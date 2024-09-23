@@ -22,7 +22,7 @@ Construct a HTTP backend service as follow code in golang project.
 
     import (
         _ "yourproject/routers"
-        "github.com/wengoldx/wcore/utils"
+        "github.com/wengoldx/xcore/utils"
      )
 
     func main() {
