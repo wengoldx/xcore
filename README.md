@@ -21,7 +21,7 @@ Construct a HTTP backend service as follow code in golang project.
     package main
 
     import (
-        _ "qks/routers"
+        _ "yourproject/routers"
         "github.com/wengoldx/wcore/utils"
      )
 
