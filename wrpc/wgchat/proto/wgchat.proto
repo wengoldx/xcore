@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "./proto";
+
+service wgchat {
+  rpc AddStaff(Staff) returns (CEmpty);         // Add a new staff
+  rpc UpdateState(TagState) returns (CEmpty);   // Update target staff state
+  rpc UpdateStatus(Status) returns (CEmpty);    // Update company staffs status
+  rpc DeleteStaff(TagStaff) returns (CEmpty);   // Delete target staff
+  rpc DeleteStaffs(Staffs) returns (CEmpty);    // Delete company staffs
+  rpc AddMessage(Message) returns (CEmpty);     // Push a message to user
+}
+
+// Empty response for WGChat
+message CEmpty {}
+
+// Staff datas for add new one
+message Staff {
+    string uuid = 1;
+    string nickname = 2;
+    string headurl = 3;
+    string company = 4;
+    string client = 5;
+    string old = 6;
+}
+
+// Target staff's company and state
+message TagState {
+    string uuid = 1;
+    string company = 2;
+    string client = 3; 
+    bool status = 4;
+}
+
+// Company staffs's status
+message Status {
+    string company = 1;
+    string client = 2; 
+    bool status = 3;
+}
+
+// Target company's staff
+message TagStaff {
+    string uuid = 1;
+    string company = 2;
+    string client = 3; 
+}
+
+// Company's staffs
+message Staffs {
+    string company = 1;
+    string client = 2; 
+}
+
+// Message content of chat
+message Message {
+    string sender = 1;
+    string receiver = 2;
+    string message = 3;
+    string client = 4;
+    int64 type = 5;
+}

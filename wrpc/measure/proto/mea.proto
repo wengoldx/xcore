@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "./proto";
+
+service Mea {
+  rpc Predict(BodySimple) returns (ReqID);
+  rpc Capture(BodyCapture) returns (ReqID);
+  rpc Measure(BodyComplex) returns (ReqID);
+  rpc Repredict(UpSimple) returns (MEmpty);
+  rpc Recapture(UpCapture) returns (MEmpty);
+  rpc Remeasure(UpComplex) returns (MEmpty);
+  rpc BodyShot(ReqID) returns (MEmpty);
+  rpc GetBodys(ReqIDs) returns (BodyList);
+  rpc GetBody(ReqID) returns (BodyDetail);
+  rpc DelBody(ReqID) returns (MEmpty);
+}
+
+message MEmpty {}
+
+message ReqID { string reqid = 1; }
+
+message ReqIDs { repeated string reqids = 1; }
+
+message BodySimple {
+  int64 sex = 1;
+  int64 height = 2;
+  int64 weight = 3;
+  int64 bust = 4;
+  int64 waist = 5;
+  int64 hipline = 6;
+  int64 wrist = 7;
+  string notifyurl = 8;
+}
+
+message BodyCapture {
+  int64 sex = 1;
+  int64 height = 2;
+  int64 weight = 3;
+  string fronturl = 4;
+  string sideurl = 5;
+  string notifyurl = 6;
+}
+
+message BodyComplex {
+  int64 sex = 1;
+  int64 height = 2;
+  int64 weight = 3;
+  string fronturl = 4;
+  string sideurl = 5;
+  int64 bust = 6;
+  int64 waist = 7;
+  int64 hipline = 8;
+  int64 wrist = 9;
+  string notifyurl = 10;
+}
+
+message UpSimple {
+  string reqid = 1;
+  int64 sex = 2;
+  int64 height = 3;
+  int64 weight = 4;
+  int64 bust = 5;
+  int64 waist = 6;
+  int64 hipline = 7;
+  int64 wrist = 8;
+  string notifyurl = 9;
+}
+
+message UpCapture {
+  string reqid = 1;
+  int64 sex = 2;
+  int64 height = 3;
+  int64 weight = 4;
+  string fronturl = 5;
+  string sideurl = 6;
+  string notifyurl = 7;
+}
+
+message UpComplex {
+  string reqid = 1;
+  int64 sex = 2;
+  int64 height = 3;
+  int64 weight = 4;
+  string fronturl = 5;
+  string sideurl = 6;
+  int64 bust = 7;
+  int64 waist = 8;
+  int64 hipline = 9;
+  int64 wrist = 10;
+  string notifyurl = 11;
+}
+
+message BodyBase {
+  int64 bodyid = 1;
+  string reqid = 2;
+  int64 status = 3;
+  int64 sex = 4;
+  string thumbnail = 5;
+  repeated string captures = 6;
+  int64 createtime = 7;
+}
+
+message BodyList { repeated BodyBase body = 1; }
+
+message BodyDetail {
+  int64 bodyid = 1;
+  string reqid = 2;
+  int64 status = 3;
+  string thumbnail = 4;
+  repeated string captures = 5;
+  int64 sex = 6;
+  int64 height = 7;
+  int64 weight = 8;
+  int64 neck = 9;
+  int64 upperneck = 10;
+  int64 shoulder = 11;
+  int64 bust = 12;
+  int64 waist = 13;
+  int64 hipline = 14;
+  int64 knee = 15;
+  int64 armlen = 16;
+  int64 armcir = 17;
+  int64 thighcir = 18;
+  int64 anklecir = 19;
+  int64 clothlen = 20;
+  int64 outseam = 21;
+  int64 wristcir = 22;
+  int64 elbowcir = 23;
+  int64 bellycir = 24;
+  int64 bpdis = 25;
+  int64 hipheight = 26;
+  int64 bpsdis = 27;
+  int64 bsdis = 28;
+  int64 wsdis = 29;
+  int64 wkdis = 30;
+  int64 armscye = 31;
+  int64 createtime = 32;
+  int64 modifytime = 33;
+}

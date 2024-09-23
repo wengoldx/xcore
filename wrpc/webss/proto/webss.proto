@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "./proto";
+
+service Webss {
+    rpc DeleteFiles (Files) returns (WEmpty);       // Delete exist files
+    rpc SetBucketLife (Life) returns (WEmpty);      // Enable  bucket lifecycle
+    rpc DelBucketLife (Lifes) returns (WEmpty);     // Disable bucket lifecycle
+    rpc SetFileLife (Tag) returns (WEmpty);         // Set file tag to apply bucket lifecycle
+    rpc SignFileUrl (Sign) returns (SignUrl);       // Get sign url  to upload file
+    rpc SignFileUrls (Signs) returns (SignUrls);    // Get sign urls to upload multiple files
+    rpc OriginalUrls (FNames) returns (SignUrls);   // Get sign urls to upload multiple files remained original file name
+    rpc GetFileInfo (File) returns (Info);          // Get exist uploaded file informations
+}
+
+// Empty response for Webss
+message WEmpty{}
+
+// Unique id to indicate lifecycle
+message ID {
+    string id =1;
+}
+
+// Object file path releative bucket
+message File {
+    string path = 1;
+}
+
+// Multiple object files of indicate bucket
+message Files {
+    string bucket = 1;
+    repeated string files = 2;
+}
+
+// Lifecycle status
+message Life {
+    string id = 1;
+    string bucket = 2;
+    string status = 3;
+}
+
+// Lifesycle ids for delete
+message Lifes {
+    repeated string ids = 1;
+    string bucket = 2;
+}
+
+// Object file tag infos
+message Tag {
+    string bucket = 1;
+    repeated string paths = 2;
+    string status = 3;
+}
+
+// Sign datas to get upload sign url
+message Sign {
+    string res = 1;
+    string add = 2;
+    string suffix = 3;
+}
+
+// Multiple sign urls to upload
+message Signs {
+    string res = 1;
+    string add = 2;
+    repeated string suffixes = 3;
+}
+
+// Sign url to upload
+message SignUrl {
+    string url = 1;
+    string path = 2;
+}
+
+// Multiple sign urls to upload
+message SignUrls {
+    repeated SignUrl urls = 1;
+}
+
+// Multiple original file names
+message FNames {
+    string res = 1;
+    string add = 2;
+    repeated FName names = 3;
+}
+
+// Original uploaded file name
+message FName{
+    string name = 1;
+    string suffix = 2;
+}
+
+// Object file infos
+message Info{
+    string name = 1;
+    string etag = 2;
+    string last = 3;
+    int64 size = 4;
+}

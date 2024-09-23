@@ -1,0 +1,275 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "./proto";
+
+service Acc {
+
+  // ----------------------------------------
+  // For Common & Utils
+  // ----------------------------------------
+
+  // Request token access permission check
+  rpc ViaToken(Token) returns (AccPwd);
+
+  // Account role access permission check
+  rpc ViaRole(Role) returns (Result);
+
+  // Add account role excepted admin
+  rpc AddRole(TagRole) returns (AEmpty);
+
+  // Register account with given role, then return uuid and random password
+  // NOTICE that this function not create a admin role account
+  rpc AccRegister(UserRole) returns (AccPwd);
+
+  // Account login by uuid/phone/email and encryptd password 
+  rpc AccLogin(AccPwd) returns (Token);
+
+  // Return profiles on role, e.g. get all store composers
+  rpc RoleProfiles(UserRole) returns (RoleProfs);
+
+  // Return profiles on role, and filter by search conditions
+  rpc SearchInRole(Search) returns (RoleProfs);
+
+  // Update account email, it maybe case duplicate entry error when tag email exist in databse
+  rpc UpdateEmail(IDEMail) returns (AEmpty);
+
+  // Reset account password and send by email
+  rpc ResetSendPwd(UUID) returns (AEmpty);
+
+  // Unbind account wechat unionid (clear unionid field directly)
+  rpc UnbindWechat(UUID) returns (AEmpty);
+
+  // Return account request token by exist user uuid (only for QKS)
+  rpc GetToken(UUID) returns (Token);
+
+  // Return account emails by given uuids
+  rpc GetAccEmails(UIDS) returns (IDEMails);
+
+  // Return account simple profiles
+  rpc GetProfile(UUID) returns (Profile);
+
+  // Return account contact (contain nickname, phone, email)
+  rpc GetContact(UUID) returns (Contact);
+
+  // Return account avatars by given uuids
+  rpc GetAvatars(UIDS) returns (Avatars);
+  
+  // Return account avatars by given uuids and search conditions
+  rpc SearchAvatars(SKeys) returns (Avatars);
+
+  // Delete indicated account by given uuid
+  rpc DeleteAcc(UUID) returns (AEmpty);
+
+  // ----------------------------------------
+  // For Store Module Of IFSCM
+  // ----------------------------------------
+
+  // Register store machine account
+  rpc StoreAddMach(Email) returns (UUID);
+
+  // Register store composer account
+  rpc StoreAddComp(Composer) returns (UUID);
+
+  // Update store composer email and nickname
+  rpc StoreUpComp(CompSimp) returns (AEmpty);
+
+  // Store machine bind with player wechat unionid
+  rpc StoreBindWx(WxBind) returns (AEmpty);
+
+  // Store machine unbind player wechat unionid
+  rpc StoreUnbindWx(AccPwd) returns (AEmpty);
+
+  // Store composer unbind machine's player wechat unionid
+  rpc CompUnbindWx(UUID) returns (AEmpty);
+
+  // Store composer reset machine password and send by email
+  rpc CompResetPwd(TagPwd) returns (AEmpty);
+
+  // Rename store machine nickname and addresses
+  rpc StoreRename(ProfAddr) returns (AEmpty);
+
+  // Return account simple profiles and addresses
+  rpc StoreProfile(UUID) returns (ProfStore);
+
+  // Return accounts simple profiles and addresses
+  rpc StoreProfiles(UIDS) returns (ProfStores);
+
+  // Return uuids and emails
+  rpc GetActiveEmails(Emails) returns (Emails);
+
+  // ----------------------------------------
+  // For QKS Send Mail
+  // ----------------------------------------
+
+  // Send custom mail from QKS web page on custom request.
+  rpc SendCustomMail(SugMail) returns (AEmpty);
+}
+
+// Empty response for AccService
+message AEmpty {}
+
+message Token {
+  string token = 1;     // account request token
+}
+
+message UUID {
+  string uuid = 1;      // account unique id
+}
+
+message UIDS {
+  repeated string uids = 1;
+}
+
+message SKeys {
+  repeated string uids = 1;
+  bool   filterid = 2;
+  string keyword = 3;
+}
+
+message Email {
+  string email = 1;      // account email
+}
+
+message Emails {
+  repeated Email items = 1;
+}
+
+message AccPwd {
+  string acc = 1;       // account uuid, email or phone
+  string pwd = 2;       // account login password enripted by RSA + Base64
+}
+
+message TagPwd {
+  string uuid = 1;      // request account uuid
+  string tag = 2;       // target account uuid to change password
+  string pwd = 3;       // target account login password enripted by RSA + Base64
+}
+
+message IDEMail {
+  string uuid = 1;      // uuid for the profile
+  string email = 2;     // store composer email address to update
+}
+
+message IDEMails {
+  repeated IDEMail items = 1;
+}
+
+message Contact {
+  string uuid = 1;      // account unique id
+  string contact = 2;   // account nickname
+  string email = 3;     // account email address
+  string phone = 4;     // account email phone
+}
+
+message Profile {
+  string uuid = 1;      // account unique id
+  string nickname = 2;  // account nickname
+  string heardurl = 3;  // account heardurl, the value set from wechat avatar or manual update by userself
+  int64  sex = 4;       // account sex, 0:none, 1:male, 2:female, 3:neutral
+  string birthday = 5;  // account birthday, the value set from real-name authentication
+  bool   isverify = 6;  // status to indicate account if pass real-name autnenticated
+}
+
+message ProfAddr {
+  string uuid = 1;      // account unique id
+  string nickname = 2;  // store name frist perfix string
+  string province = 3;  // store name middle string
+  string city = 4;      // store name the last string
+  string address = 5;   // store address string, it maybe empty
+}
+
+message Avatar {
+  string uuid = 1;      // account unique id
+  int64  sex = 2;       // account sex, 0:none, 1:male, 2:female, 3:neutral
+  string nickname = 3;  // account nickname
+  string heardurl = 4;  // account heardurl, the value set from wechat avatar
+}
+
+message Avatars {
+  repeated Avatar profs = 1;
+}
+
+message ProfStore {
+  string uuid = 1;      // account unique id
+  string unionid = 2;   // wechat unionid bind with store account
+  string logourl = 3;   // store logo image url from heardurl field value of database
+  string email = 4;     // store account email address, set when account generate
+  string nickname = 5;  // store name frist perfix string
+  string province = 6;  // store name middle string
+  string city = 7;      // store name the last string
+  string address = 8;   // store address string
+  string signature = 9; // store account auth signature
+}
+
+message ProfStores {
+  repeated ProfStore profs = 1;
+}
+
+message WxBind {
+  string uuid = 1;      // account unique id
+  string unionid = 2;   // wechat unionid bind with store account
+  string pwd =3;        // account login password enripted by RSA + Base64
+}
+
+message Role {
+  string uuid = 1;      // verification request account id
+  string router = 2;    // verification request API router
+  string method = 3;    // verification request http method
+}
+
+message Result {
+  bool pass = 1;        // if account enable access router, ture is allow, false denied
+}
+
+message UserRole {
+  string role = 1;      // traget role
+}
+
+message TagRole {
+  string uuid = 1;      // verification request account id
+  string role = 2;      // traget role
+}
+
+message Machine {
+  string email = 1;     // store machine account email address, set when account generate
+  string machsn = 2;    // store name frist perfix string
+}
+
+message Composer {
+  string email = 1;     // store account email address, set when account generate
+  string nickname = 2;  // store composer nickname
+}
+
+message CompSimp {
+  string uuid = 1;      // uuid for the profile
+  string email = 2;     // store composer email address to update
+  string nickname = 3;  // store composer nickname
+}
+
+message RoleProf {
+  string uuid = 1;      // uuid for the profile
+  string email = 2;     // account email
+  string phone = 3;     // account phone
+  string nickname = 4;  // account nickname
+  string heardurl = 5;  // account heardurl, the value set from wechat avatar  
+}
+
+message RoleProfs {
+  repeated RoleProf profiles = 1;
+}
+
+message Search {
+  int64  category = 1;  // category for search
+  string keyword = 2;   // search keyword
+  string role = 3;      // target role
+}
+
+message SugMail {
+  string email = 1;     // user input custom email address
+  string content = 2;   // feedback message content
+  string name = 3;      // user input contact name
+  string phone = 4;     // user input phone number
+  string links = 5;     // uploaded image links
+  int32  isbuy = 6;     // 0 for feedback, 1 for custom desing
+}

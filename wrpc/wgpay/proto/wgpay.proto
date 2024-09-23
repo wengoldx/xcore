@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "./proto";
+
+service Wgpay {
+    // Generate ticket 
+    rpc GenCard(TradeNode) returns (No);
+    rpc GenTrade(TradeNode) returns (No);
+    rpc GenCombine(CombineNode) returns (No);
+    rpc GenRefund(RefundNode) returns (No);
+
+    // Update amount
+    rpc ChangeTAmount(NoAment) returns (PEmpty);
+    rpc ChangeRAmount(NoAment) returns (PEmpty);
+
+    // Revoke transaction
+    rpc RevokeTrade (No) returns(PEmpty);
+    rpc RevokeRefund (No) returns(PEmpty);
+
+    // Update transaction
+    rpc UpdateTrade (UpTrade) returns(PEmpty);
+    rpc UpdateRefund (UpRefund) returns(PEmpty);
+
+    // Get trade ticket
+    rpc TradeTicket (No) returns(TradeNode);
+    rpc CombineTicket (No) returns(CombineNode);
+    rpc DiviTicket (No) returns(DiviNode);
+    rpc RefundTicket (No) returns(RefundNode);
+    
+    // Pay method
+    rpc JSPay(TradeUID) returns (JSPayRet);
+    rpc CombineJS(TradeUID) returns (JSPayRet);
+    rpc QueryTrade(No) returns (QueryRet);
+    rpc TradeRefund(RefundNo) returns (RefundRet);
+    rpc AppPay(TradeNo) returns (AppPayRet);
+    rpc QueryRefund(No) returns (QueryRef);
+}
+
+// Empty response for WGPay
+message PEmpty{}
+
+message TradeNode {
+    string trade_no = 1;
+    string cashier = 2;
+    string payer = 3;
+    string payee = 4;
+    string smid = 5;
+    int64 amount =6 ;
+    string desc = 7;
+    string ntfurl =8 ;
+    string payway = 9;
+    bool isfrozen =10 ;
+    string status = 11;
+    string expire = 12;
+}
+
+message DiviNode {
+    string cashier = 1;
+    string smid = 2;
+    string transaction_id = 3;
+    int64 commission = 4;
+    string desc = 5;
+    bool  isfinsh = 6;
+}
+
+message RefundNode {
+    string cashier = 1;
+    string trade_no = 2;
+    string payer = 3;
+    string payee = 4;
+    string smid = 5;
+    string refund_id = 6;
+    int64 amount = 7;
+    string desc = 8;
+    string status = 9;
+    string ntfurl = 10;
+}
+
+message PayInfo {
+    string payway = 1;
+    string status = 2;
+    string wxpayinfo = 3;
+    string alpayinfo = 4;
+}
+
+message CombineNode {
+    string cashier = 1;
+    string expire = 2;
+    repeated TradeNode sub_order = 3;
+}
+
+message No {
+    string number = 1;
+}
+
+message NoAment {
+    string number = 1;
+    int64 amount = 2;
+}
+
+message UpTrade {
+    string number = 1;
+    TradeNode ticket = 2;
+}
+
+message UpRefund {
+    string number = 1;
+    RefundNode ticket = 2;
+}
+
+message TradeUID {
+    string trade_no = 1;
+    string openid =2;
+}
+
+message JSPayRet {
+    string trade_no = 1;
+    string appid = 2;
+    string timestamp = 3;
+    string noncestr = 4;
+    string package = 5;
+    string signtype = 6;
+    string paysign = 7;
+}
+
+message QueryRet{
+    string out_trade_no = 1;
+    string transaction_id = 2;
+    string trade_type = 3;
+    string trade_state = 4;
+    string trade_state_desc = 5;
+    string success_time = 6;
+}
+
+message QueryRef {
+    string refund_id = 1;
+    string out_refund_no = 2;
+    string transaction_id = 3;
+    string out_trade_no = 4;
+    string channel = 5;
+    string user_received_account = 6;
+    string success_time = 7;
+    string create_time = 8;
+    string status = 9;
+}
+
+message RefundNo{
+    string trade_no = 1;
+    string refund_no = 2;
+}
+
+message RefundRet {
+    string create_time = 1;
+    string status = 2;
+}
+
+message TradeNo {
+    string trade_no =1;
+}
+
+message AppPayRet {
+    string trade_no = 1;
+    string appid = 2;
+    string partnerid = 3;
+    string prepay_id = 4;
+    string package = 5;
+    string noncestr = 6;
+    string timestamp = 7;
+    string sign = 8;
+}
