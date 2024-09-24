@@ -17,7 +17,6 @@ const (
 	StatusOK             = http.StatusOK          // success status
 	StatusExError        = http.StatusAccepted    // response extend error on 202 code
 	StatusBadFile        = http.StatusNoContent   // response file unsaved on 204 code
-	StatusConflict       = http.StatusMultiStatus // response multiple status or conflict on 207 code
 	E400ParseParams      = http.StatusBadRequest
 	E401Unauthorized     = http.StatusUnauthorized
 	E403PermissionDenied = http.StatusForbidden
@@ -36,7 +35,6 @@ var statusText = map[int]string{
 	StatusOK:             "OK",
 	StatusExError:        "Response Extend Error",
 	StatusBadFile:        "Response File Unsaved Error",
-	StatusConflict:       "Response Conflict Error",
 	E400ParseParams:      "Parse Input Params Error",
 	E401Unauthorized:     "Unauthorized",
 	E403PermissionDenied: "Permission Denied",

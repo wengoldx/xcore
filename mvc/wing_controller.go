@@ -353,7 +353,7 @@ func (c *WingController) responCheckState(datatype string, protect, hidelog bool
 		}
 
 		/*
-		 * Not Protect mode, response error code and message to frontend,
+		 * Unprotect mode, response error code and message to frontend,
 		 * Here dispathed 4xx http request errors and 202 extend error!
 		 */
 		errmsg := invar.StatusText(state)
