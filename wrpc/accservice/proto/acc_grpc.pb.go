@@ -57,6 +57,8 @@ type AccClient interface {
 	SearchAvatars(ctx context.Context, in *SKeys, opts ...grpc.CallOption) (*Avatars, error)
 	// Delete indicated account by given uuid
 	DeleteAcc(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
+	// Verify bind code of backup email
+	ViaBKMail(ctx context.Context, in *Code, opts ...grpc.CallOption) (*AEmpty, error)
 	// Register store machine account
 	StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error)
 	// Register store composer account
@@ -244,6 +246,15 @@ func (c *accClient) DeleteAcc(ctx context.Context, in *UUID, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *accClient) ViaBKMail(ctx context.Context, in *Code, opts ...grpc.CallOption) (*AEmpty, error) {
+	out := new(AEmpty)
+	err := c.cc.Invoke(ctx, "/proto.Acc/ViaBKMail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accClient) StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error) {
 	out := new(UUID)
 	err := c.cc.Invoke(ctx, "/proto.Acc/StoreAddMach", in, out, opts...)
@@ -391,6 +402,8 @@ type AccServer interface {
 	SearchAvatars(context.Context, *SKeys) (*Avatars, error)
 	// Delete indicated account by given uuid
 	DeleteAcc(context.Context, *UUID) (*AEmpty, error)
+	// Verify bind code of backup email
+	ViaBKMail(context.Context, *Code) (*AEmpty, error)
 	// Register store machine account
 	StoreAddMach(context.Context, *Email) (*UUID, error)
 	// Register store composer account
@@ -472,6 +485,9 @@ func (UnimplementedAccServer) SearchAvatars(context.Context, *SKeys) (*Avatars, 
 }
 func (UnimplementedAccServer) DeleteAcc(context.Context, *UUID) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAcc not implemented")
+}
+func (UnimplementedAccServer) ViaBKMail(context.Context, *Code) (*AEmpty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ViaBKMail not implemented")
 }
 func (UnimplementedAccServer) StoreAddMach(context.Context, *Email) (*UUID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreAddMach not implemented")
@@ -828,6 +844,24 @@ func _Acc_DeleteAcc_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Acc_ViaBKMail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Code)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).ViaBKMail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/ViaBKMail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).ViaBKMail(ctx, req.(*Code))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Acc_StoreAddMach_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Email)
 	if err := dec(in); err != nil {
@@ -1118,6 +1152,10 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteAcc",
 			Handler:    _Acc_DeleteAcc_Handler,
+		},
+		{
+			MethodName: "ViaBKMail",
+			Handler:    _Acc_ViaBKMail_Handler,
 		},
 		{
 			MethodName: "StoreAddMach",
