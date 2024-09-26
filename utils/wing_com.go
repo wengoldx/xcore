@@ -107,6 +107,17 @@ func Distinct(src *[]string) []string {
 	return st
 }
 
+// TrimEmpty remove empty string, it maybe return empty result array.
+func TrimEmpty(src *[]string) []string {
+	dst := []string{}
+	for _, str := range *src {
+		if str != "" {
+			dst = append(dst, str)
+		}
+	}
+	return dst
+}
+
 // To2Digits fill zero if input digit not enough 2
 func To2Digits(input any) string {
 	return fmt.Sprintf("%02d", input)
