@@ -446,8 +446,12 @@ func (w *WingProvider) Affected(result sql.Result) (int64, error) {
 }
 
 // JoinIDs join int64 ids as string '1,2,3', or append to query strings as formart:
-// the query  is 'SELECT * FROM tablename WHERE id IN (%s)',
-// the result is 'SELECT * FROM tablename WHERE id IN (1,2,3)'.
+//
+// - `query`` : "SELECT * FROM tablename WHERE id IN (%s)",
+//
+// - `ids``   : []int64{1, 2, 3}
+//
+// The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
 func (w *WingProvider) JoinIDs(query string, ids []int64) string {
 	if len(ids) > 0 {
 		vs := []string{}
@@ -464,6 +468,20 @@ func (w *WingProvider) JoinIDs(query string, ids []int64) string {
 		return strings.Join(vs, ",")
 	}
 	return query
+}
+
+// Join strings with ',', then insert into the given format string;
+//
+// - `query ` : "SELECT * FROM account WHERE uuid IN (%s)"
+//
+// - `values` : []string{"D23", "4R", "A34"}
+//
+// The result is "SELECT * FROM account WHERE uuid IN ('D23','4R','A34')"
+func (w *WingProvider) JoinStrings(query string, values []string) string {
+	if query != "" {
+		return fmt.Sprintf(query, "'"+strings.Join(values, "','")+"'")
+	}
+	return "'" + strings.Join(values, "','") + "'"
 }
 
 // FormatSets format update sets for sql update.
