@@ -290,9 +290,22 @@ func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 
 // Parse certs to running as grpc server and update swagger routers,
 // it will listen target services if you input them infos.
-func SetupLocal(mc *nacos.MetaConfig, data string, servers ...*nacos.ServerItem) {
+func SetupAsServer(mc *nacos.MetaConfig, data string, servers ...*nacos.ServerItem) {
 	// Parse grpc certs and start as grpc server handler
 	Singleton().ParseAndStart(data)
+
+	// Register server to nacos and listen tags for grpc
+	if len(servers) > 0 {
+		nacos.RegisterServer().ListenServers(servers)
+	}
+	mc.UploadRouters()
+}
+
+// Parse certs to running as grpc client and update swagger routers,
+// it will listen target services if you input them infos.
+func SetupAsClient(mc *nacos.MetaConfig, data string, servers ...*nacos.ServerItem) {
+	// Parse grpc certs and start as grpc server handler
+	Singleton().ParseCerts(data)
 
 	// Register server to nacos and listen tags for grpc
 	if len(servers) > 0 {
