@@ -428,14 +428,6 @@ func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
 
 // ----------------------------------------
 
-// AppendLike append like keyword end of sql string, DON'T call it when exist limit key in sql string.
-func (w *WingProvider) AppendLike(query, filed, keyword string, and ...bool) string {
-	if len(and) > 0 && and[0] {
-		return query + " AND " + filed + " LIKE '%%" + keyword + "%%'"
-	}
-	return query + " WHERE " + filed + " LIKE '%%" + keyword + "%%'"
-}
-
 // Affected get update or delete record counts.
 func (w *WingProvider) Affected(result sql.Result) (int64, error) {
 	row, err := result.RowsAffected()
@@ -445,18 +437,64 @@ func (w *WingProvider) Affected(result sql.Result) (int64, error) {
 	return row, nil
 }
 
-// JoinIDs join int64 ids as string '1,2,3', or append to query strings as formart:
+// Affects get update or delete record counts without error check.
+func (w *WingProvider) Affects(result sql.Result) int64 {
+	rows, _ := result.RowsAffected()
+	return rows
+}
+
+// LastID get inserted record id without error check.
+func (w *WingProvider) LastID(result sql.Result) int64 {
+	id, _ := result.LastInsertId()
+	return id
+}
+
+// AddLike append like field and keyword into given query or just return like string.
 //
-// - `query`` : "SELECT * FROM tablename WHERE id IN (%s)",
+// - `query` : "SELECT * FROM tablename WHERE status=? %s ORDER BY id DESC",
 //
-// - `ids``   : []int64{1, 2, 3}
+// - `field` : "title", `keyword` : "Hello", `appendand` : true
+//
+// The result is "SELECT * FROM tablename WHERE status=? AND title LIKE '%%Hello%%' ORDER BY id DESC".
+func (w *WingProvider) AddLike(query, field, keyword string, appendand ...bool) string {
+	like := field + " LIKE '%%" + keyword + "%%'"
+	if len(appendand) > 0 {
+		like = "AND " + like
+	}
+
+	if query != "" {
+		return fmt.Sprintf(query, like)
+	}
+	return like
+}
+
+// TailLimit tail limit condition into query string, default limit 1 record.
+//
+// - `query`  : "SELECT * FROM tablename WHERE status=?",
+//
+// - `limits` : 2
+//
+// The result is "SELECT * FROM tablename WHERE status=? LIMIT 2".
+func (w *WingProvider) TailLimit(query string, limits ...int) string {
+	num := "1"
+	if len(limits) > 0 && limits[0] > 0 {
+		num = strconv.Itoa(limits[0])
+	}
+	return query + " LIMIT " + num
+}
+
+// JoinInts join int64 numbers as string '1,2,3', or append to query strings as formart:
+//
+// - `query` : "SELECT * FROM tablename WHERE id IN (%s)",
+//
+// - `nums`  : []int64{1, 2, 3}
 //
 // The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
-func (w *WingProvider) JoinIDs(query string, ids []int64) string {
-	if len(ids) > 0 {
+func (w *WingProvider) JoinInts(query string, nums []int64) string {
+	if len(nums) > 0 {
 		vs := []string{}
-		for _, id := range ids {
-			if v := strconv.FormatInt(id, 10); v != "" {
+		for _, num := range nums {
+			if v := strconv.FormatInt(num, 10); v != "" {
 				vs = append(vs, v)
 			}
 		}

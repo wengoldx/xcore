@@ -192,6 +192,60 @@ func ToXMLReplace(input any, from, to string) (string, error) {
 	return xmlout, nil
 }
 
+// JoinInts join int numbers as string '1,2,3' with ',' default separator,
+// or custom separator '-' like '1-2-3'.
+func JoinInts(nums []int, sep ...string) string {
+	vs := []string{}
+	if len(nums) > 0 {
+		for _, num := range nums {
+			if v := strconv.Itoa(num); v != "" {
+				vs = append(vs, v)
+			}
+		}
+	}
+
+	if len(sep) > 0 && sep[0] != "" {
+		return strings.Join(vs, sep[0])
+	}
+	return strings.Join(vs, ",")
+}
+
+// JoinInts join int64 numbers as string '1,2,3' with ',' default separator,
+// or custom separator '-' like '1-2-3'.
+func JoinInt64s(nums []int64, sep ...string) string {
+	vs := []string{}
+	if len(nums) > 0 {
+		for _, num := range nums {
+			if v := strconv.FormatInt(num, 10); v != "" {
+				vs = append(vs, v)
+			}
+		}
+	}
+
+	if len(sep) > 0 && sep[0] != "" {
+		return strings.Join(vs, sep[0])
+	}
+	return strings.Join(vs, ",")
+}
+
+// JoinInts join float64 numbers as string '0.1,2,3.45' with ',' default separator,
+// or custom separator '-' like '0.1-2-3.45'.
+func JoinFloats(nums []float64, sep ...string) string {
+	vs := []string{}
+	if len(nums) > 0 {
+		for _, num := range nums {
+			if v := strconv.FormatFloat(num, 'f', 2, 64); v != "" {
+				vs = append(vs, v)
+			}
+		}
+	}
+
+	if len(sep) > 0 && sep[0] != "" {
+		return strings.Join(vs, sep[0])
+	}
+	return strings.Join(vs, ",")
+}
+
 // JoinLines combine strings into multiple lines
 func JoinLines(inputs ...string) string {
 	packet := ""
