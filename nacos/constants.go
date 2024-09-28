@@ -49,7 +49,7 @@ const (
 	DID_MIO_PATHS    = "dunyu.mio.paths"    // Fixed group, data id of minio source paths
 	DID_MIO_USERS    = "dunyu.mio.users"    // Fixed group, data id of minio account key
 	DID_MQTT_AGENTS  = "dunyu.mqtt.agents"  // Fixed group, data id of mqtt agents
-	DID_OTA_BUILDS   = "dunyu.ota.builds"   // Fixed group, data id of all projects OTA informations
+	DID_OTA_BUILDS   = "dunyu.ota.builds"   // Fixed group, data id of all projects OTA infos, get data from mc.OTA maps
 	DID_WX_AGENTS    = "dunyu.wx.agents"    // Fixed group, data id of wechat agents
 	DID_QKS_CERT     = "dunyu.qks.cert"     // Fixed group, data id of qks rsa cert public key
 )
@@ -120,4 +120,10 @@ type GrpcCert struct {
 // Nacos config for GRPC certs
 type GrpcCerts struct {
 	Certs []GrpcCert `xml:"Cert"` // GRPC certs
+}
+
+// Bucket path bund resource number to export MinIO bucket paths
+type ResPath struct {
+	Res  string `json:"res"`  // Resource number as unique id used by outside to bind real bucket path
+	Path string `json:"path"` // Real bucket path of MinIO service
 }

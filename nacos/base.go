@@ -11,6 +11,7 @@
 package nacos
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -23,6 +24,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
+	"github.com/wengoldx/xcore/wechat"
 )
 
 // -------- Auto Register Define --------
@@ -149,6 +151,14 @@ func (si *ServerItem) OnChanged(services []model.Instance, err error) {
 type MetaConfig struct {
 	Stub      *ConfigStub                   // Nacos config client instance
 	Callbacks map[string]MetaConfigCallback // Meta config changed callback maps, key is dataid
+
+	// Custom datas when project register data ids, see parseXxxx inner functions.
+	Conf    AccConfs                     // DID_ACC_CONFIGS  : Account configs
+	OTA     map[string]*OTAInfo          // DID_OTA_BUILDS   : Projects OTA infos
+	Senders map[string]*DTalkSender      // DID_DTALK_NTFERS : DingTalk senders
+	Agents  map[string]*wechat.WxIFAgent // DID_WX_AGENTS    : Wechat agents
+	Paths   map[string][]*ResPath        // DID_MIO_PATHS    : MinIO export resource paths
+	Users   map[string]string            // DID_MIO_USERS    : MinIO access service users
 }
 
 // Callback to listen server address and port changes
@@ -220,7 +230,24 @@ func (mc *MetaConfig) OnChanged(namespace, group, dataId, data string) {
 	}
 
 	if callback, ok := mc.Callbacks[dataId]; ok {
-		logger.I("Update config dataId", dataId, "to:", data)
+		switch dataId {
+		case DID_ACC_CONFIGS:
+			mc.parseConfigs(data)
+		case DID_OTA_BUILDS:
+			mc.parseOTAInfo(data)
+		case DID_DTALK_NTFERS:
+			mc.parseSenders(data)
+		case DID_WX_AGENTS:
+			mc.parseAgents(data)
+		case DID_MIO_USERS:
+			mc.parseUsers(data)
+		case DID_MIO_PATHS:
+			mc.parsePaths(data)
+		default:
+			logger.I("Update config dataId", dataId, "to:", data)
+		}
+
+		// Excute callback for projects next handling
 		callback(dataId, data)
 	}
 }
@@ -348,4 +375,70 @@ func matchProxyIP(proxy string) (string, error) {
 
 	logger.E("Not found any local ips, just return proxy:", proxy)
 	return proxy, nil
+}
+
+// Parse acc configs when project register DID_ACC_CONFIGS change event
+func (mc *MetaConfig) parseConfigs(data string) {
+	conf := AccConfs{}
+	if err := json.Unmarshal([]byte(data), &conf); err != nil {
+		logger.E("Unmarshal acc configs, err:", err)
+		return
+	}
+	mc.Conf = conf
+	logger.D("Update Ass Configs:", data)
+}
+
+// Parse OTA infos when project register DID_OTA_BUILDS change event
+func (mc *MetaConfig) parseOTAInfo(data string) {
+	ota := make(map[string]*OTAInfo)
+	if err := json.Unmarshal([]byte(data), &ota); err != nil {
+		logger.E("Unmarshal OTA infos, err:", err)
+		return
+	}
+	mc.OTA = ota
+	logger.D("Update OTA infos:", data)
+}
+
+// Parse DingTalk senders when project register DID_DTALK_NTFERS change event
+func (mc *MetaConfig) parseSenders(data string) {
+	senders := make(map[string]*DTalkSender)
+	if err := json.Unmarshal([]byte(data), &senders); err != nil {
+		logger.E("Unmarshal DTalk senders, err:", err)
+		return
+	}
+	mc.Senders = senders
+	logger.D("Update DTalk senders:", data)
+}
+
+// Parse wechat agents when project register DID_WX_AGENTS change event
+func (mc *MetaConfig) parseAgents(data string) {
+	agents := make(map[string]*wechat.WxIFAgent)
+	if err := json.Unmarshal([]byte(data), &agents); err != nil {
+		logger.E("Unmarshal wechat agents, err:", err)
+		return
+	}
+	mc.Agents = agents
+	logger.D("Update wechat agents:", data)
+}
+
+// Parse minio service users when project register DID_MIO_USERS change event
+func (mc *MetaConfig) parseUsers(data string) {
+	users := make(map[string]string)
+	if err := json.Unmarshal([]byte(data), &users); err != nil {
+		logger.E("Unmarshal minio users, err:", err)
+		return
+	}
+	mc.Users = users
+	logger.D("Update minio users:", data)
+}
+
+// Parse minio resource paths when project register DID_MIO_PATHS change event
+func (mc *MetaConfig) parsePaths(data string) {
+	paths := make(map[string][]*ResPath)
+	if err := json.Unmarshal([]byte(data), &paths); err != nil {
+		logger.E("Unmarshal minio paths, err:", err)
+		return
+	}
+	mc.Paths = paths
+	logger.D("Update minio paths:", data)
 }
