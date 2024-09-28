@@ -205,6 +205,8 @@ func (mc *MetaConfig) ListenConfig(dataId string, cb MetaConfigCallback) {
 	if err != nil {
 		panic("Get config " + dataId + "err: " + err.Error())
 	}
+
+	mc.dispathParsers(dataId, data)
 	cb(dataId, data)
 
 	// listing config changes
@@ -230,24 +232,8 @@ func (mc *MetaConfig) OnChanged(namespace, group, dataId, data string) {
 	}
 
 	if callback, ok := mc.Callbacks[dataId]; ok {
-		switch dataId {
-		case DID_ACC_CONFIGS:
-			mc.parseConfigs(data)
-		case DID_OTA_BUILDS:
-			mc.parseOTAInfo(data)
-		case DID_DTALK_NTFERS:
-			mc.parseSenders(data)
-		case DID_WX_AGENTS:
-			mc.parseAgents(data)
-		case DID_MIO_USERS:
-			mc.parseUsers(data)
-		case DID_MIO_PATHS:
-			mc.parsePaths(data)
-		default:
-			logger.I("Update config dataId", dataId, "to:", data)
-		}
-
-		// Excute callback for projects next handling
+		mc.dispathParsers(dataId, data)
+		// Call callback for next handle
 		callback(dataId, data)
 	}
 }
@@ -377,6 +363,26 @@ func matchProxyIP(proxy string) (string, error) {
 	return proxy, nil
 }
 
+// Dispath custom data parsers to parse data when changed
+func (mc *MetaConfig) dispathParsers(dataId, data string) {
+	switch dataId {
+	case DID_ACC_CONFIGS:
+		mc.parseConfigs(data)
+	case DID_OTA_BUILDS:
+		mc.parseOTAInfo(data)
+	case DID_DTALK_NTFERS:
+		mc.parseSenders(data)
+	case DID_WX_AGENTS:
+		mc.parseAgents(data)
+	case DID_MIO_USERS:
+		mc.parseUsers(data)
+	case DID_MIO_PATHS:
+		mc.parsePaths(data)
+	default:
+		logger.I("Update config dataId", dataId, "to:", data)
+	}
+}
+
 // Parse acc configs when project register DID_ACC_CONFIGS change event
 func (mc *MetaConfig) parseConfigs(data string) {
 	conf := AccConfs{}
@@ -429,7 +435,7 @@ func (mc *MetaConfig) parseUsers(data string) {
 		return
 	}
 	mc.Users = users
-	logger.D("Update minio users:", data)
+	logger.I("Update minio users:", data)
 }
 
 // Parse minio resource paths when project register DID_MIO_PATHS change event
@@ -440,5 +446,5 @@ func (mc *MetaConfig) parsePaths(data string) {
 		return
 	}
 	mc.Paths = paths
-	logger.D("Update minio paths:", data)
+	logger.I("Update minio paths:", data)
 }
