@@ -21,13 +21,14 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/nacos"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	acc "github.com/wengoldx/xcore/wrpc/accservice/proto"
 	mea "github.com/wengoldx/xcore/wrpc/measure/proto"
 	wss "github.com/wengoldx/xcore/wrpc/webss/proto"
 	chat "github.com/wengoldx/xcore/wrpc/wgchat/proto"
 	pay "github.com/wengoldx/xcore/wrpc/wgpay/proto"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
