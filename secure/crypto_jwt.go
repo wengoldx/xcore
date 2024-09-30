@@ -89,7 +89,7 @@ func DecClaims(keyword string, count ...int) ([]string, error) {
 
 // Encode account uuid, password and subject string
 //
-// Deprecated: Please use EncClaims() instead
+// Deprecated: Use secure.EncClaims() instead it.
 func EncJwtKeyword(uuid, pwd string, subject string) string {
 	sets := []string{uuid, pwd, subject}
 	orikey := strings.Join(sets, ";")
@@ -98,7 +98,7 @@ func EncJwtKeyword(uuid, pwd string, subject string) string {
 
 // Decode account uuid, password and subject from jwt keyword string
 //
-// Deprecated: Please use DecClaims() instead
+// Deprecated: Use secure.DecClaims() instead it.
 func DecJwtKeyword(keyword string) (string, string, string) {
 	orikeys, err := DecodeBase64(keyword)
 	if err != nil {

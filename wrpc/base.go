@@ -23,7 +23,7 @@ import (
 	"github.com/wengoldx/xcore/nacos"
 	acc "github.com/wengoldx/xcore/wrpc/accservice/proto"
 	mea "github.com/wengoldx/xcore/wrpc/measure/proto"
-	webss "github.com/wengoldx/xcore/wrpc/webss/proto"
+	wss "github.com/wengoldx/xcore/wrpc/webss/proto"
 	chat "github.com/wengoldx/xcore/wrpc/wgchat/proto"
 	pay "github.com/wengoldx/xcore/wrpc/wgpay/proto"
 	"google.golang.org/grpc"
@@ -31,25 +31,32 @@ import (
 )
 
 const (
-	SvrAcc  = "accservice" // server name of AccService backend
-	SvrMea  = "measure"    // server name of Measure    backend
-	SvrWss  = "webss"      // server name of WebSS      backend
-	SvrChat = "wgchat"     // server name of WgChat     backend
-	SvrPay  = "wgpay"      // server name of WgPay      backend
+	SVR_ACC  = "accservice" // server name of AccService backend
+	SVR_MEA  = "measure"    // server name of Measure    backend
+	SVR_WSS  = "webss"      // server name of WebSS      backend
+	SVR_CHAT = "wgchat"     // server name of WgChat     backend
+	SVR_PAY  = "wgpay"      // server name of WgPay      backend
 )
 
 // GrpcHandlerFunc grpc server handler for register
 type GrpcHandlerFunc func(svr *grpc.Server)
 
 type GrpcStub struct {
-	Certs   map[string]*nacos.GrpcCert // Grpc handler certs
-	Clients map[string]any             // Grpc client handlers
+	// Grpc handler certs
+	Certs map[string]*nacos.GrpcCert
 
 	// Current grpc server if registried
 	isRegistried bool
 
 	// Global handler function to return grpc server handler
 	SvrHandlerFunc GrpcHandlerFunc
+
+	// GRPC agent clients, when server register and listen to nacos
+	Acc  acc.AccClient     // SVR_ACC  : Acc        GRPC client, maybe null
+	Mea  mea.MeaClient     // SVR_MEA  : Measure    GRPC client, maybe null
+	Wss  wss.WebssClient   // SVR_WSS  : Web static GRPC client, maybe null
+	Chat chat.WgchatClient // SVR_CHAT : Chat       GRPC client, maybe null
+	Pay  pay.WgpayClient   // SVR_PAY  : Pay        GRPC client, maybe null
 }
 
 // Singleton grpc stub instance
@@ -59,9 +66,7 @@ var grpcStub *GrpcStub
 func Singleton() *GrpcStub {
 	if grpcStub == nil {
 		grpcStub = &GrpcStub{
-			isRegistried: false,
-			Certs:        make(map[string]*nacos.GrpcCert),
-			Clients:      make(map[string]any),
+			isRegistried: false, Certs: make(map[string]*nacos.GrpcCert),
 		}
 	}
 	return grpcStub
@@ -141,8 +146,8 @@ func (stub *GrpcStub) ParseAndStart(data string) error {
 
 // Generate grpc client handler
 func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
-	if svrkey != SvrAcc && svrkey != SvrMea && svrkey != SvrWss &&
-		svrkey != SvrChat && svrkey != SvrPay {
+	if svrkey != SVR_ACC && svrkey != SVR_MEA && svrkey != SVR_WSS &&
+		svrkey != SVR_CHAT && svrkey != SVR_PAY {
 		logger.E("Invaoid target grpc server:", svrkey)
 		return
 	}
@@ -172,16 +177,16 @@ func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
 	// content grpc client by server name
 	logger.I("Grpc client:", svrkey, "connect", grpcsvr)
 	switch svrkey {
-	case SvrAcc:
-		stub.Clients[svrkey] = acc.NewAccClient(conn)
-	case SvrMea:
-		stub.Clients[svrkey] = mea.NewMeaClient(conn)
-	case SvrWss:
-		stub.Clients[svrkey] = webss.NewWebssClient(conn)
-	case SvrChat:
-		stub.Clients[svrkey] = chat.NewWgchatClient(conn)
-	case SvrPay:
-		stub.Clients[svrkey] = pay.NewWgpayClient(conn)
+	case SVR_ACC:
+		stub.Acc = acc.NewAccClient(conn)
+	case SVR_MEA:
+		stub.Mea = mea.NewMeaClient(conn)
+	case SVR_WSS:
+		stub.Wss = wss.NewWebssClient(conn)
+	case SVR_CHAT:
+		stub.Chat = chat.NewWgchatClient(conn)
+	case SVR_PAY:
+		stub.Pay = pay.NewWgpayClient(conn)
 	}
 }
 
@@ -203,61 +208,17 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 }
 
 // ----------------------------------------
-// Get Singleton Instanced GRPC Clients
-// ----------------------------------------
-
-// Return AccService grpc client, maybe null if not generate first
-func (stub *GrpcStub) Acc() acc.AccClient {
-	if client, ok := stub.Clients[SvrAcc]; ok {
-		return client.(acc.AccClient)
-	}
-	return nil
-}
-
-// Return Measure grpc client, maybe null if not generate first
-func (stub *GrpcStub) Mea() mea.MeaClient {
-	if client, ok := stub.Clients[SvrMea]; ok {
-		return client.(mea.MeaClient)
-	}
-	return nil
-}
-
-// Return Webss grpc client, maybe null if not generate first
-func (stub *GrpcStub) Webss() webss.WebssClient {
-	if client, ok := stub.Clients[SvrWss]; ok {
-		return client.(webss.WebssClient)
-	}
-	return nil
-}
-
-// Return Wgchat grpc client, maybe null if not generate first
-func (stub *GrpcStub) Chat() chat.WgchatClient {
-	if client, ok := stub.Clients[SvrChat]; ok {
-		return client.(chat.WgchatClient)
-	}
-	return nil
-}
-
-// Return Wgpay grpc client, maybe null if not generate first
-func (stub *GrpcStub) Pay() pay.WgpayClient {
-	if client, ok := stub.Clients[SvrPay]; ok {
-		return client.(pay.WgpayClient)
-	}
-	return nil
-}
-
-// ----------------------------------------
 // Account Authentications Request
 // ----------------------------------------
 
 // Auth header token and return account uuid and password
 func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
-	if accGRPC := stub.Acc(); accGRPC == nil {
+	if stub.Acc == nil {
 		logger.E("Acc RPC instance not inited!")
 		return "", ""
 	} else {
 		param := &acc.Token{Token: token}
-		resp, err := accGRPC.ViaToken(context.Background(), param)
+		resp, err := stub.Acc.ViaToken(context.Background(), param)
 		if err != nil {
 			logger.E("RPC auth token, err:", err)
 			return "", ""
@@ -269,12 +230,12 @@ func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 
 // Auth account role from http header
 func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
-	if accGRPC := stub.Acc(); accGRPC == nil {
+	if stub.Acc == nil {
 		logger.E("Acc RPC instance not inited!")
 		return false
 	} else {
 		param := &acc.Role{Uuid: uuid, Router: url, Method: method}
-		resp, err := accGRPC.ViaRole(context.Background(), param)
+		resp, err := stub.Acc.ViaRole(context.Background(), param)
 		if err != nil {
 			logger.E("RPC auth", uuid, "role, err:", err)
 			return false
@@ -288,28 +249,43 @@ func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 // GRPC Local Service Setup
 // ----------------------------------------
 
-// Parse certs to running as grpc server and update swagger routers,
-// it will listen target services if you input them infos.
-func SetupAsServer(mc *nacos.MetaConfig, data string, servers ...*nacos.ServerItem) {
-	// Parse grpc certs and start as grpc server handler
-	Singleton().ParseAndStart(data)
+// Target services listing callback for create grpc client after registred.
+func listingCallback(svr string, addr string, port, httpport int) {
+	Singleton().GenClient(svr, addr, port)
+}
 
-	// Register server to nacos and listen tags for grpc
+// Register server to nacos and listen tags for grpc
+func registryAndUploadRouters(mc *nacos.MetaConfig, servers ...string) {
+	svrstub := nacos.RegisterServer()
 	if len(servers) > 0 {
-		nacos.RegisterServer().ListenServers(servers)
+		svrs := []*nacos.ServerItem{}
+		for _, sn := range servers {
+			svr := &nacos.ServerItem{Name: sn, Callback: listingCallback}
+			svrs = append(svrs, svr)
+		}
+		svrstub.ListenServers(svrs)
 	}
 	mc.UploadRouters()
 }
 
+// Parse certs to running as grpc server and update swagger routers,
+// it will listen target services if you input them infos.
+func SetupAsServer(mc *nacos.MetaConfig, data string, servers ...string) *GrpcStub {
+	// Parse grpc certs and start as grpc server handler
+	Singleton().ParseAndStart(data)
+
+	// Register server to nacos and listen tags for grpc
+	registryAndUploadRouters(mc, servers...)
+	return grpcStub
+}
+
 // Parse certs to running as grpc client and update swagger routers,
 // it will listen target services if you input them infos.
-func SetupAsClient(mc *nacos.MetaConfig, data string, servers ...*nacos.ServerItem) {
+func SetupAsClient(mc *nacos.MetaConfig, data string, servers ...string) *GrpcStub {
 	// Parse grpc certs and start as grpc server handler
 	Singleton().ParseCerts(data)
 
 	// Register server to nacos and listen tags for grpc
-	if len(servers) > 0 {
-		nacos.RegisterServer().ListenServers(servers)
-	}
-	mc.UploadRouters()
+	registryAndUploadRouters(mc, servers...)
+	return grpcStub
 }
