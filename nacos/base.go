@@ -215,12 +215,11 @@ func (mc *MetaConfig) ListenConfig(dataId string, cb MetaConfigCallback) {
 }
 
 // Get and listing the configs of indicated dataIds
-func (mc *MetaConfig) ListenConfigs(dataIds []string, cb MetaConfigCallback) {
+func (mc *MetaConfig) ListenConfigs(cb MetaConfigCallback, dataIds ...string) {
 	for _, dataId := range dataIds {
-		if dataId == "" || cb == nil {
-			continue
+		if dataId != "" && cb != nil {
+			mc.ListenConfig(dataId, cb)
 		}
-		mc.ListenConfig(dataId, cb)
 	}
 }
 
