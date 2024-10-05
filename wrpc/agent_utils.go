@@ -88,21 +88,15 @@ func (stub *GrpcStub) NamedUrl(res, filepath string, addition ...string) (*UrlPa
 	}
 
 	fname := path.Base(filepath)
-	name := &wss.FName{Name: fname, Suffix: path.Ext(fname)}
 	add := utils.GetVariable(addition, "").(string)
-
-	param := &wss.FNames{Res: res, Add: add, Names: []*wss.FName{name}}
-	oriurls, err := stub.Wss.OriginalUrls(context.Background(), param)
+	param := &wss.FName{Res: res, Add: add, Name: fname, Suffix: path.Ext(fname)}
+	oriurl, err := stub.Wss.OriginalUrl(context.Background(), param)
 	if err != nil {
 		return nil, err
 	}
 
-	surl, path := "", ""
-	if len(oriurls.Urls) > 0 {
-		surl, _ = secure.DecodeBase64(oriurls.Urls[0].Url)
-		path, _ = secure.DecodeBase64(oriurls.Urls[0].Path) // Format as '/bucket/file/paths'
-	}
-
+	surl, _ := secure.DecodeBase64(oriurl.Url)
+	path, _ := secure.DecodeBase64(oriurl.Path) // Format as '/bucket/file/paths'
 	if surl == "" || path == "" {
 		return nil, invar.ErrUnsupportFormat
 	}
@@ -110,7 +104,7 @@ func (stub *GrpcStub) NamedUrl(res, filepath string, addition ...string) (*UrlPa
 }
 
 // Obtain multiple pre-signed urls for upload files to minio storage, and keep the origin names.
-func (stub *GrpcStub) NamedUrls(res string, files []*wss.FName, addition ...string) ([]*UrlPath, error) {
+func (stub *GrpcStub) NamedUrls(res string, files []*wss.NSuffix, addition ...string) ([]*UrlPath, error) {
 	if stub.Wss == nil {
 		return nil, invar.ErrInvalidClient
 	} else if res == "" || len(files) == 0 {
@@ -118,7 +112,7 @@ func (stub *GrpcStub) NamedUrls(res string, files []*wss.FName, addition ...stri
 	}
 
 	add := utils.GetVariable(addition, "").(string)
-	param := &wss.FNames{Res: res, Add: add, Names: files}
+	param := &wss.FNames{Res: res, Add: add, Files: files}
 	oriurls, err := stub.Wss.OriginalUrls(context.Background(), param)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ service Webss {
     rpc SetFileLife (Tag) returns (WEmpty);         // Set file tag to apply bucket lifecycle
     rpc SignFileUrl (Sign) returns (SignUrl);       // Get sign url  to upload file
     rpc SignFileUrls (Signs) returns (SignUrls);    // Get sign urls to upload multiple files
+    rpc OriginalUrl (FName) returns (SignUrl);      // Get sign url  to upload file remained original file name
     rpc OriginalUrls (FNames) returns (SignUrls);   // Get sign urls to upload multiple files remained original file name
     rpc GetFileInfo (File) returns (Info);          // Get exist uploaded file informations
 }
@@ -82,13 +83,21 @@ message SignUrls {
 message FNames {
     string res = 1;
     string add = 2;
-    repeated FName names = 3;
+    repeated NSuffix files = 3;
+}
+
+// Original uploaded file name and suffix
+message NSuffix{
+    string name = 1;
+    string suffix = 2;
 }
 
 // Original uploaded file name
 message FName{
-    string name = 1;
-    string suffix = 2;
+    string res = 1;
+    string add = 2;
+    string name = 3;
+    string suffix = 4;
 }
 
 // Object file infos

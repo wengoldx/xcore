@@ -28,6 +28,7 @@ type WebssClient interface {
 	SetFileLife(ctx context.Context, in *Tag, opts ...grpc.CallOption) (*WEmpty, error)
 	SignFileUrl(ctx context.Context, in *Sign, opts ...grpc.CallOption) (*SignUrl, error)
 	SignFileUrls(ctx context.Context, in *Signs, opts ...grpc.CallOption) (*SignUrls, error)
+	OriginalUrl(ctx context.Context, in *FName, opts ...grpc.CallOption) (*SignUrl, error)
 	OriginalUrls(ctx context.Context, in *FNames, opts ...grpc.CallOption) (*SignUrls, error)
 	GetFileInfo(ctx context.Context, in *File, opts ...grpc.CallOption) (*Info, error)
 }
@@ -94,6 +95,15 @@ func (c *webssClient) SignFileUrls(ctx context.Context, in *Signs, opts ...grpc.
 	return out, nil
 }
 
+func (c *webssClient) OriginalUrl(ctx context.Context, in *FName, opts ...grpc.CallOption) (*SignUrl, error) {
+	out := new(SignUrl)
+	err := c.cc.Invoke(ctx, "/proto.Webss/OriginalUrl", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *webssClient) OriginalUrls(ctx context.Context, in *FNames, opts ...grpc.CallOption) (*SignUrls, error) {
 	out := new(SignUrls)
 	err := c.cc.Invoke(ctx, "/proto.Webss/OriginalUrls", in, out, opts...)
@@ -122,6 +132,7 @@ type WebssServer interface {
 	SetFileLife(context.Context, *Tag) (*WEmpty, error)
 	SignFileUrl(context.Context, *Sign) (*SignUrl, error)
 	SignFileUrls(context.Context, *Signs) (*SignUrls, error)
+	OriginalUrl(context.Context, *FName) (*SignUrl, error)
 	OriginalUrls(context.Context, *FNames) (*SignUrls, error)
 	GetFileInfo(context.Context, *File) (*Info, error)
 	mustEmbedUnimplementedWebssServer()
@@ -148,6 +159,9 @@ func (UnimplementedWebssServer) SignFileUrl(context.Context, *Sign) (*SignUrl, e
 }
 func (UnimplementedWebssServer) SignFileUrls(context.Context, *Signs) (*SignUrls, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SignFileUrls not implemented")
+}
+func (UnimplementedWebssServer) OriginalUrl(context.Context, *FName) (*SignUrl, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OriginalUrl not implemented")
 }
 func (UnimplementedWebssServer) OriginalUrls(context.Context, *FNames) (*SignUrls, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OriginalUrls not implemented")
@@ -276,6 +290,24 @@ func _Webss_SignFileUrls_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Webss_OriginalUrl_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WebssServer).OriginalUrl(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Webss/OriginalUrl",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WebssServer).OriginalUrl(ctx, req.(*FName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Webss_OriginalUrls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FNames)
 	if err := dec(in); err != nil {
@@ -342,6 +374,10 @@ var Webss_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SignFileUrls",
 			Handler:    _Webss_SignFileUrls_Handler,
+		},
+		{
+			MethodName: "OriginalUrl",
+			Handler:    _Webss_OriginalUrl_Handler,
 		},
 		{
 			MethodName: "OriginalUrls",
