@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/secure"
@@ -154,6 +155,44 @@ func (stub *GrpcStub) LocalUpload(filepath, res string, delete ...bool) (string,
 		}
 
 		// Upload file datas and check response status
+		if resp, err := http.DefaultClient.Do(req); err != nil {
+			return "", err
+		} else if resp.StatusCode != invar.StatusOK {
+			return "", invar.ErrInvalidData
+		}
+
+		// Delete local file when upload success
+		if len(delete) > 0 && delete[0] {
+			if err := os.Remove(filepath); err != nil {
+				return "", err
+			}
+		}
+	}
+	return urlpath.Path, nil
+}
+
+// Upload local file to minio storage with original name, then return bucket relative path.
+func (stub *GrpcStub) NamedUpload(filepath string, res string, delete ...bool) (string, error) {
+	if stub.Wss == nil {
+		return "", invar.ErrInvalidClient
+	} else if filepath == "" || res == "" {
+		return "", invar.ErrInvalidParams
+	}
+
+	filesuff := strings.Split(path.Base(filepath), ".")
+	urlpath, err := stub.NamedUrl(res, filesuff[0])
+	if err != nil {
+		return "", err
+	}
+
+	if buff, err := os.ReadFile(filepath); err != nil {
+		return "", err
+	} else {
+		req, err := http.NewRequest(http.MethodPut, urlpath.Url, bytes.NewBuffer(buff))
+		if err != nil {
+			return "", err
+		}
+
 		if resp, err := http.DefaultClient.Do(req); err != nil {
 			return "", err
 		} else if resp.StatusCode != invar.StatusOK {
