@@ -89,8 +89,10 @@ func (stub *GrpcStub) NamedUrl(res, filepath string, addition ...string) (*UrlPa
 	}
 
 	fname := path.Base(filepath)
+	filesuff := strings.Split(fname, ".")
+
 	add := utils.GetVariable(addition, "").(string)
-	param := &wss.FName{Res: res, Add: add, Name: fname, Suffix: path.Ext(fname)}
+	param := &wss.FName{Res: res, Add: add, Name: filesuff[0], Suffix: path.Ext(fname)}
 	oriurl, err := stub.Wss.OriginalUrl(context.Background(), param)
 	if err != nil {
 		return nil, err
@@ -179,8 +181,7 @@ func (stub *GrpcStub) NamedUpload(filepath string, res string, delete ...bool) (
 		return "", invar.ErrInvalidParams
 	}
 
-	filesuff := strings.Split(path.Base(filepath), ".")
-	urlpath, err := stub.NamedUrl(res, filesuff[0])
+	urlpath, err := stub.NamedUrl(res, filepath)
 	if err != nil {
 		return "", err
 	}
