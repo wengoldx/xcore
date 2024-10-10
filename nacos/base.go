@@ -378,7 +378,7 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 	case DID_MIO_PATHS:
 		mc.parsePaths(data)
 	default:
-		logger.I("Update config dataId", dataId, "to:", data)
+		logger.I("Received configs of", dataId)
 	}
 }
 
@@ -390,7 +390,7 @@ func (mc *MetaConfig) parseConfigs(data string) {
 		return
 	}
 	mc.Conf = conf
-	logger.D("Update Ass Configs:", data)
+	logger.D("Updated Ass Configs!")
 }
 
 // Parse OTA infos when project register DID_OTA_BUILDS change event
@@ -401,7 +401,7 @@ func (mc *MetaConfig) parseOTAInfo(data string) {
 		return
 	}
 	mc.OTA = ota
-	logger.D("Update OTA infos:", data)
+	logger.D("Updated OTA infos!")
 }
 
 // Parse DingTalk senders when project register DID_DTALK_NTFERS change event
@@ -412,7 +412,7 @@ func (mc *MetaConfig) parseSenders(data string) {
 		return
 	}
 	mc.Senders = senders
-	logger.D("Update DTalk senders:", data)
+	logger.D("Updated DTalk senders!")
 }
 
 // Parse wechat agents when project register DID_WX_AGENTS change event
@@ -423,7 +423,7 @@ func (mc *MetaConfig) parseAgents(data string) {
 		return
 	}
 	mc.Agents = agents
-	logger.D("Update wechat agents:", data)
+	logger.D("Updated wechat agents!")
 }
 
 // Parse minio service users when project register DID_MIO_USERS change event
@@ -434,7 +434,7 @@ func (mc *MetaConfig) parseUsers(data string) {
 		return
 	}
 	mc.Users = users
-	logger.I("Update minio users:", data)
+	logger.I("Updated minio users!")
 }
 
 // Parse minio resource paths when project register DID_MIO_PATHS change event
@@ -445,5 +445,5 @@ func (mc *MetaConfig) parsePaths(data string) {
 		return
 	}
 	mc.Paths = paths
-	logger.I("Update minio paths:", data)
+	logger.I("Updated minio paths!")
 }
