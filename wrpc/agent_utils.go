@@ -24,6 +24,7 @@ import (
 	acc "github.com/wengoldx/xcore/wrpc/accservice/proto"
 	mea "github.com/wengoldx/xcore/wrpc/measure/proto"
 	wss "github.com/wengoldx/xcore/wrpc/webss/proto"
+	chat "github.com/wengoldx/xcore/wrpc/wgchat/proto"
 )
 
 // Signed upload url and MinIO bucket path.
@@ -462,5 +463,38 @@ func (stub *GrpcStub) DelBody(reqid string) error {
 
 	param := &mea.ReqID{Reqid: reqid}
 	_, err := stub.Mea.DelBody(context.Background(), param)
+	return err
+}
+
+// ----------------------------------------
+// For Chat GRPC agent
+// ----------------------------------------
+
+// Add a new staff to company.
+func (stub *GrpcStub) AddStaff(uuid, name, headurl, brand, client, old string) error {
+	if stub.Chat == nil {
+		return invar.ErrInvalidClient
+	} else if uuid == "" || name == "" {
+		return invar.ErrInvalidParams
+	}
+
+	param := &chat.Staff{
+		Uuid: uuid, Nickname: name, Headurl: headurl,
+		Company: brand, Client: client, Old: old,
+	}
+	_, err := stub.Chat.AddStaff(context.Background(), param)
+	return err
+}
+
+// Update staff status.
+func (stub *GrpcStub) UpdateStaff(brand, client string, status bool) error {
+	if stub.Chat == nil {
+		return invar.ErrInvalidClient
+	} else if brand == "" || client == "" {
+		return invar.ErrInvalidParams
+	}
+
+	param := &chat.Status{Company: brand, Client: client, Status: status}
+	_, err := stub.Chat.UpdateStatus(context.Background(), param)
 	return err
 }
