@@ -11,9 +11,6 @@
 package nacos
 
 import (
-	"strconv"
-
-	"github.com/astaxie/beego"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
@@ -72,11 +69,6 @@ func (s *ServerStub) Register(name, host string, port uint64, opts ...string) er
 	dip := vo.RegisterInstanceParam{
 		Ip: host, Port: port, ServiceName: name,
 		Weight: 10, Enable: true, Healthy: true, Ephemeral: true,
-
-		// Add local server access http port into metadata map
-		Metadata: map[string]string{
-			configKeyHPort: strconv.Itoa(beego.BConfig.Listen.HTTPPort),
-		},
 	}
 
 	if cnt := len(opts); cnt > 0 {

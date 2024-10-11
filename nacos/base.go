@@ -14,7 +14,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -36,7 +35,7 @@ type ServerItem struct {
 }
 
 // Callback to listen server address and port changes
-type ServerCallback func(svr, addr string, gport, hport int)
+type ServerCallback func(svr, addr string, port int)
 
 // Register current server to nacos, you must set configs in app.conf
 //	@return - *ServerStub nacos server stub instance
@@ -130,18 +129,8 @@ func (si *ServerItem) OnChanged(services []model.Instance, err error) {
 
 	if len(services) > 0 {
 		addr, port := services[0].Ip, services[0].Port
-
-		// Paser httpport from metadata map if it exist
-		meta, httpport := services[0].Metadata, 0
-		if meta != nil {
-			if hp, ok := meta[configKeyHPort]; ok {
-				httpport, _ = strconv.Atoi(hp)
-			}
-		}
-
-		logmsg := fmt.Sprintf("%s@%s:%v - httpport:%v", si.Name, addr, port, httpport)
-		logger.I("Update server to", logmsg)
-		si.Callback(si.Name, addr, int(port), httpport)
+		logger.I("[GRPC] Server", si.Name, "address changed:", fmt.Sprintf("%s:%v", addr, port))
+		si.Callback(si.Name, addr, int(port))
 	}
 }
 

@@ -171,12 +171,11 @@ func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
 	cred := credentials.NewClientTLSFromCert(cp, svrkey)
 	conn, err := grpc.Dial(grpcsvr, grpc.WithTransportCredentials(cred))
 	if err != nil {
-		logger.E("dial grpc address", grpcsvr, " fialed", err)
+		logger.E("Dial grpc address", grpcsvr, " fialed", err)
 		return
 	}
 
 	// content grpc client by server name
-	logger.I("Grpc client:", svrkey, "connect", grpcsvr)
 	switch svrkey {
 	case SVR_ACC:
 		stub.Acc = acc.NewAccClient(conn)
@@ -188,7 +187,11 @@ func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
 		stub.Chat = chat.NewWgchatClient(conn)
 	case SVR_PAY:
 		stub.Pay = pay.NewWgpayClient(conn)
+	default:
+		logger.E("[GRPC] Invalid rpc server:", svrkey+"@"+grpcsvr)
+		return
 	}
+	logger.I("[GRPC] Connected with", svrkey+"@"+grpcsvr)
 }
 
 // Parse all grpc certs from nacos config data, and cache to certs map
@@ -251,7 +254,7 @@ func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 // ----------------------------------------
 
 // Target services listing callback for create grpc client after registred.
-func listingCallback(svr string, addr string, port, httpport int) {
+func listingCallback(svr string, addr string, port int) {
 	Singleton().GenClient(svr, addr, port)
 }
 

@@ -20,10 +20,9 @@ const (
 	nacosDirLogs   = "./nacos/logs"  // default nacos logs dir
 	nacosDirCache  = "./nacos/cache" // default nacos caches dir
 
-	configKeySvr   = "nacossvr"  // Nacos remote server IP address
-	configKeyAddr  = "nacosaddr" // Local server access IP address
-	configKeyPort  = "nacosport" // Local server access port for grpc connect
-	configKeyHPort = "httpport"  // Local server http port
+	configKeySvr  = "nacossvr"  // Nacos remote server IP address
+	configKeyAddr = "nacosaddr" // Local server access IP address
+	configKeyPort = "nacosport" // Local server access port for grpc connect
 )
 
 /* -------------------------- */
