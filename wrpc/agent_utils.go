@@ -224,10 +224,9 @@ func (stub *GrpcStub) MarkSave(bucket string, paths ...string) error {
 	}
 
 	param := &wss.Tag{Bucket: bucket, Paths: paths, Status: "on"}
-	if _, err := stub.Wss.SetFileLife(context.Background(), param); err != nil {
-		return err
-	}
-	return nil
+	_, err := stub.Wss.SetFileLife(context.Background(), param)
+	return err
+
 }
 
 // Delete given file from minio storage server, the files param must
@@ -240,10 +239,8 @@ func (stub *GrpcStub) Delete(bucket string, files ...string) error {
 	}
 
 	param := &wss.Files{Bucket: bucket, Files: files}
-	if _, err := stub.Wss.DeleteFiles(context.Background(), param); err != nil {
-		return err
-	}
-	return nil
+	_, err := stub.Wss.DeleteFiles(context.Background(), param)
+	return err
 }
 
 // Filter out current keeping files and delete the remained old files,
@@ -286,9 +283,49 @@ func (stub *GrpcStub) DiffDelete(bucket string, currs, olds any) error {
 	return nil
 }
 
+// Get file uploaded infos of minio storage server
+func (stub *GrpcStub) GetFileInfo(filepath string) (*wss.Info, error) {
+	if stub.Wss == nil {
+		return nil, invar.ErrInvalidClient
+	} else if filepath == "" {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &wss.File{Path: filepath}
+	return stub.Wss.GetFileInfo(context.Background(), param)
+}
+
 // ----------------------------------------
 // For Acc GRPC agent
 // ----------------------------------------
+
+// Get account request token by given uuid.
+func (stub *GrpcStub) GetToken(uuid string) (string, error) {
+	if stub.Acc == nil {
+		return "", invar.ErrInvalidClient
+	} else if uuid == "" {
+		return "", invar.ErrInvalidParams
+	}
+
+	param := &acc.UUID{Uuid: uuid}
+	token, err := stub.Acc.GetToken(context.Background(), param)
+	if err != nil {
+		return "", err
+	}
+	return token.Token, nil
+}
+
+// Get account profiles by given uuid.
+func (stub *GrpcStub) GetProfile(uuid string) (*acc.Profile, error) {
+	if stub.Acc == nil {
+		return nil, invar.ErrInvalidClient
+	} else if uuid == "" {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &acc.UUID{Uuid: uuid}
+	return stub.Acc.GetProfile(context.Background(), param)
+}
 
 // Get accounts simple infos and avatars.
 func (stub *GrpcStub) GetAvatars(uids []string) ([]*acc.Avatar, error) {
@@ -315,9 +352,21 @@ func (stub *GrpcStub) SearchAvatars(uids []string, filter bool, key string) (*ac
 	}
 
 	param := &acc.SKeys{Uids: uids, Filterid: filter, Keyword: key}
-	avatars, err := stub.Acc.SearchAvatars(context.Background(), param)
-	if err != nil {
-		return nil, err
+	return stub.Acc.SearchAvatars(context.Background(), param)
+}
+
+// Send custom mail.
+func (stub *GrpcStub) SendMail(mail, content, name, phone string, buy int32, links []string) error {
+	if stub.Acc == nil {
+		return invar.ErrInvalidClient
+	} else if mail == "" || content == "" || (buy == 1 && name == "") {
+		return invar.ErrInvalidParams
 	}
-	return avatars, nil
+
+	param := &acc.SugMail{
+		Email: mail, Content: content, Name: name, Phone: phone,
+		Isbuy: buy, Links: strings.Join(links, ","),
+	}
+	_, err := stub.Acc.SendCustomMail(context.Background(), param)
+	return err
 }
