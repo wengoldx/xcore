@@ -21,6 +21,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/secure"
 	"github.com/wengoldx/xcore/utils"
+	acc "github.com/wengoldx/xcore/wrpc/accservice/proto"
 	wss "github.com/wengoldx/xcore/wrpc/webss/proto"
 )
 
@@ -29,6 +30,10 @@ type UrlPath struct {
 	Url  string // Signed url to upload file
 	Path string // Real bucket path of MinIO service
 }
+
+// ----------------------------------------
+// For Wss GRPC agent
+// ----------------------------------------
 
 // Obtain a single pre-signed url for upload file to minio storage.
 func (stub *GrpcStub) SignUrl(res, suffix string, addition ...string) (*UrlPath, error) {
@@ -279,4 +284,24 @@ func (stub *GrpcStub) DiffDelete(bucket string, currs, olds any) error {
 		return stub.Delete(bucket, diffs...)
 	}
 	return nil
+}
+
+// ----------------------------------------
+// For Acc GRPC agent
+// ----------------------------------------
+
+// Get accounts simple infos and avatars.
+func (stub *GrpcStub) GetAvatars(uids []string) ([]*acc.Avatar, error) {
+	if stub.Acc == nil {
+		return nil, invar.ErrInvalidClient
+	} else if len(uids) == 0 {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &acc.UIDS{Uids: uids}
+	resp, err := stub.Acc.GetAvatars(context.Background(), param)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Profs, nil
 }
