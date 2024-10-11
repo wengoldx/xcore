@@ -22,6 +22,7 @@ import (
 	"github.com/wengoldx/xcore/secure"
 	"github.com/wengoldx/xcore/utils"
 	acc "github.com/wengoldx/xcore/wrpc/accservice/proto"
+	mea "github.com/wengoldx/xcore/wrpc/measure/proto"
 	wss "github.com/wengoldx/xcore/wrpc/webss/proto"
 )
 
@@ -368,5 +369,98 @@ func (stub *GrpcStub) SendMail(mail, content, name, phone string, buy int32, lin
 		Isbuy: buy, Links: strings.Join(links, ","),
 	}
 	_, err := stub.Acc.SendCustomMail(context.Background(), param)
+	return err
+}
+
+// ----------------------------------------
+// For Mea GRPC agent
+// ----------------------------------------
+
+// Get measured body detail by request id.
+func (stub *GrpcStub) GetBody(reqid string) (*mea.BodyDetail, error) {
+	if stub.Mea == nil {
+		return nil, invar.ErrInvalidClient
+	} else if reqid == "" {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &mea.ReqID{Reqid: reqid}
+	return stub.Mea.GetBody(context.Background(), param)
+}
+
+// Get measured bodys detail by request ids.
+func (stub *GrpcStub) GetBodys(reqids []string) ([]*mea.BodyBase, error) {
+	if stub.Mea == nil {
+		return nil, invar.ErrInvalidClient
+	} else if len(reqids) == 0 {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &mea.ReqIDs{Reqids: reqids}
+	bodys, err := stub.Mea.GetBodys(context.Background(), param)
+	if err != nil {
+		return nil, err
+	}
+	return bodys.Body, nil
+}
+
+// Post a requst to start measure body by given datas.
+func (stub *GrpcStub) Measure(sex, h, w, bust, waist, hipline, wrist int64, front, side, notifier string) (string, error) {
+	if stub.Mea == nil {
+		return "", invar.ErrInvalidClient
+	} else if h <= 0 || w <= 0 || (sex != 1 /* male */ && sex != 2 /* female */) {
+		return "", invar.ErrInvalidParams
+	}
+
+	param := &mea.BodyComplex{
+		Sex: sex, Height: h, Weight: w, Bust: bust, Waist: waist, Hipline: hipline,
+		Wrist: wrist, Fronturl: front, Sideurl: side, Notifyurl: notifier,
+	}
+	reqid, err := stub.Mea.Measure(context.Background(), param)
+	if err != nil {
+		return "", err
+	}
+	return reqid.Reqid, nil
+}
+
+// Post a requst to measure agine for exist body.
+func (stub *GrpcStub) Remeasure(sex, h, w, bust, waist, hipline, wrist int64, reqid, front, side, notifier string) error {
+	if stub.Mea == nil {
+		return invar.ErrInvalidClient
+	} else if reqid == "" || h <= 0 || w <= 0 || (sex != 1 /* male */ && sex != 2 /* female */) {
+		return invar.ErrInvalidParams
+	}
+
+	param := &mea.UpComplex{
+		Reqid: reqid, Sex: sex, Height: h, Weight: w, Bust: bust, Waist: waist,
+		Hipline: hipline, Wrist: wrist, Fronturl: front, Sideurl: side, Notifyurl: notifier,
+	}
+	_, err := stub.Mea.Remeasure(context.Background(), param)
+	return err
+}
+
+// Post a request to start capture body model.
+func (stub *GrpcStub) BodyShot(reqid string) error {
+	if stub.Mea == nil {
+		return invar.ErrInvalidClient
+	} else if reqid == "" {
+		return invar.ErrInvalidParams
+	}
+
+	param := &mea.ReqID{Reqid: reqid}
+	_, err := stub.Mea.BodyShot(context.Background(), param)
+	return err
+}
+
+// Delete exist body by request id.
+func (stub *GrpcStub) DelBody(reqid string) error {
+	if stub.Mea == nil {
+		return invar.ErrInvalidClient
+	} else if reqid == "" {
+		return invar.ErrInvalidParams
+	}
+
+	param := &mea.ReqID{Reqid: reqid}
+	_, err := stub.Mea.DelBody(context.Background(), param)
 	return err
 }
