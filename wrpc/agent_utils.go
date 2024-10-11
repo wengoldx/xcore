@@ -305,3 +305,19 @@ func (stub *GrpcStub) GetAvatars(uids []string) ([]*acc.Avatar, error) {
 	}
 	return resp.Profs, nil
 }
+
+// Search accounts simple infos and avatars from given uuids and keyword.
+func (stub *GrpcStub) SearchAvatars(uids []string, filter bool, key string) (*acc.Avatars, error) {
+	if stub.Acc == nil {
+		return nil, invar.ErrInvalidClient
+	} else if len(uids) == 0 || (filter && key == "") {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &acc.SKeys{Uids: uids, Filterid: filter, Keyword: key}
+	avatars, err := stub.Acc.SearchAvatars(context.Background(), param)
+	if err != nil {
+		return nil, err
+	}
+	return avatars, nil
+}
