@@ -23,16 +23,15 @@ import (
 	"github.com/wengoldx/xcore/logger"
 )
 
+// Setup search indexs with mapping if the index unexist.
 func (e *ESClient) SetupIndexs(indexs map[string]string) error {
 	if e.Conn == nil || e.Conn.Indices == nil {
 		return invar.ErrInvalidClient
 	}
 
 	for index, mapping := range indexs {
-		if status, err := e.Conn.Indices.Get([]string{index}); err != nil {
-			logger.E("Check index:", index, "if exist, err:", err)
-			continue
-		} else if status.StatusCode == invar.StatusOK {
+		exist, err := e.IsExistIndex([]string{index})
+		if err != nil || exist {
 			continue
 		}
 		e.CreateIndexMapping(index, mapping)
@@ -156,6 +155,34 @@ func (e *ESClient) UpdateIndexDoc(index, docid, doc string) error {
 	return respError(res)
 }
 
+// Delete the exist doc indicated by given index and doc id.
+func (e *ESClient) DeleteIndexDoc(index, docid string) error {
+	if e.Conn == nil {
+		return invar.ErrInvalidClient
+	}
+
+	ret, err := e.Conn.Delete(index, docid, e.Conn.Delete.WithPretty())
+	if err != nil {
+		logger.E("Delete index doc, err:", err)
+		return err
+	}
+	return respError(ret)
+}
+
+// Check indexs whether exist
+func (e *ESClient) IsExistIndex(index []string) (bool, error) {
+	if e.Conn == nil || e.Conn.Indices == nil {
+		return false, invar.ErrInvalidClient
+	}
+
+	exist, err := e.Conn.Indices.Get(index)
+	if err != nil {
+		logger.E("Check index:", index, "if exist, err:", err)
+		return false, err
+	}
+	return (exist.StatusCode == invar.StatusOK), nil
+}
+
 // Search doc by query index, and set page, limit. by default page=0 and limit=10
 func (e *ESClient) SearchIndex(index, query string, page int, limit ...int) (*Response, error) {
 	if e.Conn == nil {
@@ -180,19 +207,6 @@ func (e *ESClient) SearchIndex(index, query string, page int, limit ...int) (*Re
 
 	defer res.Body.Close()
 	return readResponse(res)
-}
-
-// Check indexs whether exist
-func (e *ESClient) IsExistIndex(index []string) (bool, error) {
-	if e.Conn == nil || e.Conn.Indices == nil {
-		return false, invar.ErrInvalidClient
-	}
-
-	exist, err := e.Conn.Indices.Get(index)
-	if err != nil {
-		return false, err
-	}
-	return (exist.StatusCode == invar.StatusOK), nil
 }
 
 // ----------------------------------------
