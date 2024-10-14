@@ -20,6 +20,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
+	"github.com/wengoldx/xcore/elastic"
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
@@ -45,18 +46,18 @@ type ServerCallback func(svr, addr string, port int)
 // ----
 //
 //	; Nacos remote server host
-//	nacossvr = "10.239.40.24"
+//	nacossvr = "xx.xxx.40.218"
 //
 //	[dev]
 //	; Inner net ideal address for dev servers access
-//	nacosaddr = "10.239.20.99"
+//	nacosaddr = "xx.xxx.20.239"
 //
 //	; Inner net port for grpc access
 //	nacosport = 3000
 //
 //	[prod]
 //	; Inner net ideal address for prod servers access
-//	nacosaddr = "10.239.40.64"
+//	nacosaddr = "xx.xxx.40.199"
 //
 //	; Inner net port for grpc access
 //	nacosport = 3000
@@ -161,7 +162,7 @@ type MetaConfigCallback func(dataId, data string)
 // ----
 //
 //	; Nacos remote server host
-//	nacossvr = "10.239.40.24"
+//	nacossvr = "xx.xxx.40.218"
 func GenMetaConfig() *MetaConfig {
 	svr := beego.AppConfig.String(configKeySvr)
 	if svr == "" {
@@ -366,6 +367,8 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 		mc.parseUsers(data)
 	case DID_MIO_PATHS:
 		mc.parsePaths(data)
+	case DID_ES_AGENTS:
+		mc.setEsAgent(data)
 	default:
 		logger.I("Received configs of", dataId)
 	}
@@ -435,4 +438,19 @@ func (mc *MetaConfig) parsePaths(data string) {
 	}
 	mc.Paths = paths
 	logger.I("Updated minio paths!")
+}
+
+// Parse elastic server config and create es client
+func (mc *MetaConfig) setEsAgent(data string) {
+	c := &ESConfig{}
+	if err := json.Unmarshal([]byte(data), &c); err != nil {
+		logger.E("Unmarshal elastic configs, err:", err)
+		return
+	}
+
+	if err := elastic.NewEsClient(c.Address, c.User, c.Pwd, c.CFP); err != nil {
+		logger.E("Create elastic client, err:", err)
+		return
+	}
+	logger.I("Update elastic client!")
 }

@@ -125,3 +125,11 @@ type ResPath struct {
 	Res  string `json:"res"`  // Resource number as unique id used by outside to bind real bucket path
 	Path string `json:"path"` // Real bucket path of MinIO service
 }
+
+// Elastic agent configs
+type ESConfig struct {
+	Address []string `json:"address"`
+	User    string   `json:"user"`
+	Pwd     string   `json:"pwd"`
+	CFP     string   `json:"cfp"`
+}
