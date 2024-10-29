@@ -140,8 +140,15 @@ func GenUpNum() string {
 }
 
 // Generate a code by using current nanosecond and append random suffix, e.g. M25eNdE4rF50987
-func GenRandCode() string {
-	rander.Seed(time.Now().UnixNano())
+func GenRandCode(seednum ...int64) string {
+	if len(seednum) > 0 {
+		// It maybe excute GenRandCode() multiple times in 1 nano second
+		// on hight performance device to generate same rand int number.
+		// so, input the increase seed number necessarily!
+		rander.Seed(seednum[0])
+	} else {
+		rander.Seed(time.Now().UnixNano())
+	}
 	return fmt.Sprintf("%s%04d", GenCode(), rander.Intn(1000))
 }
 
