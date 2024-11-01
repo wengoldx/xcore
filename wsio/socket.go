@@ -89,6 +89,9 @@ type wingSIO struct {
 	// socket golbal handler to execute clients connect action.
 	connHandler ConnectHandler
 
+	// socket global handler to execute clients will disconnect actions.
+	willHandler WillDisconHandler
+
 	// socket golbal handler to execute clients disconnect actions
 	discHandler DisconnectHandler
 
@@ -105,7 +108,7 @@ type wingSIO struct {
 	//	see more : go-socket.io@v1.0.1/parse.go   > Decode() > NextReader()
 	//			 : go-socket.io@v1.0.1/socket.go  > loop() > for { onPacket }
 	//			 : go-socket.io@v1.0.1/handler.go > onPacket()
-	onceBunds map[uintptr]byte // http request url to 0 byte char (not used)
+	onceBunds map[uintptr]string // http request url to empty string (not used)
 }
 
 // Socket connection server
@@ -125,11 +128,11 @@ var (
 )
 
 // Setup socket.io server by manual called.
-func init() {
+func SetupServer() {
 	loadWsioConfigs()
 	wsc = &wingSIO{
 		options:   make(map[uintptr]*clientOpt),
-		onceBunds: make(map[uintptr]byte),
+		onceBunds: make(map[uintptr]string),
 	}
 
 	// set http handler for socke.io
@@ -235,7 +238,7 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	// handler, or just use token as uuid when not set.
 	uuid, option := token, ""
 	if cc.authHandler != nil {
-		uid, opt, err := cc.authHandler(token)
+		uid, opt, err := cc.authHandler(req.Form, token)
 		if err != nil || uid == "" {
 			siolog.E("Invalid uid:", uid, "or case err:", err)
 			return invar.ErrAuthDenied
@@ -262,7 +265,7 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 		siolog.W("Duplicate onConnect, abort for", h)
 		return
 	}
-	cc.onceBunds[h] = 0 // cache the first time
+	cc.onceBunds[h] = "" // cache the first time
 
 	co := cc.unbindUUIDFromHTTPLocked(h)
 	if co == nil || co.UID == "" {
@@ -272,15 +275,15 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 	}
 
 	clientPool := clients.Clients()
-	if err := clientPool.Register(co.UID, sc, co.Opt); err != nil {
-		siolog.E("Faild register socket client:", co.UID)
+	if err := clientPool.Register(sc, co.UID, co.Opt); err != nil {
+		siolog.E("Failed register socket client:", co.UID)
 		sc.Disconnect()
 		return
 	}
 
 	// handle connect callback for socket with uuid
 	if cc.connHandler != nil {
-		if err := cc.connHandler(co.UID, co.Opt); err != nil {
+		if err := cc.connHandler(sc, co.UID, co.Opt); err != nil {
 			siolog.E("Client:", co.UID, "connect socket err:", err)
 			sc.Disconnect()
 		}
@@ -291,7 +294,13 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 
 // onDisconnected event of disconnect
 func (cc *wingSIO) onDisconnected(sc sio.Socket) {
-	uuid, opt := clients.Clients().Deregister(sc)
+	clientPool := clients.Clients()
+	uuid := clientPool.ClientID(sc.Id())
+	if cc.willHandler != nil && uuid != "" {
+		cc.willHandler(sc, uuid)
+	}
+
+	opt := clientPool.Deregister(sc)
 	if cc.discHandler != nil {
 		cc.discHandler(uuid, opt)
 	}

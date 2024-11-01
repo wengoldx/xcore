@@ -12,22 +12,31 @@ package wsio
 
 import (
 	"encoding/json"
+	"net/url"
+	"reflect"
 
 	sio "github.com/googollee/go-socket.io"
 )
 
 // Auth client outset, it will disconnect when return no-nil error
+//	@param forms form values parse from url
 //	@param token client login jwt-token contain uuid or optional data in claims key string
 //	@return - string client uuid
 //			- any client optional data parsed from token
 //			- error Exception message
-type AuthHandler func(token string) (string, string, error)
+type AuthHandler func(forms url.Values, token string) (string, string, error)
 
 // Client connected callback, it will disconnect when return no-nil error
+//	@param sc current socket client
 //	@param uuid client unique id
 //	@param option client login optional data, maybe nil
 //	@return - error Exception message
-type ConnectHandler func(uuid, option string) error
+type ConnectHandler func(sc sio.Socket, uuid, option string) error
+
+// Client will disconnected handler function, it called before socket client disconnect.
+//	@param sc current socket client
+//	@param uuid client unique id
+type WillDisconHandler func(sc sio.Socket, uuid string)
 
 // Client disconnected handler function
 //	@param uuid client unique id
@@ -83,8 +92,19 @@ func AckError(msg string) string {
 }
 
 // Set handler to execute clients authenticate, connect and disconnect.
-func SetHandlers(auth AuthHandler, conn ConnectHandler, disc DisconnectHandler) {
-	wsc.authHandler, wsc.connHandler, wsc.discHandler = auth, conn, disc
+func SetHandlers(handlers ...any) {
+	for _, handler := range handlers {
+		switch reflect.ValueOf(handler).Interface().(type) {
+		case AuthHandler:
+			wsc.authHandler = handler.(AuthHandler)
+		case ConnectHandler:
+			wsc.connHandler = handler.(ConnectHandler)
+		case WillDisconHandler:
+			wsc.willHandler = handler.(WillDisconHandler)
+		case DisconnectHandler:
+			wsc.discHandler = handler.(DisconnectHandler)
+		}
+	}
 	siolog.I("Set wsio handlers...")
 }
 
