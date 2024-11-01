@@ -157,8 +157,7 @@ func (c *client) register(sc sio.Socket, opt string) error {
 		siolog.E("Client", cid, "duplicate bind socket", sid)
 		return invar.ErrDupRegister
 	}
-	c.socket = sc
-	c.option = opt
+	c.socket, c.option = sc, opt
 	return nil
 }
 

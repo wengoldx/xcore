@@ -88,6 +88,9 @@ type wingSIO struct {
 	// socket golbal handler to execute clients connect action.
 	connHandler ConnectHandler
 
+	// socket global handler to execute clients will disconnect actions.
+	willHandler WillDisconHandler
+
 	// socket golbal handler to execute clients disconnect actions
 	discHandler DisconnectHandler
 
@@ -120,7 +123,7 @@ var (
 
 	// Check client option if empty when connnection is established,
 	// if optinal data is empty the connect will not establish and disconnect.
-	usingOption = false
+	viaOption = false
 )
 
 func init() {
@@ -149,12 +152,9 @@ func setupWsioConfigs() {
 	timeout := beego.AppConfig.DefaultInt64("wsio::timeout", 60)
 	serverPingTimeout = time.Duration(timeout) * time.Second
 
-	using := beego.AppConfig.DefaultBool("wsio::optinal", false)
-	usingOption = using
-
-	// logout the configs value
-	siolog.I("Server configs interval:", interval,
-		"timeout:", timeout, "optional:", using)
+	viaOption := beego.AppConfig.DefaultBool("wsio::optinal", false)
+	siolog.I("Server configs, interval:", interval, "timeout:", timeout,
+		"optional:", viaOption)
 }
 
 // createHandler create http handler for socket.io
@@ -236,11 +236,11 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	// handler, or just use token as uuid when not set.
 	uuid, option := token, ""
 	if cc.authHandler != nil {
-		uid, opt, err := cc.authHandler(token)
+		uid, opt, err := cc.authHandler(req.Form, token)
 		if err != nil || uid == "" {
 			siolog.E("Invalid uid:", uid, "or case err:", err)
 			return invar.ErrAuthDenied
-		} else if usingOption && opt == "" {
+		} else if viaOption && opt == "" {
 			siolog.E("Empty client", uid, "option data!")
 			return invar.ErrAuthDenied
 		}
@@ -273,7 +273,7 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 	}
 
 	clientPool := clients.Clients()
-	if err := clientPool.Register(co.UID, sc, co.Opt); err != nil {
+	if err := clientPool.Register(sc, co.UID, co.Opt); err != nil {
 		siolog.E("Failed register socket client:", co.UID)
 		sc.Disconnect()
 		return
@@ -281,7 +281,7 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 
 	// handle connect callback for socket with uuid
 	if cc.connHandler != nil {
-		if err := cc.connHandler(co.UID, co.Opt); err != nil {
+		if err := cc.connHandler(sc, co.UID, co.Opt); err != nil {
 			siolog.E("Client:", co.UID, "connect socket err:", err)
 			sc.Disconnect()
 		}
@@ -292,7 +292,13 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 
 // onDisconnected event of disconnect
 func (cc *wingSIO) onDisconnected(sc sio.Socket) {
-	uuid, opt := clients.Clients().Deregister(sc)
+	clientPool := clients.Clients()
+	uuid := clientPool.ClientID(sc.Id())
+	if cc.willHandler != nil && uuid != "" {
+		cc.willHandler(sc, uuid)
+	}
+
+	opt := clientPool.Deregister(sc)
 	if cc.discHandler != nil {
 		cc.discHandler(uuid, opt)
 	}

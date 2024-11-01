@@ -62,11 +62,11 @@ func (cp *ClientPool) Client(cid string) *client {
 }
 
 // Register client and bind socket.
-func (cp *ClientPool) Register(cid string, sc sio.Socket, opt string) error {
+func (cp *ClientPool) Register(sc sio.Socket, cid, opt string) error {
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
 
-	if err := cp.registerLocked(cid, sc, opt); err != nil {
+	if err := cp.registerLocked(sc, cid, opt); err != nil {
 		siolog.E("Regisger client, err:", err.Error())
 		return err
 	}
@@ -76,7 +76,7 @@ func (cp *ClientPool) Register(cid string, sc sio.Socket, opt string) error {
 }
 
 // Deregister client and unbind socket.
-func (cp *ClientPool) Deregister(sc sio.Socket) (string, string) {
+func (cp *ClientPool) Deregister(sc sio.Socket) string {
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
 
@@ -196,7 +196,7 @@ func (cp *ClientPool) Signaling(cid, evt, data string) error {
 // --------
 
 // Register the client without acquiring the lock.
-func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) error {
+func (cp *ClientPool) registerLocked(sc sio.Socket, cid, opt string) error {
 	var newOne *client
 	sid := sc.Id()
 
@@ -227,7 +227,7 @@ func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) erro
 }
 
 // Deregister the client without acquiring the lock.
-func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
+func (cp *ClientPool) deregisterLocked(sc sio.Socket) string {
 	sid := sc.Id()
 	if cid := cp.s2c[sid]; cid != "" {
 		delete(cp.s2c, sid)
@@ -236,13 +236,13 @@ func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
 		if c := cp.clients[cid]; c != nil {
 			delete(cp.clients, cid)
 			c.deregister()
-			return cid, c.option
+			return c.option
 		}
 	}
 
 	siolog.I("Disconnect socket", sid)
 	sc.Disconnect()
-	return "", ""
+	return ""
 }
 
 // Increate idle weight for client without acquiring the lock.
