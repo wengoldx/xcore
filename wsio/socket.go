@@ -26,8 +26,8 @@ import (
 
 // client datas for temp cache
 type clientOpt struct {
-	UID string
-	Opt string
+	UID string // Client unique id
+	Opt string // Client optional data
 }
 
 // Socket.io connecte information, it will generate a socket server
@@ -101,7 +101,7 @@ type wingSIO struct {
 	//	see more : go-socket.io@v1.0.1/parse.go   > Decode() > NextReader()
 	//			 : go-socket.io@v1.0.1/socket.go  > loop() > for { onPacket }
 	//			 : go-socket.io@v1.0.1/handler.go > onPacket()
-	onceBunds map[uintptr]byte // http request url to 0 byte char (not used)
+	onceBunds map[uintptr]string // http request url to empty string (not used)
 }
 
 // Socket connection server
@@ -121,7 +121,7 @@ func init() {
 	setupWsioConfigs()
 	wsc = &wingSIO{
 		options:   make(map[uintptr]*clientOpt),
-		onceBunds: make(map[uintptr]byte),
+		onceBunds: make(map[uintptr]string),
 	}
 
 	// set http handler for socke.io
@@ -132,7 +132,7 @@ func init() {
 
 	// set socket.io routers
 	beego.Handler("/"+beego.BConfig.AppName+"/socket.io", handler)
-	logger.I("Initialized socket.io routers...")
+	logger.I("[SIO] Initialized routers...")
 }
 
 // read wsio configs from file
@@ -147,7 +147,7 @@ func setupWsioConfigs() {
 	usingOption = using
 
 	// logout the configs value
-	logger.I("Socket.IO server configs interval:", interval,
+	logger.I("[SIO] Server configs interval:", interval,
 		"timeout:", timeout, "optional:", using)
 }
 
@@ -160,7 +160,7 @@ func (cc *wingSIO) createHandler() (http.Handler, error) {
 	cc.server = server
 
 	// set socket.io ping interval and timeout
-	logger.I("Set socket.io ping-pong and timeout")
+	logger.I("[SIO] Set ping-pong and timeout")
 	server.SetPingInterval(serverPingInterval)
 	server.SetPingTimeout(serverPingTimeout)
 
@@ -170,7 +170,7 @@ func (cc *wingSIO) createHandler() (http.Handler, error) {
 	// set auth middleware for socket.io connection
 	server.SetAllowRequest(func(req *http.Request) error {
 		if err = cc.onAuthentication(req); err != nil {
-			logger.E("Socket.IO authenticate err:", err)
+			logger.E("[SIO] Authenticate err:", err)
 			return err
 		}
 		return nil
@@ -186,7 +186,7 @@ func (cc *wingSIO) createHandler() (http.Handler, error) {
 		cc.onDisconnected(sc)
 	})
 
-	logger.I("Created socket.io handler")
+	logger.I("[SIO] Created handler")
 	return server, nil
 }
 
@@ -212,16 +212,16 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 		// Use auth header function for Python3 and Unreal client
 		token = req.Header.Get("Token")
 		if !strings.HasPrefix(author, "WENGOLD") || token == "" {
-			logger.E("Invalid authoration:", author, "token:", token)
+			logger.E("[SIO] Invalid authoration:", author, "token:", token)
 			return invar.ErrAuthDenied
 		}
 	} else {
 		// Use URL + token string for React frontend and Wechat app client
 		if err := req.ParseForm(); err != nil {
-			logger.E("Parse socket.io request form, err:", err)
+			logger.E("[SIO] Parse request form, err:", err)
 			return err
 		} else if token = req.Form.Get("token"); token == "" {
-			logger.E("Failed get token from socket.io request url!")
+			logger.E("[SIO] Failed get token from request url!")
 			return invar.ErrAuthDenied
 		}
 	}
@@ -232,14 +232,14 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	if cc.authHandler != nil {
 		uid, opt, err := cc.authHandler(token)
 		if err != nil || uid == "" {
-			logger.E("Invalid uid:", uid, "or case err:", err)
+			logger.E("[SIO] Invalid uid:", uid, "or case err:", err)
 			return invar.ErrAuthDenied
 		} else if usingOption && opt == "" {
-			logger.E("Empty client", uid, "option data!")
+			logger.E("[SIO] Empty client", uid, "option data!")
 			return invar.ErrAuthDenied
 		}
 
-		logger.I("Decoded client token, uuid:", uid, "opt:", opt)
+		logger.I("[SIO] Decoded client token, uuid:", uid, "opt:", opt)
 		uuid, option = uid, opt
 	}
 
@@ -251,24 +251,24 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 
 // onConnect event of connect
 func (cc *wingSIO) onConnect(sc sio.Socket) {
-	// find client uuid and unbind -> http.Request
+	// found client uuid and unbind -> http.Request
 	h := uintptr(unsafe.Pointer(sc.Request()))
 	if _, ok := cc.onceBunds[h]; ok /* already bund */ {
-		logger.W("Duplicate onConnect, abort for", h)
+		logger.W("[SIO] Duplicate onConnect, abort for", h)
 		return
 	}
-	cc.onceBunds[h] = 0 // cache the first time
+	cc.onceBunds[h] = "" // cache the first time
 
 	co := cc.unbindUUIDFromHTTPLocked(h)
 	if co == nil || co.UID == "" {
-		logger.E("Invalid socket request bind!")
+		logger.E("[SIO] Invalid socket request bind!")
 		sc.Disconnect()
 		return
 	}
 
 	clientPool := clients.Clients()
 	if err := clientPool.Register(co.UID, sc, co.Opt); err != nil {
-		logger.E("Faild register socket client:", co.UID)
+		logger.E("[SIO] Failed register socket client:", co.UID)
 		sc.Disconnect()
 		return
 	}
@@ -276,11 +276,11 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 	// handle connect callback for socket with uuid
 	if cc.connHandler != nil {
 		if err := cc.connHandler(co.UID, co.Opt); err != nil {
-			logger.E("Client:", co.UID, "connect socket err:", err)
+			logger.E("[SIO] Client:", co.UID, "connect socket err:", err)
 			sc.Disconnect()
 		}
 	}
-	logger.I("Connected socket client:", co.UID)
+	logger.I("[SIO] Connected client:", co.UID)
 	go cc.clearBundCache(h)
 }
 

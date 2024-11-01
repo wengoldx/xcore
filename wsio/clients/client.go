@@ -26,11 +26,7 @@ type client struct {
 
 // Generate a new client, just init client id.
 func newClient(cid string) *client {
-	c := &client{
-		id:     cid,
-		socket: nil,
-	}
-	return c
+	return &client{id: cid, socket: nil}
 }
 
 // Return client id that set when register on client connnecte.
@@ -54,10 +50,10 @@ func (c *client) Send(evt, msg string) error {
 		return invar.ErrInvalidState
 	}
 	if err := c.socket.Emit(evt, msg); err != nil {
-		logger.E("Send [", evt, "] err:", err)
+		logger.E("[SIO] Send [", evt, "], err:", err)
 		return err
 	}
-	logger.I("Send to", c.id, "[", evt, "] >>", msg)
+	logger.I("[SIO] Send to", c.id, "[", evt, "] >>", msg)
 	return nil
 }
 
@@ -77,7 +73,7 @@ func (c *client) Join(room string) error {
 		}
 	}
 
-	logger.I("Client:", c.id, "join room:", room)
+	logger.I("[SIO] Client:", c.id, "join room:", room)
 	return c.socket.Join(room)
 }
 
@@ -89,7 +85,7 @@ func (c *client) Leave(room string) error {
 		return invar.ErrInvalidParams
 	}
 
-	logger.I("Client:", c.id, "leave room:", room)
+	logger.I("[SIO] Client:", c.id, "leave room:", room)
 	return c.socket.Leave(room)
 }
 
@@ -106,7 +102,7 @@ func (c *client) LeaveRooms() error {
 		}
 	}
 
-	logger.I("Client:", c.id, "leave all rooms")
+	logger.I("[SIO] Client:", c.id, "leave all rooms")
 	return nil
 }
 
@@ -145,10 +141,10 @@ func (c *client) Broadcast(evt, msg string, rooms ...string) error {
 	// execute broadcast to valid target rooms
 	for _, room := range tagrooms {
 		if err := c.socket.BroadcastTo(room, evt, msg); err != nil {
-			logger.E("Client", c.id, "broadcast [", evt, "] err:", err)
+			logger.E("[SIO] Client", c.id, "broadcast [", evt, "] err:", err)
 			return err
 		}
-		logger.I("Broadcast to", c.id, "[", evt, "]", room, ">>", msg)
+		logger.I("[SIO] Broadcast to", c.id, "[", evt, "]", room, ">>", msg)
 	}
 	return nil
 }
@@ -159,7 +155,7 @@ func (c *client) Broadcast(evt, msg string, rooms ...string) error {
 func (c *client) register(sc sio.Socket, opt string) error {
 	if c.registered() {
 		cid, sid := c.id, sc.Id()
-		logger.E("Client", cid, "duplicate bind socket", sid)
+		logger.E("[SIO] Client", cid, "duplicate bind socket", sid)
 		return invar.ErrDupRegister
 	}
 	c.socket = sc
@@ -171,7 +167,7 @@ func (c *client) register(sc sio.Socket, opt string) error {
 func (c *client) deregister() {
 	if c.registered() {
 		sid := c.socket.Id()
-		logger.I("Client", c.id, "unbind socket", sid)
+		logger.I("[SIO] Client", c.id, "unbind socket", sid)
 		c.socket.Disconnect()
 		c.socket = nil
 	}
