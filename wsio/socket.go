@@ -72,6 +72,9 @@ type clientOpt struct {
 //
 //	; Using client optional data check, default false
 //	optinal = false
+//
+//	; Using idles client function, default false
+//	idels = true
 type wingSIO struct {
 	// Mutex sync lock, protect client connecting
 	lock sync.Mutex
@@ -135,7 +138,7 @@ func init() {
 
 	// set socket.io routers
 	beego.Handler("/"+beego.BConfig.AppName+"/socket.io", handler)
-	siolog.I("Initialized routers...")
+	siolog.I("Initialized socket.io routers...")
 }
 
 // read wsio configs from file
@@ -189,7 +192,7 @@ func (cc *wingSIO) createHandler() (http.Handler, error) {
 		cc.onDisconnected(sc)
 	})
 
-	siolog.I("Created handler")
+	siolog.I("Created socket.io handler")
 	return server, nil
 }
 
@@ -283,7 +286,7 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 			sc.Disconnect()
 		}
 	}
-	siolog.I("Connected client:", co.UID)
+	siolog.I("Connected socket client:", co.UID)
 	go cc.clearBundCache(h)
 }
 

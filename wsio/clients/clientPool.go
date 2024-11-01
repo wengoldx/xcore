@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/astaxie/beego"
 	sio "github.com/googollee/go-socket.io"
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
@@ -25,7 +26,9 @@ type ClientPool struct {
 	lock    sync.Mutex         // Mutex sync lock
 	clients map[string]*client // Client map as { client-id : client }
 	s2c     map[string]string  // Socket id to client id as { socket-id : client-id }
-	idles   map[string]int64   // Idle client weights as { client-id : idle-start-nanosecond }
+
+	useidle bool             // The flag to indicate if enable idel function, default false
+	idles   map[string]int64 // Idle client weights as { client-id : idle-start-nanosecond }
 }
 
 // clientPool singleton instance
@@ -41,10 +44,10 @@ type idleWeight struct {
 }
 
 func init() {
+	using := beego.AppConfig.DefaultBool("wsio::idels", false)
 	clientPool = &ClientPool{
-		clients: make(map[string]*client),
-		s2c:     make(map[string]string),
-		idles:   make(map[string]int64),
+		clients: make(map[string]*client), s2c: make(map[string]string),
+		useidle: using, idles: make(map[string]int64),
 	}
 }
 
@@ -96,32 +99,36 @@ func (cp *ClientPool) ClientID(sid string) string {
 
 // Cache or refresh unix nanosecond time as weight.
 func (cp *ClientPool) Idle(cid string) {
-	cp.lock.Lock()
-	defer cp.lock.Unlock()
-
-	cp.idleLocked(cid)
+	if cp.useidle {
+		cp.lock.Lock()
+		defer cp.lock.Unlock()
+		cp.idleLocked(cid)
+	}
 }
 
 // Remove client out of idles map whatever weight value over zero or not.
 func (cp *ClientPool) LeaveIdle(cid string) {
-	cp.lock.Lock()
-	defer cp.lock.Unlock()
-
-	cp.leaveIdleLocked(cid)
+	if cp.useidle {
+		cp.lock.Lock()
+		defer cp.lock.Unlock()
+		cp.leaveIdleLocked(cid)
+	}
 }
 
 // Return idle clients ids
 func (cp *ClientPool) Idles() []string {
 	var idles []string
-	for k := range cp.idles {
-		idles = append(idles, k)
+	if cp.useidle {
+		for k := range cp.idles {
+			idles = append(idles, k)
+		}
 	}
 	return idles
 }
 
 // Move client out of idle state without acquiring the lock.
 func (cp *ClientPool) SortIdels() []string {
-	if len(cp.idles) == 0 {
+	if !cp.useidle || len(cp.idles) == 0 {
 		return nil
 	}
 
@@ -240,14 +247,18 @@ func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
 
 // Increate idle weight for client without acquiring the lock.
 func (cp *ClientPool) idleLocked(cid string) {
-	cp.idles[cid] = time.Now().UnixNano()
-	siolog.I("Client", cid, "idle...")
+	if cp.useidle {
+		cp.idles[cid] = time.Now().UnixNano()
+		siolog.I("Client", cid, "idle...")
+	}
 }
 
 // Move client out of idle state without acquiring the lock.
 func (cp *ClientPool) leaveIdleLocked(cid string) {
-	if _, ok := cp.idles[cid]; ok {
-		siolog.I("Client", cid, "leave idle")
-		delete(cp.idles, cid)
+	if cp.useidle {
+		if _, ok := cp.idles[cid]; ok {
+			siolog.I("Client", cid, "leave idle")
+			delete(cp.idles, cid)
+		}
 	}
 }
