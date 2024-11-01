@@ -13,6 +13,7 @@ package clients
 import (
 	sio "github.com/googollee/go-socket.io"
 	"github.com/wengoldx/xcore/invar"
+	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -25,7 +26,11 @@ type client struct {
 
 // Generate a new client, just init client id.
 func newClient(cid string) *client {
-	return &client{id: cid, socket: nil}
+	c := &client{
+		id:     cid,
+		socket: nil,
+	}
+	return c
 }
 
 // Return client id that set when register on client connnecte.
@@ -49,10 +54,10 @@ func (c *client) Send(evt, msg string) error {
 		return invar.ErrInvalidState
 	}
 	if err := c.socket.Emit(evt, msg); err != nil {
-		siolog.E("Send [", evt, "], err:", err)
+		logger.E("Send [", evt, "] err:", err)
 		return err
 	}
-	siolog.I("Send to", c.id, "[", evt, "] >>", msg)
+	logger.I("Send to", c.id, "[", evt, "] >>", msg)
 	return nil
 }
 
@@ -72,7 +77,7 @@ func (c *client) Join(room string) error {
 		}
 	}
 
-	siolog.I("Client:", c.id, "join room:", room)
+	logger.I("Client:", c.id, "join room:", room)
 	return c.socket.Join(room)
 }
 
@@ -84,7 +89,7 @@ func (c *client) Leave(room string) error {
 		return invar.ErrInvalidParams
 	}
 
-	siolog.I("Client:", c.id, "leave room:", room)
+	logger.I("Client:", c.id, "leave room:", room)
 	return c.socket.Leave(room)
 }
 
@@ -101,7 +106,7 @@ func (c *client) LeaveRooms() error {
 		}
 	}
 
-	siolog.I("Client:", c.id, "leave all rooms")
+	logger.I("Client:", c.id, "leave all rooms")
 	return nil
 }
 
@@ -140,10 +145,10 @@ func (c *client) Broadcast(evt, msg string, rooms ...string) error {
 	// execute broadcast to valid target rooms
 	for _, room := range tagrooms {
 		if err := c.socket.BroadcastTo(room, evt, msg); err != nil {
-			siolog.E("Client", c.id, "broadcast [", evt, "] err:", err)
+			logger.E("Client", c.id, "broadcast [", evt, "] err:", err)
 			return err
 		}
-		siolog.I("Broadcast to", c.id, "[", evt, "]", room, ">>", msg)
+		logger.I("Broadcast to", c.id, "[", evt, "]", room, ">>", msg)
 	}
 	return nil
 }
@@ -154,10 +159,11 @@ func (c *client) Broadcast(evt, msg string, rooms ...string) error {
 func (c *client) register(sc sio.Socket, opt string) error {
 	if c.registered() {
 		cid, sid := c.id, sc.Id()
-		siolog.E("Client", cid, "duplicate bind socket", sid)
+		logger.E("Client", cid, "duplicate bind socket", sid)
 		return invar.ErrDupRegister
 	}
-	c.socket, c.option = sc, opt
+	c.socket = sc
+	c.option = opt
 	return nil
 }
 
@@ -165,7 +171,7 @@ func (c *client) register(sc sio.Socket, opt string) error {
 func (c *client) deregister() {
 	if c.registered() {
 		sid := c.socket.Id()
-		siolog.I("Client", c.id, "unbind socket", sid)
+		logger.I("Client", c.id, "unbind socket", sid)
 		c.socket.Disconnect()
 		c.socket = nil
 	}

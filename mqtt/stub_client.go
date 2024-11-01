@@ -34,7 +34,7 @@ import (
 // UseCase 1 : Using nacos MQTT configs and connect without callbacks.
 //
 //	if err := mqtt.GenClient(data); err != nil {
-//		mqxlog.E("Connect client err:", err)
+//		logger.E("Connect client err:", err)
 //		return
 //	}
 //
@@ -44,7 +44,7 @@ import (
 //	stub := mqtt.SetOptions(2)
 //	stub.ConnectHandler = ConnectHandler
 //	if err := mqtt.GenClient(data); err != nil {
-//		mqxlog.E("Connect client err:", err)
+//		logger.E("Connect client err:", err)
 //		return
 //	}
 //
@@ -55,7 +55,7 @@ import (
 //	// Here use stub.Options to set broker configs
 //	//      use stub.xxxHandler to set connect, disconnect, message handlers
 //	if err := stub.Connect(stub.GetConnOptions()); err != nil {
-//		mqxlog.E("Connect client err:", err)
+//		logger.E("Connect client err:", err)
 //		return
 //	}
 type MqttStub struct {
@@ -72,19 +72,16 @@ type MqttStub struct {
 // Singleton mqtt stub instance
 var mqttStub *MqttStub
 
-// Object logger with [MQX] perfix for MQTT module
-var mqxlog = logger.NewLogger("MQX")
-
 // Default connect handler, change it before call GetConnOptions().
 var connHandler mq.OnConnectHandler = func(client mq.Client) {
 	serve, opt := beego.BConfig.AppName, client.OptionsReader()
-	mqxlog.I("Server", serve, "connected mqtt as client:", opt.ClientID())
+	logger.I("Server", serve, "connected mqtt as client:", opt.ClientID())
 }
 
 // Default disconnect handler, change it before call GetConnOptions().
 var lostHandler mq.ConnectionLostHandler = func(client mq.Client, err error) {
 	serve, opt := beego.BConfig.AppName, client.OptionsReader()
-	mqxlog.W("Server", serve, "disconnect mqtt client:", opt.ClientID())
+	logger.W("Server", serve, "disconnect mqtt client:", opt.ClientID())
 }
 
 const (
@@ -132,7 +129,7 @@ func GenClient(configs any, server ...string) error {
 
 	opt := stub.GetConnOptions() // using default tcp protocol
 	if err := stub.Connect(opt); err != nil {
-		mqxlog.E("Generate", svr, "mqtt client err:", err)
+		logger.E("Generate", svr, "mqtt client err:", err)
 		return err
 	}
 	return nil
@@ -179,7 +176,7 @@ func (stub *MqttStub) Connect(opt *mq.ClientOptions) error {
 	stub.Client = mq.NewClient(opt)
 	if token := stub.Client.Connect(); token.Wait() && token.Error() != nil {
 		stub.Client = nil
-		mqxlog.E("Connect mqtt client, err:", token.Error())
+		logger.E("Connect mqtt client, err:", token.Error())
 		return token.Error()
 	}
 	return nil
@@ -201,7 +198,7 @@ func (stub *MqttStub) Publish(topic string, data any, Qos ...byte) error {
 // Pointer or map, or instead nil data to empty bytes array.
 func (stub *MqttStub) PublishOptions(topic string, data any, remain bool, Qos ...byte) error {
 	if stub.Client == nil {
-		mqxlog.E("Abort publish topic:", topic, "on nil client!!")
+		logger.E("Abort publish topic:", topic, "on nil client!!")
 		return invar.ErrInvalidClient
 	}
 
@@ -228,18 +225,18 @@ func (stub *MqttStub) PublishOptions(topic string, data any, remain bool, Qos ..
 
 	token := stub.Client.Publish(topic, qosv, remain, payload)
 	if token.Wait() && token.Error() != nil {
-		mqxlog.E("Publish topic:", topic, "err:", token.Error())
+		logger.E("Publish topic:", topic, "err:", token.Error())
 		return token.Error()
 	}
 
-	mqxlog.I("Published topic:", topic)
+	logger.I("Published topic:", topic)
 	return nil
 }
 
 // Subscribe given topic and set callback
 func (stub *MqttStub) Subscribe(topic string, hanlder mq.MessageHandler, Qos ...byte) error {
 	if stub.Client == nil {
-		mqxlog.E("Abort subscribe topic:", topic, "on nil client!!")
+		logger.E("Abort subscribe topic:", topic, "on nil client!!")
 		return invar.ErrInvalidClient
 	}
 
@@ -250,10 +247,10 @@ func (stub *MqttStub) Subscribe(topic string, hanlder mq.MessageHandler, Qos ...
 
 	token := stub.Client.Subscribe(topic, qosv, hanlder)
 	if token.Wait() && token.Error() != nil {
-		mqxlog.E("Subscribe topic:", topic, "err:", token.Error())
+		logger.E("Subscribe topic:", topic, "err:", token.Error())
 		return token.Error()
 	}
-	mqxlog.I("Subscribed topic:", topic)
+	logger.I("Subscribed topic:", topic)
 	return nil
 }
 
@@ -271,7 +268,7 @@ func (stub *MqttStub) newTLSConfig() *tls.Config {
 	opts := stub.Options
 	ca, err := os.ReadFile(opts.CAFile)
 	if err != nil {
-		mqxlog.E("Read CA file err:", err)
+		logger.E("Read CA file err:", err)
 		return nil
 	}
 
@@ -283,7 +280,7 @@ func (stub *MqttStub) newTLSConfig() *tls.Config {
 	if opts.CerFile != "" && opts.KeyFile != "" {
 		keyPair, err := tls.LoadX509KeyPair(opts.CerFile, opts.KeyFile)
 		if err != nil {
-			mqxlog.E("Load cert and key err:", err)
+			logger.E("Load cert and key err:", err)
 			return nil
 		}
 
@@ -299,7 +296,7 @@ func (stub *MqttStub) newTLSConfig() *tls.Config {
 func (stub *MqttStub) parseConfig(data, svr string) error {
 	cfgs := &MqttConfigs{}
 	if err := json.Unmarshal([]byte(data), &cfgs); err != nil {
-		mqxlog.E("Unmarshal mqtt settings, err:", err)
+		logger.E("Unmarshal mqtt settings, err:", err)
 		return err
 	}
 

@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/astaxie/beego"
 	sio "github.com/googollee/go-socket.io"
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
@@ -23,31 +22,26 @@ import (
 
 // ClientPool client pool
 type ClientPool struct {
-	lock    sync.Mutex         // Mutex sync lock
-	clients map[string]*client // Client map as { client-id : client }
-	s2c     map[string]string  // Socket id to client id as { socket-id : client-id }
-
-	useidle bool             // The flag to indicate if enable idel function, default false
-	idles   map[string]int64 // Idle client weights as { client-id : idle-start-nanosecond }
+	lock     sync.Mutex         // Mutex sync lock
+	clients  map[string]*client // Client map, seach key is client id
+	s2c      map[string]string  // Socket id to Client id, seach key is socket id, value is client id
+	waitings map[string]int64   // Client weights map, seach key is client id, value is unix nanosecond start waiting
 }
 
 // clientPool singleton instance
 var clientPool *ClientPool
 
-// Object logger with [SIO] perfix for socket.io module
-var siolog = logger.NewLogger("SIO")
-
-// idleWeight idle client weight
-type idleWeight struct {
-	uuid   string // Client unique id
-	weight int64  // Client weight as unix nanosecond start idle
+// idelWeight waiting client weight
+type idelWeight struct {
+	uuid   string
+	weight int64
 }
 
 func init() {
-	using := beego.AppConfig.DefaultBool("wsio::idels", false)
 	clientPool = &ClientPool{
-		clients: make(map[string]*client), s2c: make(map[string]string),
-		useidle: using, idles: make(map[string]int64),
+		clients:  make(map[string]*client),
+		s2c:      make(map[string]string),
+		waitings: make(map[string]int64),
 	}
 }
 
@@ -62,21 +56,21 @@ func (cp *ClientPool) Client(cid string) *client {
 }
 
 // Register client and bind socket.
-func (cp *ClientPool) Register(sc sio.Socket, cid, opt string) error {
+func (cp *ClientPool) Register(cid string, sc sio.Socket, opt string) error {
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
 
-	if err := cp.registerLocked(sc, cid, opt); err != nil {
-		siolog.E("Regisger client, err:", err.Error())
+	if err := cp.registerLocked(cid, sc, opt); err != nil {
+		logger.E("Regisger client err:", err.Error())
 		return err
 	}
 
-	cp.idleLocked(cid)
+	cp.waitingLocked(cid)
 	return nil
 }
 
 // Deregister client and unbind socket.
-func (cp *ClientPool) Deregister(sc sio.Socket) string {
+func (cp *ClientPool) Deregister(sc sio.Socket) (string, string) {
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
 
@@ -97,44 +91,40 @@ func (cp *ClientPool) ClientID(sid string) string {
 	return cp.s2c[sid]
 }
 
-// Cache or refresh unix nanosecond time as weight.
-func (cp *ClientPool) Idle(cid string) {
-	if cp.useidle {
-		cp.lock.Lock()
-		defer cp.lock.Unlock()
-		cp.idleLocked(cid)
-	}
+// Cache or refresh waiting unix nanosecond time as weight.
+func (cp *ClientPool) Waiting(cid string) {
+	cp.lock.Lock()
+	defer cp.lock.Unlock()
+
+	cp.waitingLocked(cid)
 }
 
-// Remove client out of idles map whatever weight value over zero or not.
-func (cp *ClientPool) LeaveIdle(cid string) {
-	if cp.useidle {
-		cp.lock.Lock()
-		defer cp.lock.Unlock()
-		cp.leaveIdleLocked(cid)
-	}
+// Remove client out of waiting map whatever weight value over zero or not.
+func (cp *ClientPool) LeaveWaiting(cid string) {
+	cp.lock.Lock()
+	defer cp.lock.Unlock()
+
+	cp.leaveWaitingLocked(cid)
 }
 
-// Return idle clients ids
-func (cp *ClientPool) Idles() []string {
+// Return waiting clients ids
+func (cp *ClientPool) IdleClients() []string {
 	var idles []string
-	if cp.useidle {
-		for k := range cp.idles {
-			idles = append(idles, k)
-		}
+	for k := range cp.waitings {
+		idles = append(idles, k)
 	}
 	return idles
 }
 
-// Move client out of idle state without acquiring the lock.
-func (cp *ClientPool) SortIdels() []string {
-	if !cp.useidle || len(cp.idles) == 0 {
+// Move client out of waiting state without acquiring the lock.
+func (cp *ClientPool) SortWaitings() []string {
+	if len(cp.waitings) == 0 {
 		return nil
 	}
 
-	var weights []idleWeight
-	for k, v := range cp.idles {
-		weights = append(weights, idleWeight{uuid: k, weight: v})
+	var weights []idelWeight
+	for k, v := range cp.waitings {
+		weights = append(weights, idelWeight{uuid: k, weight: v})
 	}
 
 	sort.Slice(weights, func(i, j int) bool {
@@ -196,20 +186,20 @@ func (cp *ClientPool) Signaling(cid, evt, data string) error {
 // --------
 
 // Register the client without acquiring the lock.
-func (cp *ClientPool) registerLocked(sc sio.Socket, cid, opt string) error {
+func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) error {
 	var newOne *client
 	sid := sc.Id()
 
 	if oldOne, ok := cp.clients[cid]; ok {
 		oldOneID := oldOne.socket.Id()
 		if oldOneID == sid {
-			siolog.W("Client", cid, "already bind socket", sid)
+			logger.W("Client", cid, "already bind socket", sid)
 			return nil
 		}
 
-		siolog.W("Drop bund socket", oldOneID)
+		logger.W("Drop binded socket", oldOneID)
 		delete(cp.s2c, oldOneID)
-		oldOne.deregister() // reset and disconnet the old socket
+		oldOne.deregister() // reset and  disconnet the old socket
 		newOne = oldOne
 	} else {
 		newOne = newClient(cid)
@@ -220,45 +210,41 @@ func (cp *ClientPool) registerLocked(sc sio.Socket, cid, opt string) error {
 		return err
 	}
 
-	siolog.I("Client", cid, "bind socket", sid)
+	logger.I("Client", cid, "bind socket", sid)
 	cp.clients[cid] = newOne
 	cp.s2c[sid] = cid // same as uuid
 	return nil
 }
 
 // Deregister the client without acquiring the lock.
-func (cp *ClientPool) deregisterLocked(sc sio.Socket) string {
+func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
 	sid := sc.Id()
 	if cid := cp.s2c[sid]; cid != "" {
 		delete(cp.s2c, sid)
 
-		cp.leaveIdleLocked(cid)
+		cp.leaveWaitingLocked(cid)
 		if c := cp.clients[cid]; c != nil {
 			delete(cp.clients, cid)
 			c.deregister()
-			return c.option
+			return cid, c.option
 		}
 	}
 
-	siolog.I("Disconnect socket", sid)
+	logger.I("Disconnect unkown socket", sid)
 	sc.Disconnect()
-	return ""
+	return "", ""
 }
 
-// Increate idle weight for client without acquiring the lock.
-func (cp *ClientPool) idleLocked(cid string) {
-	if cp.useidle {
-		cp.idles[cid] = time.Now().UnixNano()
-		siolog.I("Client", cid, "idle...")
-	}
+// Increate waiting weight for client without acquiring the lock.
+func (cp *ClientPool) waitingLocked(cid string) {
+	cp.waitings[cid] = time.Now().UnixNano()
+	logger.I("Client", cid, "start waiting...")
 }
 
-// Move client out of idle state without acquiring the lock.
-func (cp *ClientPool) leaveIdleLocked(cid string) {
-	if cp.useidle {
-		if _, ok := cp.idles[cid]; ok {
-			siolog.I("Client", cid, "leave idle")
-			delete(cp.idles, cid)
-		}
+// Move client out of waiting state without acquiring the lock.
+func (cp *ClientPool) leaveWaitingLocked(cid string) {
+	if _, ok := cp.waitings[cid]; ok {
+		logger.I("Client", cid, "leave waiting")
+		delete(cp.waitings, cid)
 	}
 }

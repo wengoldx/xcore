@@ -20,6 +20,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/wengoldx/xcore/invar"
+	"github.com/wengoldx/xcore/logger"
 )
 
 // Setup search indexs with mapping if the index unexist.
@@ -36,7 +37,7 @@ func (e *ESClient) SetupIndexs(indexs map[string]string) error {
 		e.CreateIndexMapping(index, mapping)
 	}
 
-	esclog.I("Setup elastic mappings")
+	logger.I("Setup elastic mappings")
 	return nil
 }
 
@@ -64,7 +65,7 @@ func (e *ESClient) CreateIndexMapping(index, mapping string) error {
 	createfunc := e.Conn.Indices.Create.WithBody(strings.NewReader(mapping))
 	res, err := e.Conn.Indices.Create(index, createfunc)
 	if err != nil {
-		esclog.E("Create index, err:", err)
+		logger.E("Create index, err:", err)
 		return err
 	}
 	return respError(res)
@@ -91,7 +92,7 @@ func (e *ESClient) UpdateIndexMapping(index []string, mapping string) error {
 
 	res, err := e.Conn.Indices.PutMapping(index, strings.NewReader(mapping))
 	if err != nil {
-		esclog.E("Update index, err:", err)
+		logger.E("Update index, err:", err)
 		return err
 	}
 	return respError(res)
@@ -110,7 +111,7 @@ func (e *ESClient) CreateIndexDoc(index string, doc any, docid ...string) error 
 
 	body, err := json.Marshal(doc)
 	if err != nil {
-		esclog.E("Marshal index doc, err:", err)
+		logger.E("Marshal index doc, err:", err)
 		return err
 	}
 
@@ -123,7 +124,7 @@ func (e *ESClient) CreateIndexDoc(index string, doc any, docid ...string) error 
 
 	res, err := req.Do(context.Background(), e.Conn)
 	if err != nil {
-		esclog.E("Create index doc, err:", err)
+		logger.E("Create index doc, err:", err)
 		return err
 	}
 	return respError(res)
@@ -148,7 +149,7 @@ func (e *ESClient) UpdateIndexDoc(index, docid, doc string) error {
 	updatefunc := e.Conn.Update.WithRefresh("wait_for")
 	res, err := e.Conn.Update(index, docid, strings.NewReader(doc), updatefunc)
 	if err != nil {
-		esclog.E("Update index doc, err:", err)
+		logger.E("Update index doc, err:", err)
 		return err
 	}
 	return respError(res)
@@ -162,7 +163,7 @@ func (e *ESClient) DeleteIndexDoc(index, docid string) error {
 
 	ret, err := e.Conn.Delete(index, docid, e.Conn.Delete.WithPretty())
 	if err != nil {
-		esclog.E("Delete index doc, err:", err)
+		logger.E("Delete index doc, err:", err)
 		return err
 	}
 	return respError(ret)
@@ -176,7 +177,7 @@ func (e *ESClient) IsExistIndex(index []string) (bool, error) {
 
 	exist, err := e.Conn.Indices.Get(index)
 	if err != nil {
-		esclog.E("Check index:", index, "if exist, err:", err)
+		logger.E("Check index:", index, "if exist, err:", err)
 		return false, err
 	}
 	return (exist.StatusCode == invar.StatusOK), nil
@@ -200,7 +201,7 @@ func (e *ESClient) SearchIndex(index, query string, page int, limit ...int) (*Re
 		e.Conn.Search.WithBody(strings.NewReader(query)),
 	)
 	if err != nil {
-		esclog.E("Search index, err:", err)
+		logger.E("Search index, err:", err)
 		return nil, err
 	}
 

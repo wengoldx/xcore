@@ -63,9 +63,6 @@ type GrpcStub struct {
 // Singleton grpc stub instance
 var grpcStub *GrpcStub
 
-// Object logger with [RPC] perfix for GRPC module
-var rpclog = logger.NewLogger("RPC")
-
 // Return Grpc global singleton
 func Singleton() *GrpcStub {
 	if grpcStub == nil {
@@ -94,18 +91,18 @@ func Singleton() *GrpcStub {
 //	go stub.StartGrpcServer()
 func (stub *GrpcStub) StartGrpcServer() {
 	if stub.SvrHandlerFunc == nil {
-		rpclog.E("Not setup grpc handler!")
+		logger.E("Not setup global grpc handler!")
 		return
 	} else if stub.isRegistried {
 		return // drop the duplicate registry
 	}
 
 	svrname := beego.BConfig.AppName
-	rpclog.I("Register grpc server:", svrname)
+	logger.I("Register Grpc server:", svrname)
 
 	secure, ok := stub.Certs[svrname]
 	if !ok || secure.Key == "" || secure.Pem == "" {
-		rpclog.E("Not found", svrname, "grpc cert, abort register!")
+		logger.E("Not found", svrname, "grpc cert, abort register!")
 		return
 	}
 
@@ -113,14 +110,14 @@ func (stub *GrpcStub) StartGrpcServer() {
 	port := beego.AppConfig.String("nacosport")
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		rpclog.E("Listen grpc server, err:", err)
+		logger.E("Listen grpc server, err:", err)
 		return
 	}
 
 	// generate TLS cert from pem datas
 	cert, err := tls.X509KeyPair([]byte(secure.Pem), []byte(secure.Key))
 	if err != nil {
-		rpclog.E("Create grpc cert, err:", err)
+		logger.E("Create grpc cert, err:", err)
 		return
 	}
 
@@ -128,12 +125,12 @@ func (stub *GrpcStub) StartGrpcServer() {
 	cred := credentials.NewServerTLSFromCert(&cert)
 	svr := grpc.NewServer(grpc.Creds(cred))
 	stub.SvrHandlerFunc(svr)
-	rpclog.I("Running grpc server:", svrname, "on port", port)
+	logger.I("Running Grpc server:", svrname, "on port", port)
 
 	stub.isRegistried = true
 	defer func(stub *GrpcStub) { stub.isRegistried = false }(stub)
 	if err := svr.Serve(lis); err != nil {
-		rpclog.E("Start grpc server, err:", err)
+		logger.E("Start grpc server, err:", err)
 	}
 }
 
@@ -152,20 +149,20 @@ func (stub *GrpcStub) ParseAndStart(data string) error {
 func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
 	if svrkey != SVR_ACC && svrkey != SVR_MEA && svrkey != SVR_WSS &&
 		svrkey != SVR_CHAT && svrkey != SVR_PAY {
-		rpclog.E("Invalid target grpc server:", svrkey)
+		logger.E("Invaoid target grpc server:", svrkey)
 		return
 	}
 
 	secure, ok := stub.Certs[svrkey]
 	if !ok || secure.Key == "" || secure.Pem == "" {
-		rpclog.E("Not found target grpc cert of", svrkey)
+		logger.E("Not found target grpc cert of", svrkey)
 		return
 	}
 
 	// generate TLS cert from pem datas
 	cp := x509.NewCertPool()
 	if !cp.AppendCertsFromPEM([]byte(secure.Pem)) {
-		rpclog.E("Failed generate grpc cert!")
+		logger.E("Failed generate grpc cert!")
 		return
 	}
 
@@ -174,7 +171,7 @@ func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
 	cred := credentials.NewClientTLSFromCert(cp, svrkey)
 	conn, err := grpc.Dial(grpcsvr, grpc.WithTransportCredentials(cred))
 	if err != nil {
-		rpclog.E("Dial grpc address", grpcsvr, " fialed", err)
+		logger.E("Dial grpc address", grpcsvr, " fialed", err)
 		return
 	}
 
@@ -191,22 +188,22 @@ func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
 	case SVR_PAY:
 		stub.Pay = pay.NewWgpayClient(conn)
 	default:
-		rpclog.E("Invalid grpc server:", svrkey+"@"+grpcsvr)
+		logger.E("[GRPC] Invalid rpc server:", svrkey+"@"+grpcsvr)
 		return
 	}
-	rpclog.I("Connected with", svrkey+"@"+grpcsvr)
+	logger.I("[GRPC] Connected with", svrkey+"@"+grpcsvr)
 }
 
 // Parse all grpc certs from nacos config data, and cache to certs map
 func (stub *GrpcStub) ParseCerts(data string) error {
 	certs := nacos.GrpcCerts{}
 	if err := xml.Unmarshal([]byte(data), &certs); err != nil {
-		rpclog.E("Parse grpc certs, err:", err)
+		logger.E("Parse grpc certs, err:", err)
 		return err
 	}
 
 	for _, cert := range certs.Certs {
-		rpclog.D("Update", cert.Svr, "grpc cert")
+		logger.D("Update", cert.Svr, "grpc cert")
 		stub.Certs[cert.Svr] = &nacos.GrpcCert{
 			Svr: cert.Svr, Key: cert.Key, Pem: cert.Pem,
 		}
@@ -221,13 +218,13 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 // Auth header token and return account uuid and password
 func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 	if stub.Acc == nil {
-		rpclog.E("Acc grpc instance not inited!")
+		logger.E("Acc RPC instance not inited!")
 		return "", ""
 	} else {
 		param := &acc.Token{Token: token}
 		resp, err := stub.Acc.ViaToken(context.Background(), param)
 		if err != nil {
-			rpclog.E("Auth grpc token, err:", err)
+			logger.E("RPC auth token, err:", err)
 			return "", ""
 		}
 
@@ -238,13 +235,13 @@ func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 // Auth account role from http header
 func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 	if stub.Acc == nil {
-		rpclog.E("Acc grpc instance not inited!")
+		logger.E("Acc RPC instance not inited!")
 		return false
 	} else {
 		param := &acc.Role{Uuid: uuid, Router: url, Method: method}
 		resp, err := stub.Acc.ViaRole(context.Background(), param)
 		if err != nil {
-			rpclog.E("Auth", uuid, "role, err:", err)
+			logger.E("RPC auth", uuid, "role, err:", err)
 			return false
 		}
 

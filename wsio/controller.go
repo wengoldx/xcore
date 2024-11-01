@@ -12,31 +12,23 @@ package wsio
 
 import (
 	"encoding/json"
-	"net/url"
-	"reflect"
 
 	sio "github.com/googollee/go-socket.io"
+	"github.com/wengoldx/xcore/logger"
 )
 
 // Auth client outset, it will disconnect when return no-nil error
-//	@param forms form values parse from url
 //	@param token client login jwt-token contain uuid or optional data in claims key string
 //	@return - string client uuid
 //			- any client optional data parsed from token
 //			- error Exception message
-type AuthHandler func(forms url.Values, token string) (string, string, error)
+type AuthHandler func(token string) (string, string, error)
 
 // Client connected callback, it will disconnect when return no-nil error
-//	@param sc current socket client
 //	@param uuid client unique id
 //	@param option client login optional data, maybe nil
 //	@return - error Exception message
-type ConnectHandler func(sc sio.Socket, uuid, option string) error
-
-// Client will disconnected handler function, it called before socket client disconnect.
-//	@param sc current socket client
-//	@param uuid client unique id
-type WillDisconHandler func(sc sio.Socket, uuid string)
+type ConnectHandler func(uuid, option string) error
 
 // Client disconnected handler function
 //	@param uuid client unique id
@@ -87,37 +79,26 @@ func AckError(msg string) string {
 	resp, _ := json.Marshal(&EventAck{
 		State: StError, Message: msg,
 	})
-	siolog.E("Response err >>", msg)
+	logger.E("SIO Response err >>", msg)
 	return string(resp)
 }
 
 // Set handler to execute clients authenticate, connect and disconnect.
-func SetHandlers(handlers ...any) {
-	for _, handler := range handlers {
-		switch reflect.ValueOf(handler).Interface().(type) {
-		case AuthHandler:
-			wsc.authHandler = handler.(AuthHandler)
-		case ConnectHandler:
-			wsc.connHandler = handler.(ConnectHandler)
-		case WillDisconHandler:
-			wsc.willHandler = handler.(WillDisconHandler)
-		case DisconnectHandler:
-			wsc.discHandler = handler.(DisconnectHandler)
-		}
-	}
-	siolog.I("Set wsio handlers...")
+func SetHandlers(auth AuthHandler, conn ConnectHandler, disc DisconnectHandler) {
+	wsc.authHandler, wsc.connHandler, wsc.discHandler = auth, conn, disc
+	logger.I("Set wsio handlers...")
 }
 
 // Set adapter to register socket signaling events.
 func SetAdapter(adaptor SignalingAdaptor) error {
 	if adaptor == nil {
-		siolog.W("Invalid socket event adaptor!")
+		logger.W("Invalid socket event adaptor!")
 		return nil
 	}
 
 	evts := adaptor.Signalings()
 	if len(evts) == 0 {
-		siolog.W("No signaling event keys!")
+		logger.W("No signaling event keys!")
 		return nil
 	}
 
@@ -129,7 +110,7 @@ func SetAdapter(adaptor SignalingAdaptor) error {
 				if err := wsc.server.On(evt, callback); err != nil {
 					return err
 				}
-				siolog.I("Bind signaling event:", evt)
+				logger.I("Bind signaling event:", evt)
 			}
 		}
 	}

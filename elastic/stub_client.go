@@ -12,7 +12,6 @@ package elastic
 
 import (
 	es "github.com/elastic/go-elasticsearch/v8"
-	"github.com/wengoldx/xcore/logger"
 )
 
 // Elasticsearch client
@@ -22,9 +21,6 @@ type ESClient struct {
 
 // Elastic client singleton, setup when DID_ES_AGENTS config received or changed.
 var esc *ESClient
-
-// Object logger with [ESC] perfix for elastic module
-var esclog = logger.NewLogger("ESC")
 
 // Create a new elasticsearch client.
 func NewEsClient(address []string, user, pwd, cfp string) error {
