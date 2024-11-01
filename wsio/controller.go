@@ -14,7 +14,6 @@ import (
 	"encoding/json"
 
 	sio "github.com/googollee/go-socket.io"
-	"github.com/wengoldx/xcore/logger"
 )
 
 // Auth client outset, it will disconnect when return no-nil error
@@ -79,26 +78,26 @@ func AckError(msg string) string {
 	resp, _ := json.Marshal(&EventAck{
 		State: StError, Message: msg,
 	})
-	logger.E("SIO Response err >>", msg)
+	siolog.E("Response err >>", msg)
 	return string(resp)
 }
 
 // Set handler to execute clients authenticate, connect and disconnect.
 func SetHandlers(auth AuthHandler, conn ConnectHandler, disc DisconnectHandler) {
 	wsc.authHandler, wsc.connHandler, wsc.discHandler = auth, conn, disc
-	logger.I("Set wsio handlers...")
+	siolog.I("Set wsio handlers...")
 }
 
 // Set adapter to register socket signaling events.
 func SetAdapter(adaptor SignalingAdaptor) error {
 	if adaptor == nil {
-		logger.W("Invalid socket event adaptor!")
+		siolog.W("Invalid socket event adaptor!")
 		return nil
 	}
 
 	evts := adaptor.Signalings()
 	if len(evts) == 0 {
-		logger.W("No signaling event keys!")
+		siolog.W("No signaling event keys!")
 		return nil
 	}
 
@@ -110,7 +109,7 @@ func SetAdapter(adaptor SignalingAdaptor) error {
 				if err := wsc.server.On(evt, callback); err != nil {
 					return err
 				}
-				logger.I("Bind signaling event:", evt)
+				siolog.I("Bind signaling event:", evt)
 			}
 		}
 	}

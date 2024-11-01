@@ -146,6 +146,7 @@ func GenRandCode(seednum ...int64) string {
 		// on hight performance device to generate same rand int number.
 		// so, input the increase seed number necessarily!
 		rander.Seed(seednum[0])
+		rander.Seed(rander.Int63())
 	} else {
 		rander.Seed(time.Now().UnixNano())
 	}

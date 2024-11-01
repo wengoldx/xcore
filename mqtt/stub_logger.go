@@ -18,7 +18,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	mq "github.com/eclipse/paho.mqtt.golang"
-	"github.com/wengoldx/xcore/logger"
 )
 
 const (
@@ -86,7 +85,7 @@ func SetupLogger(opts *Options) {
 func GetOptions(data string, svr ...string) *Options {
 	cfgs := &MqttConfigs{}
 	if err := json.Unmarshal([]byte(data), &cfgs); err != nil {
-		logger.E("Unmarshal mqtt options err:", err)
+		mqxlog.E("Unmarshal mqtt options err:", err)
 		return nil
 	}
 
@@ -96,7 +95,7 @@ func GetOptions(data string, svr ...string) *Options {
 	}
 
 	if user, ok := cfgs.Users[userkey]; ok {
-		logger.I("Got mqtt options of user:", userkey)
+		mqxlog.I("Got mqtt options of user:", userkey)
 		return &Options{
 			Host: cfgs.Broker.Host,
 			Port: cfgs.Broker.Port,
@@ -120,7 +119,7 @@ func getAppPrefix() string {
 	return prefix + " | "
 }
 
-// Init mqtt logger topic and connect client with id of 'appname.logger'
+// Init mqtt logger topic and connect client with id of 'logger.appname'
 func (w *mqttLogger) Init(config string) error {
 	options := mq.NewClientOptions()
 	broker := fmt.Sprintf(protFormatTCP, w.Options.Host, w.Options.Port)
@@ -136,11 +135,11 @@ func (w *mqttLogger) Init(config string) error {
 
 		// Delete mqtt logger from beego logs when connect failed
 		logs.GetBeeLogger().DelLogger(adapterMqtt)
-		logger.E("Setup mqtt logger err:", token.Error())
+		mqxlog.E("Setup mqtt logger err:", token.Error())
 		return nil // not return error
 	}
 
-	logger.I("Connected mqtt logger!")
+	mqxlog.I("Connected mqtt logger!")
 	return nil
 }
 

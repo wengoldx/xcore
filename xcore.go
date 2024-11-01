@@ -24,6 +24,7 @@ package xcore
 // 	_ "github.com/wengoldx/xcore/wechat"
 // 	_ "github.com/wengoldx/xcore/wrpc"
 // 	_ "github.com/wengoldx/xcore/wsio"
+// 	_ "github.com/wengoldx/xcore/wsio/clients"
 // )
 
 // func main() {}

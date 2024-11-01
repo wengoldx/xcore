@@ -31,6 +31,9 @@ type ClientPool struct {
 // clientPool singleton instance
 var clientPool *ClientPool
 
+// Object logger with [SIO] perfix for socket.io module
+var siolog = logger.NewLogger("SIO")
+
 // idelWeight waiting client weight
 type idelWeight struct {
 	uuid   string
@@ -61,7 +64,7 @@ func (cp *ClientPool) Register(cid string, sc sio.Socket, opt string) error {
 	defer cp.lock.Unlock()
 
 	if err := cp.registerLocked(cid, sc, opt); err != nil {
-		logger.E("Regisger client err:", err.Error())
+		siolog.E("Regisger client, err:", err.Error())
 		return err
 	}
 
@@ -193,13 +196,13 @@ func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) erro
 	if oldOne, ok := cp.clients[cid]; ok {
 		oldOneID := oldOne.socket.Id()
 		if oldOneID == sid {
-			logger.W("Client", cid, "already bind socket", sid)
+			siolog.W("Client", cid, "already bind socket", sid)
 			return nil
 		}
 
-		logger.W("Drop binded socket", oldOneID)
+		siolog.W("Drop bund socket", oldOneID)
 		delete(cp.s2c, oldOneID)
-		oldOne.deregister() // reset and  disconnet the old socket
+		oldOne.deregister() // reset and disconnet the old socket
 		newOne = oldOne
 	} else {
 		newOne = newClient(cid)
@@ -210,7 +213,7 @@ func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) erro
 		return err
 	}
 
-	logger.I("Client", cid, "bind socket", sid)
+	siolog.I("Client", cid, "bind socket", sid)
 	cp.clients[cid] = newOne
 	cp.s2c[sid] = cid // same as uuid
 	return nil
@@ -230,7 +233,7 @@ func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
 		}
 	}
 
-	logger.I("Disconnect unkown socket", sid)
+	siolog.I("Disconnect socket", sid)
 	sc.Disconnect()
 	return "", ""
 }
