@@ -58,6 +58,7 @@ type clientOpt struct {
 //		if err := wsio.SetAdapter(adaptor); err != nil {
 //			panic(err)
 //		}
+//		wsio.SetupServer()
 //	}
 //
 // You may config socket ping interval, timeout and using optinal data
@@ -126,8 +127,9 @@ var (
 	viaOption = false
 )
 
-func init() {
-	setupWsioConfigs()
+// Setup socket.io server by manual called.
+func SetupServer() {
+	loadWsioConfigs()
 	wsc = &wingSIO{
 		options:   make(map[uintptr]*clientOpt),
 		onceBunds: make(map[uintptr]string),
@@ -145,7 +147,7 @@ func init() {
 }
 
 // read wsio configs from file
-func setupWsioConfigs() {
+func loadWsioConfigs() {
 	interval := beego.AppConfig.DefaultInt64("wsio::interval", 30)
 	serverPingInterval = time.Duration(interval) * time.Second
 
