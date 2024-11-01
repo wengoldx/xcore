@@ -31,6 +31,9 @@ type ClientPool struct {
 // clientPool singleton instance
 var clientPool *ClientPool
 
+// Object logger with [SIO] perfix for socket.io module
+var siolog = logger.NewLogger("SIO")
+
 // idleWeight idle client weight
 type idleWeight struct {
 	uuid   string // Client unique id
@@ -61,7 +64,7 @@ func (cp *ClientPool) Register(cid string, sc sio.Socket, opt string) error {
 	defer cp.lock.Unlock()
 
 	if err := cp.registerLocked(cid, sc, opt); err != nil {
-		logger.E("[SIO] Regisger client, err:", err.Error())
+		siolog.E("Regisger client, err:", err.Error())
 		return err
 	}
 
@@ -193,11 +196,11 @@ func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) erro
 	if oldOne, ok := cp.clients[cid]; ok {
 		oldOneID := oldOne.socket.Id()
 		if oldOneID == sid {
-			logger.W("[SIO] Client", cid, "already bind socket", sid)
+			siolog.W("Client", cid, "already bind socket", sid)
 			return nil
 		}
 
-		logger.W("[SIO] Drop bund socket", oldOneID)
+		siolog.W("Drop bund socket", oldOneID)
 		delete(cp.s2c, oldOneID)
 		oldOne.deregister() // reset and disconnet the old socket
 		newOne = oldOne
@@ -210,7 +213,7 @@ func (cp *ClientPool) registerLocked(cid string, sc sio.Socket, opt string) erro
 		return err
 	}
 
-	logger.I("[SIO] Client", cid, "bind socket", sid)
+	siolog.I("Client", cid, "bind socket", sid)
 	cp.clients[cid] = newOne
 	cp.s2c[sid] = cid // same as uuid
 	return nil
@@ -230,7 +233,7 @@ func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
 		}
 	}
 
-	logger.I("[SIO] Disconnect socket", sid)
+	siolog.I("Disconnect socket", sid)
 	sc.Disconnect()
 	return "", ""
 }
@@ -238,13 +241,13 @@ func (cp *ClientPool) deregisterLocked(sc sio.Socket) (string, string) {
 // Increate idle weight for client without acquiring the lock.
 func (cp *ClientPool) idleLocked(cid string) {
 	cp.idles[cid] = time.Now().UnixNano()
-	logger.I("[SIO] Client", cid, "idle...")
+	siolog.I("Client", cid, "idle...")
 }
 
 // Move client out of idle state without acquiring the lock.
 func (cp *ClientPool) leaveIdleLocked(cid string) {
 	if _, ok := cp.idles[cid]; ok {
-		logger.I("[SIO] Client", cid, "leave idle")
+		siolog.I("Client", cid, "leave idle")
 		delete(cp.idles, cid)
 	}
 }
