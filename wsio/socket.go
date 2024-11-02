@@ -52,6 +52,11 @@ type clientOpt struct {
 //	import "github.com/wengoldx/xcore/wsio"
 //
 //	init() {
+//		handlers := Handlers{
+//			AuthHandler: authHandlerFunc, ConnHandler: connHandlerFunc,
+//			WillHandler: willHandlerFunc, DiscHandler: discHandlerFunc,
+//		}
+//
 //		// set socket io handler and signalings
 //		wsio.SetHandlers(ctrl.Authenticate, nil, nil)
 //		adaptor := &ctrl.DefSioAdaptor{}
@@ -84,16 +89,9 @@ type wingSIO struct {
 	server *sio.Server
 
 	// socket golbal handler to execute clients authenticate action.
-	authHandler AuthHandler
+	handlers Handlers
 
-	// socket golbal handler to execute clients connect action.
-	connHandler ConnectHandler
-
-	// socket global handler to execute clients will disconnect actions.
-	willHandler WillDisconHandler
-
-	// socket golbal handler to execute clients disconnect actions
-	discHandler DisconnectHandler
+	events map[string]SignalingEvent
 
 	// http request pointer to client, cache datas temporary
 	// only for client authenticate-connect process.
@@ -109,6 +107,14 @@ type wingSIO struct {
 	//			 : go-socket.io@v1.0.1/socket.go  > loop() > for { onPacket }
 	//			 : go-socket.io@v1.0.1/handler.go > onPacket()
 	onceBunds map[uintptr]string // http request url to empty string (not used)
+}
+
+// Socket.IO handlers for auth, connect, disconnect.
+type Handlers struct {
+	AuthHandler AuthHandler       // socket golbal handler to execute clients authenticate action.
+	ConnHandler ConnectHandler    // socket golbal handler to execute clients connect action.
+	WillHandler WillDisconHandler // socket global handler to execute clients will disconnect actions.
+	DiscHandler DisconnectHandler // socket golbal handler to execute clients disconnect actions
 }
 
 // Socket connection server
@@ -128,11 +134,13 @@ var (
 )
 
 // Setup socket.io server by manual called.
-func SetupServer() {
+func SetupServer(cbs Handlers, evts map[string]SignalingEvent) {
+
 	loadWsioConfigs()
 	wsc = &wingSIO{
 		options:   make(map[uintptr]*clientOpt),
 		onceBunds: make(map[uintptr]string),
+		handlers:  cbs, events: evts,
 	}
 
 	// set http handler for socke.io
@@ -194,8 +202,28 @@ func (cc *wingSIO) createHandler() (http.Handler, error) {
 		cc.onDisconnected(sc)
 	})
 
+	cc.registryEvents()
 	siolog.I("Created socket.io handler")
 	return server, nil
+}
+
+// Set adapter to register socket signaling events.
+func (cc *wingSIO) registryEvents() {
+	if len(cc.events) == 0 {
+		siolog.W("Not registry any socket events !!")
+		return
+	}
+
+	// register socket signaling events
+	for evt, callback := range cc.events {
+		if evt != "" && callback != nil {
+			if err := wsc.server.On(evt, callback); err != nil {
+				siolog.E("Bind socket event:", evt, "err:", err)
+				continue
+			}
+		}
+	}
+	siolog.I("Bund socket events")
 }
 
 // Internal event of authentication, to get auth datas from request header
@@ -237,8 +265,8 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	// auth client token by handler if set Authenticate function
 	// handler, or just use token as uuid when not set.
 	uuid, option := token, ""
-	if cc.authHandler != nil {
-		uid, opt, err := cc.authHandler(req.Form, token)
+	if cc.handlers.AuthHandler != nil {
+		uid, opt, err := cc.handlers.AuthHandler(req.Form, token)
 		if err != nil || uid == "" {
 			siolog.E("Invalid uid:", uid, "or case err:", err)
 			return invar.ErrAuthDenied
@@ -282,8 +310,8 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 	}
 
 	// handle connect callback for socket with uuid
-	if cc.connHandler != nil {
-		if err := cc.connHandler(sc, co.UID, co.Opt); err != nil {
+	if cc.handlers.ConnHandler != nil {
+		if err := cc.handlers.ConnHandler(sc, co.UID, co.Opt); err != nil {
 			siolog.E("Client:", co.UID, "connect socket err:", err)
 			sc.Disconnect()
 		}
@@ -295,14 +323,19 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 // onDisconnected event of disconnect
 func (cc *wingSIO) onDisconnected(sc sio.Socket) {
 	clientPool := clients.Clients()
+
+	// hangle will callback before diconnect when
+	// socket client object still valid.
 	uuid := clientPool.ClientID(sc.Id())
-	if cc.willHandler != nil && uuid != "" {
-		cc.willHandler(sc, uuid)
+	if cc.handlers.WillHandler != nil && uuid != "" {
+		cc.handlers.WillHandler(sc, uuid)
 	}
 
+	// deregister socket and disconnect it, then
+	// call disconnected handler to release sources.
 	opt := clientPool.Deregister(sc)
-	if cc.discHandler != nil {
-		cc.discHandler(uuid, opt)
+	if cc.handlers.DiscHandler != nil {
+		cc.handlers.DiscHandler(uuid, opt)
 	}
 }
 

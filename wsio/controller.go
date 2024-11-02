@@ -13,7 +13,6 @@ package wsio
 import (
 	"encoding/json"
 	"net/url"
-	"reflect"
 
 	sio "github.com/googollee/go-socket.io"
 )
@@ -50,16 +49,6 @@ type DisconnectHandler func(uuid, option string)
 // Socket signlaing event function
 type SignalingEvent func(sc sio.Socket, uuid, params string) string
 
-// Socket signaling adaptor to register events
-type SignalingAdaptor interface {
-
-	// Retruen socket signaling events
-	Signalings() []string
-
-	// Dispath socket signaling callback by event
-	Dispatch(evt string) SignalingEvent
-}
-
 // Socket event ack
 type EventAck struct {
 	State   int    `json:"state"`
@@ -89,49 +78,4 @@ func AckError(msg string) string {
 	})
 	siolog.E("Response err >>", msg)
 	return string(resp)
-}
-
-// Set handler to execute clients authenticate, connect and disconnect.
-func SetHandlers(handlers ...any) {
-	for _, handler := range handlers {
-		switch reflect.ValueOf(handler).Interface().(type) {
-		case AuthHandler:
-			wsc.authHandler = handler.(AuthHandler)
-		case ConnectHandler:
-			wsc.connHandler = handler.(ConnectHandler)
-		case WillDisconHandler:
-			wsc.willHandler = handler.(WillDisconHandler)
-		case DisconnectHandler:
-			wsc.discHandler = handler.(DisconnectHandler)
-		}
-	}
-	siolog.I("Set wsio handlers...")
-}
-
-// Set adapter to register socket signaling events.
-func SetAdapter(adaptor SignalingAdaptor) error {
-	if adaptor == nil {
-		siolog.W("Invalid socket event adaptor!")
-		return nil
-	}
-
-	evts := adaptor.Signalings()
-	if len(evts) == 0 {
-		siolog.W("No signaling event keys!")
-		return nil
-	}
-
-	// register socket signaling events
-	for _, evt := range evts {
-		if evt != "" {
-			callback := adaptor.Dispatch(evt)
-			if callback != nil {
-				if err := wsc.server.On(evt, callback); err != nil {
-					return err
-				}
-				siolog.I("Bind signaling event:", evt)
-			}
-		}
-	}
-	return nil
 }
