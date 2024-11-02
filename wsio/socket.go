@@ -133,7 +133,6 @@ var (
 
 // Setup socket.io server by manual called.
 func SetupServer(cbs Handlers, evts map[string]SignalingEvent) {
-
 	loadWsioConfigs()
 	wsc = &wingSIO{
 		options:   make(map[uintptr]*clientOpt),
@@ -293,6 +292,7 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 		return
 	}
 	cc.onceBunds[h] = "" // cache the first time
+	defer cc.clearBundCache(h)
 
 	co := cc.unbindUUIDFromHTTPLocked(h)
 	if co == nil || co.UID == "" {
@@ -316,7 +316,6 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 		}
 	}
 	siolog.I("Connected socket client:", co.UID)
-	go cc.clearBundCache(h)
 }
 
 // onDisconnected event of disconnect
@@ -361,6 +360,8 @@ func (cc *wingSIO) unbindUUIDFromHTTPLocked(h uintptr) *clientOpt {
 
 // Clear the bind cache after 10ms
 func (cc *wingSIO) clearBundCache(h uintptr) {
-	time.Sleep(50 * time.Millisecond)
-	delete(cc.onceBunds, h)
+	go func(c *wingSIO, h uintptr) {
+		time.Sleep(50 * time.Millisecond)
+		delete(c.onceBunds, h)
+	}(cc, h)
 }
