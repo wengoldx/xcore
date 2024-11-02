@@ -56,14 +56,11 @@ type clientOpt struct {
 //			AuthHandler: authHandlerFunc, ConnHandler: connHandlerFunc,
 //			WillHandler: willHandlerFunc, DiscHandler: discHandlerFunc,
 //		}
-//
-//		// set socket io handler and signalings
-//		wsio.SetHandlers(ctrl.Authenticate, nil, nil)
-//		adaptor := &ctrl.DefSioAdaptor{}
-//		if err := wsio.SetAdapter(adaptor); err != nil {
-//			panic(err)
+//		events := map[string]wsio.SignalingEvent{
+//			"evt_msg"   : (&SocketController{Evt: "evt_msg"}).askMessage,
+//			"evt_create": (&SocketController{Evt: "evt_create"}).createRoom,
 //		}
-//		wsio.SetupServer()
+//		wsio.SetupServer(handlers, events)
 //	}
 //
 // You may config socket ping interval, timeout and using optinal data
@@ -80,7 +77,7 @@ type clientOpt struct {
 //	optinal = false
 //
 //	; Using idles client function, default false
-//	idels = true
+//	idels = false
 type wingSIO struct {
 	// Mutex sync lock, protect client connecting
 	lock sync.Mutex

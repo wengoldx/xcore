@@ -49,33 +49,32 @@ type DisconnectHandler func(uuid, option string)
 // Socket signlaing event function
 type SignalingEvent func(sc sio.Socket, uuid, params string) string
 
+// Socket signlaing event controller
+type WsioController struct {
+	Evt string // Signaling event key
+}
+
 // Socket event ack
-type EventAck struct {
-	State   int    `json:"state"`
-	Message string `json:"message"`
+type EvtAck struct {
+	State   int    `json:"state"`   // Event ack status, one of WsioOK or WsioErr
+	Message string `json:"message"` // Event ack response data marshaled as string
 }
 
 const (
-	// StSuccess success status
-	StSuccess = iota + 1
-
-	// StError error status
-	StError
+	WsioOK  = iota + 1 // Success status
+	WsioErr            // Error status
 )
 
 // Response normal ack to socket client
-func AckResp(msg string) string {
-	resp, _ := json.Marshal(&EventAck{
-		State: StSuccess, Message: msg,
-	})
+func (c *WsioController) AckResp(msg string) string {
+	resp, _ := json.Marshal(&EvtAck{State: WsioOK, Message: msg})
+	siolog.I("Ack evt[", c.Evt, "] resp: ", msg)
 	return string(resp)
 }
 
 // Response error ack to socket client
-func AckError(msg string) string {
-	resp, _ := json.Marshal(&EventAck{
-		State: StError, Message: msg,
-	})
-	siolog.E("Response err >>", msg)
+func (c *WsioController) AckError(msg string) string {
+	resp, _ := json.Marshal(&EvtAck{State: WsioErr, Message: msg})
+	siolog.E("Ack  evt[", c.Evt, "] err: ", msg)
 	return string(resp)
 }
