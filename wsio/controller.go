@@ -51,7 +51,8 @@ type SignalingEvent func(sc sio.Socket, uuid, params string) string
 
 // Socket signlaing event controller
 type WsioController struct {
-	Evt string // Signaling event key
+	Evt    string         // Signaling event key
+	hander SignalingEvent // Signaling event callback
 }
 
 // Socket event ack

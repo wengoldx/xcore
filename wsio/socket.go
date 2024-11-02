@@ -88,6 +88,7 @@ type wingSIO struct {
 	// socket golbal handler to execute clients authenticate action.
 	handlers Handlers
 
+	// Socket events map, registry on server start.
 	events map[string]SignalingEvent
 
 	// http request pointer to client, cache datas temporary
@@ -214,7 +215,8 @@ func (cc *wingSIO) registryEvents() {
 	// register socket signaling events
 	for evt, callback := range cc.events {
 		if evt != "" && callback != nil {
-			if err := wsc.server.On(evt, callback); err != nil {
+			controller := &WsioController{Evt: evt, hander: callback}
+			if err := wsc.server.On(evt, controller.hander); err != nil {
 				siolog.E("Bind socket event:", evt, "err:", err)
 				continue
 			}
