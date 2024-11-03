@@ -24,9 +24,9 @@ import (
 	"github.com/wengoldx/xcore/wsio/clients"
 )
 
-// client datas for temp cache
+// Client datas for temp cache
 type clientOpt struct {
-	UID string // Client unique id
+	CID string // Client unique id (maybe same as account uuid)
 	Opt string // Client optional data
 }
 
@@ -42,7 +42,7 @@ type clientOpt struct {
 // all UE4/UE5, Nodejs, python3 clients. the go-socket.io version 1.6.2
 // not matche or well support UE4/UE5 (No disconnected notify on server).
 //
-// see more [UE Socket.IO Pluge Usage](http://10.239.20.244:8090/pages/viewpage.action?pageId=7110992).
+// see more [UE Socket.IO Plugin Usage](http://10.239.20.244:8090/pages/viewpage.action?pageId=7110992).
 //
 // ----
 //
@@ -79,16 +79,16 @@ type clientOpt struct {
 //	; Using idles client function, default false
 //	idels = false
 type wingSIO struct {
-	// Mutex sync lock, protect client connecting
+	// mutex sync lock, protect client connecting
 	lock sync.Mutex
 
 	// socket server
 	server *sio.Server
 
-	// socket golbal handler to execute clients authenticate action.
+	// socket golbal handlers.
 	handlers Handlers
 
-	// Socket events map, registry on server start.
+	// socket events map, registry on server start.
 	events map[string]SignalingEvent
 
 	// http request pointer to client, cache datas temporary
@@ -109,10 +109,10 @@ type wingSIO struct {
 
 // Socket.IO handlers for auth, connect, disconnect.
 type Handlers struct {
-	AuthHandler AuthHandler       // socket golbal handler to execute clients authenticate action.
-	ConnHandler ConnectHandler    // socket golbal handler to execute clients connect action.
-	WillHandler WillDisconHandler // socket global handler to execute clients will disconnect actions.
-	DiscHandler DisconnectHandler // socket golbal handler to execute clients disconnect actions
+	AuthHandler AuthHandler       // socket callback to authenticate client.
+	ConnHandler ConnectHandler    // socket callback to perpare after client connected.
+	WillHandler WillDisconHandler // socket callback to do will before client disconnect.
+	DiscHandler DisconnectHandler // socket callback to release after client disconnected.
 }
 
 // Socket connection server
@@ -151,7 +151,7 @@ func SetupServer(cbs Handlers, evts map[string]SignalingEvent) {
 	siolog.I("Initialized socket.io routers...")
 }
 
-// read wsio configs from file
+// Read wsio configs from file
 func loadWsioConfigs() {
 	interval := beego.AppConfig.DefaultInt64("wsio::interval", 30)
 	serverPingInterval = time.Duration(interval) * time.Second
@@ -164,7 +164,7 @@ func loadWsioConfigs() {
 		"optional:", viaOption)
 }
 
-// createHandler create http handler for socket.io
+// Create http handler for socket.io
 func (cc *wingSIO) createHandler() (http.Handler, error) {
 	server, err := sio.NewServer(nil)
 	if err != nil {
@@ -243,14 +243,14 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	 *      check the perfix better than total match.
 	 */
 	if author != "" {
-		// Use auth header function for Python3 and Unreal client
+		// use auth header function for Python3 and Unreal client
 		token = req.Header.Get("Token")
 		if !strings.HasPrefix(author, "WENGOLD") || token == "" {
 			siolog.E("Invalid authoration:", author, "token:", token)
 			return invar.ErrAuthDenied
 		}
 	} else {
-		// Use URL + token string for React frontend and Wechat app client
+		// use URL + token string for React frontend and Wechat app client
 		if err := req.ParseForm(); err != nil {
 			siolog.E("Parse request form, err:", err)
 			return err
@@ -264,20 +264,20 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	// handler, or just use token as uuid when not set.
 	uuid, option := token, ""
 	if cc.handlers.AuthHandler != nil {
-		uid, opt, err := cc.handlers.AuthHandler(req.Form, token)
-		if err != nil || uid == "" {
-			siolog.E("Invalid uid:", uid, "or case err:", err)
+		cid, opt, err := cc.handlers.AuthHandler(req.Form, token)
+		if err != nil || cid == "" {
+			siolog.E("Invalid cid:", cid, "or case err:", err)
 			return invar.ErrAuthDenied
 		} else if viaOption && opt == "" {
-			siolog.E("Empty client", uid, "option data!")
+			siolog.E("Empty client", cid, "option data!")
 			return invar.ErrAuthDenied
 		}
 
-		siolog.I("Decoded client token, uuid:", uid, "opt:", opt)
-		uuid, option = uid, opt
+		siolog.I("Decoded client token, cid:", cid, "opt:", opt)
+		uuid, option = cid, opt
 	}
 
-	// bind http.Request -> uuid
+	// bind http.Request -> cid
 	h := uintptr(unsafe.Pointer(req))
 	cc.bindHTTP2UUIDLocked(h, uuid, option)
 	return nil
@@ -285,7 +285,7 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 
 // onConnect event of connect
 func (cc *wingSIO) onConnect(sc sio.Socket) {
-	// found client uuid and unbind -> http.Request
+	// found client id and unbind -> http.Request
 	h := uintptr(unsafe.Pointer(sc.Request()))
 	if _, ok := cc.onceBunds[h]; ok /* already bund */ {
 		siolog.W("Duplicate onConnect, abort for", h)
@@ -295,27 +295,27 @@ func (cc *wingSIO) onConnect(sc sio.Socket) {
 	defer cc.clearBundCache(h)
 
 	co := cc.unbindUUIDFromHTTPLocked(h)
-	if co == nil || co.UID == "" {
+	if co == nil || co.CID == "" {
 		siolog.E("Invalid socket request bind!")
 		sc.Disconnect()
 		return
 	}
 
 	clientPool := clients.Clients()
-	if err := clientPool.Register(sc, co.UID, co.Opt); err != nil {
-		siolog.E("Failed register socket client:", co.UID)
+	if err := clientPool.Register(sc, co.CID, co.Opt); err != nil {
+		siolog.E("Failed register socket client:", co.CID)
 		sc.Disconnect()
 		return
 	}
 
-	// handle connect callback for socket with uuid
+	// handle connect callback for socket with client id
 	if cc.handlers.ConnHandler != nil {
-		if err := cc.handlers.ConnHandler(sc, co.UID, co.Opt); err != nil {
-			siolog.E("Client:", co.UID, "connect socket err:", err)
+		if err := cc.handlers.ConnHandler(sc, co.CID, co.Opt); err != nil {
+			siolog.E("Client:", co.CID, "connect socket err:", err)
 			sc.Disconnect()
 		}
 	}
-	siolog.I("Connected socket client:", co.UID)
+	siolog.I("Connected socket client:", co.CID)
 }
 
 // onDisconnected event of disconnect
@@ -324,34 +324,34 @@ func (cc *wingSIO) onDisconnected(sc sio.Socket) {
 
 	// hangle will callback before diconnect when
 	// socket client object still valid.
-	uuid := clientPool.ClientID(sc.Id())
-	if cc.handlers.WillHandler != nil && uuid != "" {
-		cc.handlers.WillHandler(sc, uuid)
+	cid := clientPool.ClientID(sc.Id())
+	if cc.handlers.WillHandler != nil && cid != "" {
+		cc.handlers.WillHandler(sc, cid)
 	}
 
 	// deregister socket and disconnect it, then
 	// call disconnected handler to release sources.
 	opt := clientPool.Deregister(sc)
 	if cc.handlers.DiscHandler != nil {
-		cc.handlers.DiscHandler(uuid, opt)
+		cc.handlers.DiscHandler(cid, opt)
 	}
 }
 
-// bindHTTP2UUIDLocked bind http request pointer -> uuid on locked status
-func (cc *wingSIO) bindHTTP2UUIDLocked(h uintptr, uuid, opt string) {
+// Bind http request pointer -> cid on locked status
+func (cc *wingSIO) bindHTTP2UUIDLocked(h uintptr, cid, opt string) {
 	cc.lock.Lock()
 	defer cc.lock.Unlock()
 
-	cc.options[h] = &clientOpt{UID: uuid, Opt: opt}
+	cc.options[h] = &clientOpt{CID: cid, Opt: opt}
 }
 
-// unbindUUIDFromHTTPLocked unbind uuid -> http request pointer on locked status
+// Unbind cid -> http request pointer on locked status
 func (cc *wingSIO) unbindUUIDFromHTTPLocked(h uintptr) *clientOpt {
 	cc.lock.Lock()
 	defer cc.lock.Unlock()
 
 	if data, ok := cc.options[h]; ok {
-		co := &clientOpt{UID: data.UID, Opt: data.Opt}
+		co := &clientOpt{CID: data.CID, Opt: data.Opt}
 		delete(cc.options, h)
 		return co
 	}

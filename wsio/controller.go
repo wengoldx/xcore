@@ -20,34 +20,34 @@ import (
 // Auth client outset, it will disconnect when return no-nil error
 //	@param forms form values parse from url
 //	@param token client login jwt-token contain uuid or optional data in claims key string
-//	@return - string client uuid
+//	@return - string client unique id (maybe same as client id)
 //			- any client optional data parsed from token
 //			- error Exception message
 type AuthHandler func(forms url.Values, token string) (string, string, error)
 
 // Client connected callback, it will disconnect when return no-nil error
-//	@param sc current socket client
-//	@param uuid client unique id
-//	@param option client login optional data, maybe nil
+//	@param sc  current socket client
+//	@param cid client unique id
+//	@param opt client login optional data, maybe nil
 //	@return - error Exception message
-type ConnectHandler func(sc sio.Socket, uuid, option string) error
+type ConnectHandler func(sc sio.Socket, cid, opt string) error
 
 // Client will disconnected handler function, it called before socket client disconnect.
-//	@param sc current socket client
-//	@param uuid client unique id
-type WillDisconHandler func(sc sio.Socket, uuid string)
+//	@param sc  current socket client
+//	@param cid client unique id
+type WillDisconHandler func(sc sio.Socket, cid string)
 
 // Client disconnected handler function
-//	@param uuid client unique id
-//	@param option client login optional data, maybe nil
+//	@param cid client unique id
+//	@param opt client login optional data, maybe nil
 //
 // `NOTICE` :
 //
-// The client of uuid already released when call this event function.
-type DisconnectHandler func(uuid, option string)
+// The client already released when call this event function.
+type DisconnectHandler func(cid, opt string)
 
 // Socket signlaing event function
-type SignalingEvent func(sc sio.Socket, uuid, params string) string
+type SignalingEvent func(sc sio.Socket, cid, params string) string
 
 // Socket signlaing event controller
 type WsioController struct {
