@@ -326,34 +326,33 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 // MQTT Local Client Setup
 // ----------------------------------------
 
-// A simple way to setup mqtt client by given params, you can init mqtt subscribes on return true.
-// The opts params must as: [remain bool, svr string, handler mq.OnConnectHandler]
-func SetupMQClient(data string, qos byte, opts ...any) bool {
-	// get remain flag from input params if exist
-	remain, num := false, len(opts)
-	if num > 0 {
-		remain = opts[0].(bool)
+// A simple way to setup mqtt client by given connect handler and optional params,
+// you can subscribe mqtt topics on return true. The optional params must set as
+// sequence [qos:int, remain:bool, svr:string]
+func SetupMQClient(data string, handler mq.OnConnectHandler, opts ...any) bool {
+	optslen := len(opts)
+	qos, remain, svr := 0, false, ""
+
+	// get optional params if exist
+	if optslen > 0 {
+		qos = opts[0].(int)
+	}
+	if optslen > 1 {
+		remain = opts[1].(bool)
+	}
+	if optslen > 2 {
+		svr = opts[2].(string)
 	}
 
-	stub := SetOptions(qos, remain)
-
-	// get mqtt connect configs from indicated server from
-	// input params if exist, and then check the result.
-	var err error
-	if num > 1 {
-		err = GenClient(data, opts[1].(string))
-	} else {
-		err = GenClient(data)
-	}
-
-	if err != nil {
+	stub := SetOptions(byte(qos), remain)
+	if err := GenClient(data, svr); err != nil {
 		mqxlog.E("Create mqtt client, err:", err)
 		return false
 	}
 
-	// set mqtt client connect callback from input params if exist
-	if num > 2 && opts[2] != nil {
-		stub.ConnectHandler = opts[2].(mq.OnConnectHandler)
+	// set mqtt client connect callback
+	if handler != nil {
+		stub.ConnectHandler = handler
 	}
 	return true
 }
