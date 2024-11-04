@@ -219,20 +219,19 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 // ----------------------------------------
 
 // Auth header token and return account uuid and password
-func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
+func (stub *GrpcStub) AuthHeaderToken(token string) string {
 	if stub.Acc == nil {
 		rpclog.E("Acc grpc instance not inited!")
-		return "", ""
-	} else {
-		param := &acc.Token{Token: token}
-		resp, err := stub.Acc.ViaToken(context.Background(), param)
-		if err != nil {
-			rpclog.E("Auth grpc token, err:", err)
-			return "", ""
-		}
-
-		return resp.Acc /* uuid */, ""
+		return ""
 	}
+
+	param := &acc.Token{Token: token}
+	resp, err := stub.Acc.ViaToken(context.Background(), param)
+	if err != nil {
+		rpclog.E("Auth grpc token, err:", err)
+		return ""
+	}
+	return resp.Acc /* uuid */
 }
 
 // Auth account role from http header
@@ -240,16 +239,15 @@ func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 	if stub.Acc == nil {
 		rpclog.E("Acc grpc instance not inited!")
 		return false
-	} else {
-		param := &acc.Role{Uuid: uuid, Router: url, Method: method}
-		resp, err := stub.Acc.ViaRole(context.Background(), param)
-		if err != nil {
-			rpclog.E("Auth", uuid, "role, err:", err)
-			return false
-		}
-
-		return resp.Pass
 	}
+
+	param := &acc.Role{Uuid: uuid, Router: url, Method: method}
+	resp, err := stub.Acc.ViaRole(context.Background(), param)
+	if err != nil {
+		rpclog.E("Auth", uuid, "role, err:", err)
+		return false
+	}
+	return resp.Pass
 }
 
 // ----------------------------------------
