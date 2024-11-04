@@ -330,7 +330,7 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 func SetupMQClient(data string, opt byte, remain bool, handler ...mq.OnConnectHandler) bool {
 	stub := SetOptions(opt, remain)
 	if err := GenClient(data); err != nil {
-		logger.E("Parse mqtt config, err:", err)
+		mqxlog.E("Create mqtt client, err:", err)
 		return false
 	}
 	if len(handler) > 0 {
