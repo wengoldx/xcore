@@ -218,20 +218,23 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 // Account Authentications Request
 // ----------------------------------------
 
-// Auth header token and return account uuid and password
-func (stub *GrpcStub) AuthHeaderToken(token string) string {
+// Auth header token and return account uuid.
+//
+// `NOTICE` that the returned password fixed as empty string for services
+// except backend account server.
+func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 	if stub.Acc == nil {
 		rpclog.E("Acc grpc instance not inited!")
-		return ""
+		return "", ""
 	}
 
 	param := &acc.Token{Token: token}
 	resp, err := stub.Acc.ViaToken(context.Background(), param)
 	if err != nil {
 		rpclog.E("Auth grpc token, err:", err)
-		return ""
+		return "", ""
 	}
-	return resp.Acc /* uuid */
+	return resp.Acc /* uuid */, "" /* password */
 }
 
 // Auth account role from http header
