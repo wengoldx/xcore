@@ -39,7 +39,7 @@ import (
 //	}
 //
 //
-// UseCase 2 : Using nacos MQTT configs and connect with callbacks.
+// UseCase 2 : Using nacos MQTT configs and connect with callbacks, it same as call mqtt.SetMQClient(data, 2, ConnectHandler).
 //
 //	stub := mqtt.SetOptions(2)
 //	stub.ConnectHandler = ConnectHandler
@@ -107,7 +107,7 @@ func Singleton() *MqttStub {
 // Generate mqtt client and connect with MQTT broker, the client using
 // 'tcp' protocol and fixed id as format 'server@12345678'.
 //
-//	* The configs input param mabe set as json string from Nacos Configs Server
+//	* The configs input param maybe set as json string from Nacos Configs Server
 //	* Or input Options object refrence created at local
 func GenClient(configs any, server ...string) error {
 	stub, svr := Singleton(), beego.BConfig.AppName
@@ -320,4 +320,27 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 		}
 	}
 	return nil
+}
+
+// ----------------------------------------
+// MQTT Local Client Setup
+// ----------------------------------------
+
+// A simple way to setup mqtt client by given params, you can init mqtt subscribes on return true.
+func SetupMQClient(data string, opt byte, remain bool, handler ...mq.OnConnectHandler) bool {
+	stub := SetOptions(opt, remain)
+	if err := GenClient(data); err != nil {
+		logger.E("Parse mqtt config, err:", err)
+		return false
+	}
+	if len(handler) > 0 {
+		stub.ConnectHandler = handler[0]
+	}
+	return true
+}
+
+// A simple way to setup mqtt remote logger from original nacos config datas, it called
+// by internal nacos module when local server listen nacos.DID_MQTT_AGENTS config key.
+func SetupMQLogger(data string) {
+	SetupLogger(GetOptions(data, "public"))
 }

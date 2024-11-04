@@ -23,6 +23,7 @@ import (
 	"github.com/wengoldx/xcore/elastic"
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
+	"github.com/wengoldx/xcore/mqtt"
 	"github.com/wengoldx/xcore/utils"
 	"github.com/wengoldx/xcore/wechat"
 )
@@ -30,7 +31,9 @@ import (
 // Object logger with [NACOS] perfix for nacos module
 var naclog = logger.NewLogger("NACOS")
 
-// -------- Auto Register Define --------
+// ----------------------------------------
+// Auto Register Define
+// ----------------------------------------
 
 // Server register informations
 type ServerItem struct {
@@ -138,7 +141,9 @@ func (si *ServerItem) OnChanged(services []model.Instance, err error) {
 	}
 }
 
-// -------- Config Service Define --------
+// ----------------------------------------
+// Config Service Define
+// ----------------------------------------
 
 // Meta config informations
 type MetaConfig struct {
@@ -372,7 +377,9 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 		mc.parsePaths(data)
 	case DID_ES_AGENTS:
 		mc.setEsAgent(data)
-	default:
+	case DID_MQTT_AGENTS:
+		mqtt.SetupMQLogger(data)
+	default: // DID_API_ROUTERS, DID_GRPC_CERTS
 		naclog.I("Received configs of", dataId)
 	}
 }
