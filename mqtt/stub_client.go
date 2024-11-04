@@ -327,14 +327,21 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 // ----------------------------------------
 
 // A simple way to setup mqtt client by given params, you can init mqtt subscribes on return true.
-func SetupMQClient(data string, opt byte, remain bool, handler ...mq.OnConnectHandler) bool {
-	stub := SetOptions(opt, remain)
+// The opts params must as: [remain bool, handler mq.OnConnectHandler]
+func SetupMQClient(data string, qos byte, opts ...any) bool {
+	remain, num := false, len(opts)
+	if num > 0 {
+		remain = opts[0].(bool)
+	}
+
+	stub := SetOptions(qos, remain)
 	if err := GenClient(data); err != nil {
 		mqxlog.E("Create mqtt client, err:", err)
 		return false
 	}
-	if len(handler) > 0 {
-		stub.ConnectHandler = handler[0]
+
+	if num > 1 && opts[1] != nil {
+		stub.ConnectHandler = opts[1].(mq.OnConnectHandler)
 	}
 	return true
 }
