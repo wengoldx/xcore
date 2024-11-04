@@ -345,14 +345,13 @@ func SetupMQClient(data string, handler mq.OnConnectHandler, opts ...any) bool {
 	}
 
 	stub := SetOptions(byte(qos), remain)
+	if handler != nil {
+		stub.ConnectHandler = handler
+	}
+
 	if err := GenClient(data, svr); err != nil {
 		mqxlog.E("Create mqtt client, err:", err)
 		return false
-	}
-
-	// set mqtt client connect callback
-	if handler != nil {
-		stub.ConnectHandler = handler
 	}
 	return true
 }
