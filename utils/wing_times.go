@@ -335,6 +335,24 @@ func FormatNow(layout ...string) string {
 	return FormatUnix(TimeLayout, nowns/1e9)
 }
 
+// FormatToday format now to today string as '2006-01-02', or custom
+// format set by layout like '2006/01/02', '2006.01.02' and so on.
+func FormatToday(layout ...string) string {
+	if len(layout) > 0 && layout[0] != "" {
+		return time.Now().Format(layout[0])
+	}
+	return time.Now().Format(DateLayout)
+}
+
+// FormatDay format day string from given unix seconds as '2006-01-02',
+// or custom format like '2006/01/02', '2006.01.02' and so on.
+func FormatDay(sec int64, layout ...string) string {
+	if len(layout) > 0 && layout[0] != "" {
+		return time.Unix(sec, 0).Format(layout[0])
+	}
+	return time.Unix(sec, 0).Format(DateLayout)
+}
+
 // FormatDur format the time before or after now by add given duration, it
 // may format as TimeLayout when input layout not set, and the formated
 // time contain location timezoom.
