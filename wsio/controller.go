@@ -47,7 +47,7 @@ type WillDisconHandler func(sc sio.Socket, cid string)
 type DisconnectHandler func(cid, opt string)
 
 // Socket signlaing event function
-type SignalingEvent func(sc sio.Socket, cid, params string) string
+type SignalingEvent func(sc sio.Socket, params ...string) string
 
 // Socket signlaing event controller
 type WsioController struct {
