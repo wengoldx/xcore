@@ -307,6 +307,29 @@ func (c *WingController) BindValue(key string, dest any) error {
 	return nil
 }
 
+// GetFloatDef get float value from url params with default value that enbale
+// to use as error value to check get result.
+func (c *WingController) GetFloatDef(key string, def float64) float64 {
+	rst, _ := c.GetFloat(key, def)
+	return rst
+}
+
+// GetFloatDef get int value from url params with default value that enbale
+// to use as error value to check get result.
+func (c *WingController) GetIntDef(key string, def int) int {
+	rst, _ := c.GetInt(key, def)
+	return rst
+}
+
+// GetFloatDef get int64 value from url params with default value that enbale
+// to use as error value to check get result.
+func (c *WingController) GetInt64Def(key string, def int64) int64 {
+	rst, _ := c.GetInt64(key, def)
+	return rst
+}
+
+// ----------------------------------------
+
 // DoAfterValidated do bussiness action after success validate the given json data.
 //	@Return 400, 404 codes returned on error.
 func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, fs ...bool) {
