@@ -210,7 +210,7 @@ func JoinInts(nums []int, sep ...string) string {
 	return strings.Join(vs, ",")
 }
 
-// JoinInts join int64 numbers as string '1,2,3' with ',' default separator,
+// JoinInt64s join int64 numbers as string '1,2,3' with ',' default separator,
 // or custom separator '-' like '1-2-3'.
 func JoinInt64s(nums []int64, sep ...string) string {
 	vs := []string{}
@@ -228,7 +228,7 @@ func JoinInt64s(nums []int64, sep ...string) string {
 	return strings.Join(vs, ",")
 }
 
-// JoinInts join float64 numbers as string '0.1,2,3.45' with ',' default separator,
+// JoinFloats join float64 numbers as string '0.1,2,3.45' with ',' default separator,
 // or custom separator '-' like '0.1-2-3.45'.
 func JoinFloats(nums []float64, sep ...string) string {
 	vs := []string{}
@@ -253,6 +253,42 @@ func JoinLines(inputs ...string) string {
 		packet += line + "\n"
 	}
 	return packet
+}
+
+// Reversal ints string to int array with default separator , char or custom separator.
+func ReverInts(src string, sep ...string) []int {
+	var vs []string
+	if len(sep) > 0 {
+		vs = strings.Split(src, sep[0])
+	} else {
+		vs = strings.Split(src, ",")
+	}
+
+	out := []int{}
+	for _, v := range vs {
+		if vi, err := strconv.Atoi(v); err == nil {
+			out = append(out, vi)
+		}
+	}
+	return out
+}
+
+// Reversal int64s string to int64 array with default separator , char or custom separator.
+func ReverInt64s(src string, sep ...string) []int64 {
+	var vs []string
+	if len(sep) > 0 {
+		vs = strings.Split(src, sep[0])
+	} else {
+		vs = strings.Split(src, ",")
+	}
+
+	out := []int64{}
+	for _, v := range vs {
+		if vi, err := strconv.ParseInt(v, 10, 64); err == nil {
+			out = append(out, vi)
+		}
+	}
+	return out
 }
 
 // SplitTrim extend strings.Split to trim space and sub strings before split.
