@@ -42,7 +42,12 @@ type ScanCallback func(rows *sql.Rows) error
 type InsertCallback func(index int) string
 
 // TransactionCallback transaction callback for Transactions().
-type TransactionCallback func(tx *sql.Tx) error
+//
+// Deprecated: Use TransCallback and mvc.TxExce, mvc.TxQuery instead it.
+type TransactionCallback func(tx *sql.Tx) (sql.Result, error)
+
+// TransCallback transaction callback for Trans().
+type TransCallback func(tx *sql.Tx) error
 
 // MySQL database configs
 const (
@@ -197,6 +202,21 @@ func TxExce(tx *sql.Tx, query string, args ...any) error {
 	return err
 }
 
+// Excute transaction step to query single data and get result in scan callback.
+func TxOne(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
+	if rows, err := tx.Query(query, args...); err != nil {
+		return err
+	} else {
+		defer rows.Close()
+
+		if !rows.Next() {
+			return invar.ErrNotFound
+		}
+		rows.Columns()
+		return cb(rows)
+	}
+}
+
 // Excute transaction step to query datas, and fetch result in scan callback.
 func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
 	if rows, err := tx.Query(query, args...); err != nil {
@@ -260,7 +280,21 @@ func (w *WingProvider) Query(query string, args ...any) (*sql.Rows, error) {
 }
 
 // QueryOne call sql.Query() to query the top one record.
+//
+// Deprecated: Use mvc.One() instead it.
 func (w *WingProvider) QueryOne(query string, cb ScanCallback, args ...any) error {
+	return w.One(query, cb, args...)
+}
+
+// QueryArray call sql.Query() to query multiple records.
+//
+// Deprecated: Use mvc.Array() instead it.
+func (w *WingProvider) QueryArray(query string, cb ScanCallback, args ...any) error {
+	return w.Array(query, cb, args...)
+}
+
+// One call sql.Query() to query the top one record.
+func (w *WingProvider) One(query string, cb ScanCallback, args ...any) error {
 	if rows, err := w.Conn.Query(query, args...); err != nil {
 		return err
 	} else {
@@ -275,7 +309,7 @@ func (w *WingProvider) QueryOne(query string, cb ScanCallback, args ...any) erro
 }
 
 // QueryArray call sql.Query() to query multiple records.
-func (w *WingProvider) QueryArray(query string, cb ScanCallback, args ...any) error {
+func (w *WingProvider) Array(query string, cb ScanCallback, args ...any) error {
 	if rows, err := w.Conn.Query(query, args...); err != nil {
 		return err
 	} else {
@@ -422,14 +456,39 @@ func (w *WingProvider) Transaction(query string, args ...any) error {
 
 // Transactions excute multiple transactions, it will rollback when case any error.
 //
+// Deprecated: Use mvc.Trans() instead it.
+func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
+	if tx, err := w.Conn.Begin(); err != nil {
+		return err
+	} else {
+		defer tx.Rollback()
+
+		// start excute multiple transactions in callback
+		for _, cb := range cbs {
+			if _, err := cb(tx); err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Trans excute multiple transactions, it will rollback when case any error.
+//
 // ---
 //
 //	// Excute 3 transactions in callback with different query1 ~ 3
-//	err := mvc.Transactions(
-//		func(tx *sql.Tx) error { return mvc.Query(tx, query1, args...) },
+//	err := mvc.Trans(
+//		func(tx *sql.Tx) error { return mvc.Query(tx, query1, func(rows *sql.Rows) error {
+//				// Fetch all rows to get result datas...
+//			}, args...) },
 //		func(tx *sql.Tx) error { return mvc.Exec(tx, query2, args...) },
 //		func(tx *sql.Tx) error { return mvc.Exec(tx, query3, args...) })
-func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
+func (w *WingProvider) Trans(cbs ...TransCallback) error {
 	if tx, err := w.Conn.Begin(); err != nil {
 		return err
 	} else {
