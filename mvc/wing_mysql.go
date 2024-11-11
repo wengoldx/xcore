@@ -197,7 +197,7 @@ func Select(session string) *WingProvider {
 }
 
 // Excute transaction step to update, insert, or delete datas.
-func TxExce(tx *sql.Tx, query string, args ...any) error {
+func TxExec(tx *sql.Tx, query string, args ...any) error {
 	_, err := tx.Exec(query, args...)
 	return err
 }
