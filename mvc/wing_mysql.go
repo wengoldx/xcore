@@ -42,7 +42,7 @@ type ScanCallback func(rows *sql.Rows) error
 type InsertCallback func(index int) string
 
 // TransactionCallback transaction callback for Transactions().
-type TransactionCallback func(tx *sql.Tx) (sql.Result, error)
+type TransactionCallback func(tx *sql.Tx) error
 
 // MySQL database configs
 const (
@@ -189,6 +189,29 @@ func Select(session string) *WingProvider {
 		session = session + "-dev"
 	}
 	return connPool[session]
+}
+
+// Excute transaction step to update, insert, or delete datas.
+func TxExce(tx *sql.Tx, query string, args ...any) error {
+	_, err := tx.Exec(query, args...)
+	return err
+}
+
+// Excute transaction step to query datas, and fetch result in scan callback.
+func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
+	if rows, err := tx.Query(query, args...); err != nil {
+		return err
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			rows.Columns()
+			if err := cb(rows); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Stub return content provider connection.
@@ -403,9 +426,9 @@ func (w *WingProvider) Transaction(query string, args ...any) error {
 //
 //	// Excute 3 transactions in callback with different query1 ~ 3
 //	err := mvc.Transactions(
-//		func(tx *sql.Tx) (sql.Result, error) { return tx.Exec(query1, args...) },
-//		func(tx *sql.Tx) (sql.Result, error) { return tx.Exec(query2, args...) },
-//		func(tx *sql.Tx) (sql.Result, error) { return tx.Exec(query3, args...) })
+//		func(tx *sql.Tx) error { return mvc.Query(tx, query1, args...) },
+//		func(tx *sql.Tx) error { return mvc.Exec(tx, query2, args...) },
+//		func(tx *sql.Tx) error { return mvc.Exec(tx, query3, args...) })
 func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
 	if tx, err := w.Conn.Begin(); err != nil {
 		return err
@@ -414,7 +437,7 @@ func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
 
 		// start excute multiple transactions in callback
 		for _, cb := range cbs {
-			if _, err := cb(tx); err != nil {
+			if err := cb(tx); err != nil {
 				return err
 			}
 		}
