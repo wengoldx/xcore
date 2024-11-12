@@ -196,44 +196,6 @@ func Select(session string) *WingProvider {
 	return connPool[session]
 }
 
-// Excute transaction step to update, insert, or delete datas.
-func TxExec(tx *sql.Tx, query string, args ...any) error {
-	_, err := tx.Exec(query, args...)
-	return err
-}
-
-// Excute transaction step to query single data and get result in scan callback.
-func TxOne(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
-	if rows, err := tx.Query(query, args...); err != nil {
-		return err
-	} else {
-		defer rows.Close()
-
-		if !rows.Next() {
-			return invar.ErrNotFound
-		}
-		rows.Columns()
-		return cb(rows)
-	}
-}
-
-// Excute transaction step to query datas, and fetch result in scan callback.
-func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
-	if rows, err := tx.Query(query, args...); err != nil {
-		return err
-	} else {
-		defer rows.Close()
-
-		for rows.Next() {
-			rows.Columns()
-			if err := cb(rows); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // Stub return content provider connection.
 func (w *WingProvider) Stub() *sql.DB {
 	return w.Conn
@@ -274,8 +236,10 @@ func (w *WingProvider) Count(query string, args ...any) (int, error) {
 	}
 }
 
-// Query directory call sql.Query() from database connection.
-func (w *WingProvider) Query(query string, args ...any) (*sql.Rows, error) {
+// Rows directory call sql.Query() from database connection.
+//
+// Deprecated: Use mvc.One() or mvc.Query instead it.
+func (w *WingProvider) Rows(query string, args ...any) (*sql.Rows, error) {
 	return w.Conn.Query(query, args...)
 }
 
@@ -288,9 +252,9 @@ func (w *WingProvider) QueryOne(query string, cb ScanCallback, args ...any) erro
 
 // QueryArray call sql.Query() to query multiple records.
 //
-// Deprecated: Use mvc.Array() instead it.
+// Deprecated: Use mvc.Query() instead it.
 func (w *WingProvider) QueryArray(query string, cb ScanCallback, args ...any) error {
-	return w.Array(query, cb, args...)
+	return w.Query(query, cb, args...)
 }
 
 // One call sql.Query() to query the top one record.
@@ -308,8 +272,8 @@ func (w *WingProvider) One(query string, cb ScanCallback, args ...any) error {
 	}
 }
 
-// QueryArray call sql.Query() to query multiple records.
-func (w *WingProvider) Array(query string, cb ScanCallback, args ...any) error {
+// Query call sql.Query() to query multiple records.
+func (w *WingProvider) Query(query string, cb ScanCallback, args ...any) error {
 	if rows, err := w.Conn.Query(query, args...); err != nil {
 		return err
 	} else {
@@ -747,4 +711,68 @@ func (w *WingProvider) FormatInserts(values any) (string, error) {
 		return "", invar.ErrEmptyData
 	}
 	return strings.Join(items, ","), nil
+}
+
+// ----------------------------------------
+
+// Excute transaction step to update, insert, or delete datas.
+func TxExec(tx *sql.Tx, query string, args ...any) error {
+	_, err := tx.Exec(query, args...)
+	return err
+}
+
+// Excute transaction step to query single data and get result in scan callback.
+func TxOne(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
+	if rows, err := tx.Query(query, args...); err != nil {
+		return err
+	} else {
+		defer rows.Close()
+
+		if !rows.Next() {
+			return invar.ErrNotFound
+		}
+		rows.Columns()
+		return cb(rows)
+	}
+}
+
+// Excute transaction step to query datas, and fetch result in scan callback.
+func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
+	if rows, err := tx.Query(query, args...); err != nil {
+		return err
+	} else {
+		defer rows.Close()
+
+		for rows.Next() {
+			rows.Columns()
+			if err := cb(rows); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Excute transaction step to insert multiple records.
+//
+// ---
+//
+//	query := "INSERT sametable (field1, field2) VALUES"
+//	err := mvc.TxInserts(tx, query, len(vs), func(index int) string {
+//		return fmt.Sprintf("(%v, %v)", v1, vs[index])
+//
+//		// For string values like follows:
+//		// return fmt.Sprintf("(\"%s\", \"%s\")", v1, vs[index])
+//	})
+func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
+	values := []string{}
+	for i := 0; i < cnt; i++ {
+		value := strings.TrimSpace(cb(i))
+		if value != "" {
+			values = append(values, value)
+		}
+	}
+	query = query + " " + strings.Join(values, ",")
+	_, err := tx.Exec(query)
+	return err
 }
