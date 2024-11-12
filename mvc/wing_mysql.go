@@ -436,7 +436,7 @@ func (w *WingProvider) Execute2(query string, args ...any) (int64, error) {
 
 // Transaction execute one sql transaction, it will rollback when operate failed.
 //
-// `@see` Use Transactions() to excute multiple transaction as once.
+// Deprecated: Use mvc.TranRoll() instead it.
 func (w *WingProvider) Transaction(query string, args ...any) error {
 	if tx, err := w.Conn.Begin(); err != nil {
 		return err
@@ -477,17 +477,37 @@ func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
 	return nil
 }
 
+// TranRoll execute one sql transaction, it will rollback when operate failed.
+//
+// `@see` Use mvc.Trans() to excute multiple transaction as once.
+func (w *WingProvider) TranRoll(query string, args ...any) error {
+	if tx, err := w.Conn.Begin(); err != nil {
+		return err
+	} else {
+		defer tx.Rollback()
+
+		if _, err := tx.Exec(query, args...); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Trans excute multiple transactions, it will rollback when case any error.
 //
 // ---
 //
 //	// Excute 3 transactions in callback with different query1 ~ 3
 //	err := mvc.Trans(
-//		func(tx *sql.Tx) error { return mvc.Query(tx, query1, func(rows *sql.Rows) error {
+//		func(tx *sql.Tx) error { return mvc.TxQuery(tx, query1, func(rows *sql.Rows) error {
 //				// Fetch all rows to get result datas...
 //			}, args...) },
-//		func(tx *sql.Tx) error { return mvc.Exec(tx, query2, args...) },
-//		func(tx *sql.Tx) error { return mvc.Exec(tx, query3, args...) })
+//		func(tx *sql.Tx) error { return mvc.TxExec(tx, query2, args...) },
+//		func(tx *sql.Tx) error { return mvc.TxExec(tx, query3, args...) })
 func (w *WingProvider) Trans(cbs ...TransCallback) error {
 	if tx, err := w.Conn.Begin(); err != nil {
 		return err
