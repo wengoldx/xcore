@@ -314,9 +314,7 @@ func (w *WingProvider) Insert(query string, args ...any) (int64, error) {
 //	query := "INSERT sametable (field1, field2) VALUES"
 //	err := mvc.Inserts(query, len(vs), func(index int) string {
 //		return fmt.Sprintf("(%v, %v)", v1, vs[index])
-//
-//		// For string values like follows:
-//		// return fmt.Sprintf("(\"%s\", \"%s\")", v1, vs[index])
+//		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
 //	})
 func (w *WingProvider) Inserts(query string, cnt int, cb InsertCallback) error {
 	values := []string{}
@@ -600,7 +598,7 @@ func (w *WingProvider) JoinStrings(query string, values []string) string {
 //		"Height": 176.8,
 //		"Secure": nil,      // Filter out nil value
 //	}
-//	// => Age=16, Male=true, Name="ZhangSan", Height=176.8
+//	// => Age=16, Male=true, Name='ZhangSan', Height=176.8
 func (w *WingProvider) FormatSets(values map[string]any) (string, error) {
 	sets := []string{}
 	for key, value := range values {
@@ -610,7 +608,7 @@ func (w *WingProvider) FormatSets(values map[string]any) (string, error) {
 
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.String {
-			sets = append(sets, fmt.Sprintf(key+"=\"%s\"", value))
+			sets = append(sets, fmt.Sprintf(key+"='%s'", value))
 		} else if v.Kind() == reflect.Bool || v.CanInt() || v.CanFloat() || v.CanUint() {
 			sets = append(sets, fmt.Sprintf(key+"=%v", value))
 		}
@@ -675,7 +673,7 @@ func (w *WingProvider) FormatInserts(values any) (string, error) {
 		case reflect.Pointer:
 			item = item.Elem()
 		case reflect.String: // for string values array
-			items = append(items, fmt.Sprintf("(\"%s\")", item))
+			items = append(items, fmt.Sprintf("('%s')", item))
 			continue
 		default: // for basic data types values array
 			if item.Kind() == reflect.Bool || item.CanInt() || item.CanFloat() || item.CanUint() {
@@ -691,7 +689,7 @@ func (w *WingProvider) FormatInserts(values any) (string, error) {
 			for j, vs := 0, item.NumField(); j < vs; j++ {
 				itv := item.Field(j) // fetch value fields
 				if itv.Kind() == reflect.String {
-					fields = append(fields, fmt.Sprintf("\"%s\"", itv))
+					fields = append(fields, fmt.Sprintf("'%s'", itv))
 				} else if itv.Kind() == reflect.Bool || itv.CanInt() || itv.CanFloat() || itv.CanUint() {
 					fields = append(fields, fmt.Sprintf("%v", itv))
 				} else {
@@ -760,9 +758,7 @@ func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
 //	query := "INSERT sametable (field1, field2) VALUES"
 //	err := mvc.TxInserts(tx, query, len(vs), func(index int) string {
 //		return fmt.Sprintf("(%v, %v)", v1, vs[index])
-//
-//		// For string values like follows:
-//		// return fmt.Sprintf("(\"%s\", \"%s\")", v1, vs[index])
+//		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
 //	})
 func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
 	values := []string{}
