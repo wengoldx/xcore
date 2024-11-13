@@ -223,8 +223,8 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 // `NOTICE` that the returned password fixed as empty string for services
 // except backend account server.
 func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
-	if stub.Acc == nil {
-		rpclog.E("Acc grpc instance not inited!")
+	if stub.Acc == nil || token == "" {
+		rpclog.E("Acc grpc not inited, or invalie token!")
 		return "", ""
 	}
 
@@ -239,8 +239,8 @@ func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 
 // Auth account role from http header
 func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
-	if stub.Acc == nil {
-		rpclog.E("Acc grpc instance not inited!")
+	if stub.Acc == nil || uuid == "" || url == "" || method == "" {
+		rpclog.E("Acc grpc not inited, or invalid role!")
 		return false
 	}
 
