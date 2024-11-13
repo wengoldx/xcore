@@ -224,7 +224,7 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 // except backend account server.
 func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 	if stub.Acc == nil || token == "" {
-		rpclog.E("Acc grpc not inited, or invalie token!")
+		rpclog.E("Acc grpc uninit, or invalie token!")
 		return "", ""
 	}
 
@@ -240,7 +240,7 @@ func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 // Auth account role from http header
 func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 	if stub.Acc == nil || uuid == "" || url == "" || method == "" {
-		rpclog.E("Acc grpc not inited, or invalid role!")
+		rpclog.E("Acc grpc uninit, or invalid role!")
 		return false
 	}
 
