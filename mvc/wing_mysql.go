@@ -41,11 +41,6 @@ type ScanCallback func(rows *sql.Rows) error
 // InsertCallback format query values to string for Inserts().
 type InsertCallback func(index int) string
 
-// TransactionCallback transaction callback for Transactions().
-//
-// Deprecated: Use TransCallback and mvc.TxExce, mvc.TxQuery instead it.
-type TransactionCallback func(tx *sql.Tx) (sql.Result, error)
-
 // TransCallback transaction callback for Trans().
 type TransCallback func(tx *sql.Tx) error
 
@@ -236,27 +231,6 @@ func (w *WingProvider) Count(query string, args ...any) (int, error) {
 	}
 }
 
-// Rows directory call sql.Query() from database connection.
-//
-// Deprecated: Use mvc.One() or mvc.Query instead it.
-func (w *WingProvider) Rows(query string, args ...any) (*sql.Rows, error) {
-	return w.Conn.Query(query, args...)
-}
-
-// QueryOne call sql.Query() to query the top one record.
-//
-// Deprecated: Use mvc.One() instead it.
-func (w *WingProvider) QueryOne(query string, cb ScanCallback, args ...any) error {
-	return w.One(query, cb, args...)
-}
-
-// QueryArray call sql.Query() to query multiple records.
-//
-// Deprecated: Use mvc.Query() instead it.
-func (w *WingProvider) QueryArray(query string, cb ScanCallback, args ...any) error {
-	return w.Query(query, cb, args...)
-}
-
 // One call sql.Query() to query the top one record.
 func (w *WingProvider) One(query string, cb ScanCallback, args ...any) error {
 	if rows, err := w.Conn.Query(query, args...); err != nil {
@@ -291,7 +265,7 @@ func (w *WingProvider) Query(query string, cb ScanCallback, args ...any) error {
 
 // Insert call sql.Prepare() and stmt.Exec() to insert a new record.
 //
-// `@see` Use Inserts() to insert multiple values in once database operation.
+// `@see` Use mvc.Inserts() to insert multiple values in once request.
 func (w *WingProvider) Insert(query string, args ...any) (int64, error) {
 	if stmt, err := w.Conn.Prepare(query); err != nil {
 		return -1, err
@@ -307,7 +281,7 @@ func (w *WingProvider) Insert(query string, args ...any) (int64, error) {
 }
 
 // Inserts format and combine multiple values to insert at once,
-// this method can provide high-performance than call Insert() one by one.
+// this method can provide high-performance than call mvc.Insert() one by one.
 //
 // ---
 //
@@ -329,7 +303,7 @@ func (w *WingProvider) Inserts(query string, cnt int, cb InsertCallback) error {
 }
 
 // Inserts2 format and combine slice values to insert multiple items at once,
-// this method can provide high-performance same as call Insert() without callback.
+// this method can provide high-performance same as call mvc.Insert() without callback.
 //
 // ---
 //
@@ -347,14 +321,31 @@ func (w *WingProvider) Inserts2(query string, values any) error {
 	return w.Execute(query + " " + items)
 }
 
-// Updates format the values map and update result sets.
+// Update call sql.Prepare() and stmt.Exec() to update record, then check the
+// updated result if return invar.ErrNotChanged error when not changed any one.
+//
+// `@see` Use mvc.Updates() to update mapping values on slient.
+//
+// `@see` Use mvc.Execute() to update record on silent.
+func (w *WingProvider) Update(query string, args ...any) error {
+	rows, err := w.Execute2(query, args...)
+	if rows == 0 {
+		return invar.ErrNotChanged
+	}
+	return err /* nil or error */
+}
+
+// Updates update record from mapping values as colmun sets, it not check the
+// updated result whatever changed or not.
 //
 // ---
 //
 //	values := map[string]any{ "Age": 16, "Name": "ZhangSan" }
 //	query := "UPDATE person SET %s WHERE id=?"
 //	err := mvc.updates(query, values, "id-123456")
-func (w *WingProvider) Updates(query string, values map[string]any, args ...any) error {
+//
+// `@see` Use mvc.Update() to update record and check result.
+func (w *WingProvider) Update2(query string, values map[string]any, args ...any) error {
 	sets, err := w.FormatSets(values)
 	if err != nil {
 		return err
@@ -362,10 +353,22 @@ func (w *WingProvider) Updates(query string, values map[string]any, args ...any)
 	return w.Execute(fmt.Sprintf(query, sets), args...)
 }
 
+// Delete call sql.Prepare() and stmt.Exec() to delete record, then check the
+// deleted result if return invar.ErrNotChanged error when none delete.
+//
+// `@see` Use mvc.Execute() to delete record on silent.
+func (w *WingProvider) Delete(query string, args ...any) error {
+	rows, err := w.Execute2(query, args...)
+	if rows == 0 {
+		return invar.ErrNotChanged
+	}
+	return err /* nil or error */
+}
+
 // Execute call sql.Prepare() and stmt.Exec() to insert, update or delete records
 // without any result datas to return as silent.
 //
-// `@see` Use Execute2() return results.
+// `@see` Use mvc.Execute2() return results.
 func (w *WingProvider) Execute(query string, args ...any) error {
 	if stmt, err := w.Conn.Prepare(query); err != nil {
 		return err
@@ -381,7 +384,7 @@ func (w *WingProvider) Execute(query string, args ...any) error {
 // Execute2 call sql.Prepare() and stmt.Exec() to update or delete records (but not
 // for multiple inserts) with result counts to return.
 //
-// `@see` Use Execute() on silent, use Inserts() to multiple insert.
+// `@see` Use mvc.Execute() on silent, use mvc.Inserts() to multiple insert.
 func (w *WingProvider) Execute2(query string, args ...any) (int64, error) {
 	if stmt, err := w.Conn.Prepare(query); err != nil {
 		return 0, err
@@ -394,49 +397,6 @@ func (w *WingProvider) Execute2(query string, args ...any) (int64, error) {
 		}
 		return w.Affected(result)
 	}
-}
-
-// Transaction execute one sql transaction, it will rollback when operate failed.
-//
-// Deprecated: Use mvc.TranRoll() instead it.
-func (w *WingProvider) Transaction(query string, args ...any) error {
-	if tx, err := w.Conn.Begin(); err != nil {
-		return err
-	} else {
-		defer tx.Rollback()
-
-		if _, err := tx.Exec(query, args...); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Transactions excute multiple transactions, it will rollback when case any error.
-//
-// Deprecated: Use mvc.Trans() instead it.
-func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
-	if tx, err := w.Conn.Begin(); err != nil {
-		return err
-	} else {
-		defer tx.Rollback()
-
-		// start excute multiple transactions in callback
-		for _, cb := range cbs {
-			if _, err := cb(tx); err != nil {
-				return err
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // TranRoll execute one sql transaction, it will rollback when operate failed.
@@ -771,4 +731,83 @@ func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
 	query = query + " " + strings.Join(values, ",")
 	_, err := tx.Exec(query)
 	return err
+}
+
+// -------------------------------------------
+
+// TransactionCallback transaction callback for Transactions().
+//
+// Deprecated: Use TransCallback and mvc.TxExce, mvc.TxQuery instead it.
+type TransactionCallback func(tx *sql.Tx) (sql.Result, error)
+
+// Rows directory call sql.Query() from database connection.
+//
+// Deprecated: Use mvc.One() or mvc.Query instead it.
+func (w *WingProvider) Rows(query string, args ...any) (*sql.Rows, error) {
+	return w.Conn.Query(query, args...)
+}
+
+// QueryOne call sql.Query() to query the top one record.
+//
+// Deprecated: Use mvc.One() instead it.
+func (w *WingProvider) QueryOne(query string, cb ScanCallback, args ...any) error {
+	return w.One(query, cb, args...)
+}
+
+// QueryArray call sql.Query() to query multiple records.
+//
+// Deprecated: Use mvc.Query() instead it.
+func (w *WingProvider) QueryArray(query string, cb ScanCallback, args ...any) error {
+	return w.Query(query, cb, args...)
+}
+
+// Updates update record from mapping values as colmun sets, it not check the
+// updated result whatever changed or not.
+//
+// Deprecated: Use mvc.Update2() instead it.
+func (w *WingProvider) Updates(query string, values map[string]any, args ...any) error {
+	return w.Update2(query, values, args...)
+}
+
+// Transaction execute one sql transaction, it will rollback when operate failed.
+//
+// Deprecated: Use mvc.TranRoll() instead it.
+func (w *WingProvider) Transaction(query string, args ...any) error {
+	if tx, err := w.Conn.Begin(); err != nil {
+		return err
+	} else {
+		defer tx.Rollback()
+
+		if _, err := tx.Exec(query, args...); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Transactions excute multiple transactions, it will rollback when case any error.
+//
+// Deprecated: Use mvc.Trans() instead it.
+func (w *WingProvider) Transactions(cbs ...TransactionCallback) error {
+	if tx, err := w.Conn.Begin(); err != nil {
+		return err
+	} else {
+		defer tx.Rollback()
+
+		// start excute multiple transactions in callback
+		for _, cb := range cbs {
+			if _, err := cb(tx); err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
