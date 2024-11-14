@@ -679,6 +679,22 @@ func TxExec(tx *sql.Tx, query string, args ...any) error {
 	return err
 }
 
+// Excute transaction step to check if data exist.
+func TxExist(tx *sql.Tx, out *bool, query string, args ...any) error {
+	if out == nil {
+		return invar.ErrInvalidParams
+	}
+
+	*out = false
+	if rows, err := tx.Query(query, args...); err != nil {
+		return err
+	} else {
+		defer rows.Close()
+		*out = rows.Next()
+	}
+	return nil
+}
+
 // Excute transaction step to query single data and get result in scan callback.
 func TxOne(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
 	if rows, err := tx.Query(query, args...); err != nil {
