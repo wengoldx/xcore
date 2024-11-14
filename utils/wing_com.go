@@ -89,6 +89,57 @@ func Contain(list *[]string, item string) bool {
 	return false
 }
 
+// Contains check the given strings items if contains in totals.
+func Contains(totals []string, items []string) bool {
+	for _, item := range items {
+		found := false
+		for _, t := range totals {
+			if t == item {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+// ContainInts check the given int items if contains in totals.
+func ContainInts(totals []int, items []int) bool {
+	for _, item := range items {
+		found := false
+		for _, t := range totals {
+			if t == item {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+// ContainInt64s check the given int64 items if contains in totals.
+func ContainInt64s(totals []int64, items []int64) bool {
+	for _, item := range items {
+		found := false
+		for _, t := range totals {
+			if t == item {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
 // Distinct remove duplicate string from given array.
 //
 // You should call Contain() only for check if exist sub string.

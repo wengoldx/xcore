@@ -118,8 +118,8 @@ type Handlers struct {
 // Socket connection server
 var wsc *wingSIO
 
-// Object logger with [SIO] perfix for socket.io module
-var siolog = logger.NewLogger("SIO")
+// Object logger with [SIO] mark for socket.io module
+var siolog = logger.CatLogger("SIO")
 
 var (
 	serverPingInterval = 30 * time.Second

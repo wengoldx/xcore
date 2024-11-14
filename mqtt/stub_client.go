@@ -72,8 +72,8 @@ type MqttStub struct {
 // Singleton mqtt stub instance
 var mqttStub *MqttStub
 
-// Object logger with [MQX] perfix for MQTT module
-var mqxlog = logger.NewLogger("MQX")
+// Object logger with [MQX] mark for MQTT module
+var mqxlog = logger.CatLogger("MQX")
 
 // Default connect handler, change it before call GetConnOptions().
 var connHandler mq.OnConnectHandler = func(client mq.Client) {

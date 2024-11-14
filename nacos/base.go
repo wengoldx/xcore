@@ -28,8 +28,8 @@ import (
 	"github.com/wengoldx/xcore/wechat"
 )
 
-// Object logger with [NACOS] perfix for nacos module
-var naclog = logger.NewLogger("NACOS")
+// Object logger with [NACOS] mark for nacos module
+var naclog = logger.CatLogger("NACOS")
 
 // ----------------------------------------
 // Auto Register Define

@@ -34,8 +34,8 @@ type ClientPool struct {
 // clientPool singleton instance
 var clientPool *ClientPool
 
-// Object logger with [SIO] perfix for socket.io module
-var siolog = logger.NewLogger("SIO")
+// Object logger with [SIO] mark for socket.io module
+var siolog = logger.CatLogger("SIO")
 
 // idleWeight idle client weight
 type idleWeight struct {

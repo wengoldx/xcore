@@ -63,8 +63,8 @@ type GrpcStub struct {
 // Singleton grpc stub instance
 var grpcStub *GrpcStub
 
-// Object logger with [RPC] perfix for GRPC module
-var rpclog = logger.NewLogger("RPC")
+// Object logger with [RPC] mark for GRPC module
+var rpclog = logger.CatLogger("RPC")
 
 // Return Grpc global singleton
 func Singleton() *GrpcStub {
@@ -278,6 +278,19 @@ func registryAndUploadRouters(mc *nacos.MetaConfig, servers ...string) {
 
 // Parse certs to running as grpc server and update swagger routers,
 // it will listen target services if you input them infos.
+//
+// ---
+//
+//	stub := wrpc.Singleton()
+//	stub.ParseAndStart(data) // stub.ParseCerts(data);
+//							 // go stub.StartGrpcServer()
+//
+//	mvc.registryAndUploadRouters(mc, servers...)
+//	// svrstub := nacos.RegisterServer()
+//	// svrstub.ListenServers(servers...)
+//	// mc.UploadRouters()
+//
+// ---
 func SetupAsServer(mc *nacos.MetaConfig, data string, servers ...string) *GrpcStub {
 	// Parse grpc certs and start as grpc server handler
 	Singleton().ParseAndStart(data)
@@ -289,6 +302,17 @@ func SetupAsServer(mc *nacos.MetaConfig, data string, servers ...string) *GrpcSt
 
 // Parse certs to running as grpc client and update swagger routers,
 // it will listen target services if you input them infos.
+//
+// ---
+//
+//	wrpc.Singleton().ParseCerts(data);
+//
+//	mvc.registryAndUploadRouters(mc, servers...)
+//	// svrstub := nacos.RegisterServer()
+//	// svrstub.ListenServers(servers...)
+//	// mc.UploadRouters()
+//
+// ---
 func SetupAsClient(mc *nacos.MetaConfig, data string, servers ...string) *GrpcStub {
 	// Parse grpc certs and start as grpc server handler
 	Singleton().ParseCerts(data)

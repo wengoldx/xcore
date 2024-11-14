@@ -87,21 +87,23 @@ func setupFileLogger() {
 	logs.SetLogger(logs.AdapterFile, config)
 }
 
-// Return log format string like '%v %v %v' when n is 3.
-// Here will set logger perfix as outside caller function name.
-func logFormatString(n int, perfix string) string {
+// Return log format string like '%v %v %v' when n is 3. Here will set logger category mark
+// as front of caller function name, and set target key before logger out messages.
+//
+// By default, the perfix and tag key not set, use CatLogger and TagLogger instead normal.
+func logFormatString(n int, perfix string, tag string) string {
 
 	// append runtime calling function name as logger prefix, out logs format like :
-	// ------------------------------------------------------------------------------
-	// 2023/05/31 10:56:36.609 [I] [code_file.go:89] [PERFIX] FuncName() Log messages
-	// ------------------------------------------------------------------------------
+	// ------------------------------------------------------------------------------------
+	// 2023/05/31 10:56:36.609 [I] [code_file.go:89] [CAT] FuncName() Tag: xxx log messages
+	// ------------------------------------------------------------------------------------
 
 	/* Fixed the call skipe on 2 to filter inner functions name */
 	if pc, _, _, ok := runtime.Caller(2); ok {
 		if funcptr := runtime.FuncForPC(pc); funcptr != nil {
 			if funname := funcptr.Name(); funname != "" {
 				fns := strings.SplitAfter(funname, ".")
-				logs.SetPrefix(perfix + fns[len(fns)-1] + "()")
+				logs.SetPrefix(perfix + fns[len(fns)-1] + "()" + tag)
 			}
 		}
 	}
@@ -134,83 +136,40 @@ func GetLevel() string {
 
 // EM logs a message at emergency level.
 func EM(v ...any) {
-	logs.Emergency(logFormatString(len(v), ""), v...)
+	logs.Emergency(logFormatString(len(v), "", ""), v...)
 }
 
 // AL logs a message at alert level.
 func AL(v ...any) {
-	logs.Alert(logFormatString(len(v), ""), v...)
+	logs.Alert(logFormatString(len(v), "", ""), v...)
 }
 
 // CR logs a message at critical level.
 func CR(v ...any) {
-	logs.Critical(logFormatString(len(v), ""), v...)
+	logs.Critical(logFormatString(len(v), "", ""), v...)
 }
 
 // E logs a message at error level.
 func E(v ...any) {
-	logs.Error(logFormatString(len(v), ""), v...)
+	logs.Error(logFormatString(len(v), "", ""), v...)
 }
 
 // W logs a message at warning level.
 func W(v ...any) {
-	logs.Warn(logFormatString(len(v), ""), v...)
+	logs.Warn(logFormatString(len(v), "", ""), v...)
 }
 
 // N logs a message at notice level.
 func N(v ...any) {
-	logs.Notice(logFormatString(len(v), ""), v...)
+	logs.Notice(logFormatString(len(v), "", ""), v...)
 }
 
 // I logs a message at info level.
 func I(v ...any) {
-	logs.Info(logFormatString(len(v), ""), v...)
+	logs.Info(logFormatString(len(v), "", ""), v...)
 }
 
 // D logs a message at debug level.
 func D(v ...any) {
-	logs.Debug(logFormatString(len(v), ""), v...)
-}
-
-// ----------------------------------------
-
-// Object logger with optional settings to format output logs.
-type wingLogger struct {
-	perfix string // Module perfix output as [PERFIX] in logs
-
-	// Add options here...
-}
-
-// Create a logger instance to output logs with ' [PERFIX] ' perfix, notice
-// that the perfix will auto append '[]' and change to upper strings.
-//
-// -----------------------------------------------------------------------
-// 2023/05/31 10:56:36.609 [I] [code_file.go:89] [PERFIX] FuncName() ...
-// -----------------------------------------------------------------------
-func NewLogger(perfix string) *wingLogger {
-	perfix = strings.TrimSpace(perfix)
-	if perfix != "" {
-		perfix = "[" + strings.ToUpper(perfix) + "] "
-	}
-	return &wingLogger{perfix}
-}
-
-// E logs a message at error level.
-func (l *wingLogger) E(v ...any) {
-	logs.Error(logFormatString(len(v), l.perfix), v...)
-}
-
-// W logs a message at warning level.
-func (l *wingLogger) W(v ...any) {
-	logs.Warn(logFormatString(len(v), l.perfix), v...)
-}
-
-// I logs a message at info level.
-func (l *wingLogger) I(v ...any) {
-	logs.Info(logFormatString(len(v), l.perfix), v...)
-}
-
-// D logs a message at debug level.
-func (l *wingLogger) D(v ...any) {
-	logs.Debug(logFormatString(len(v), l.perfix), v...)
+	logs.Debug(logFormatString(len(v), "", ""), v...)
 }
