@@ -679,18 +679,16 @@ func TxExec(tx *sql.Tx, query string, args ...any) error {
 	return err
 }
 
-// Excute transaction step to check if data exist.
-func TxExist(tx *sql.Tx, out *bool, query string, args ...any) error {
-	if out == nil {
-		return invar.ErrInvalidParams
-	}
-
-	*out = false
+// Excute transaction step to check if data exist, it wil return
+// invar.ErrNotFound if unexist any records, or return nil when exist results.
+func TxExist(tx *sql.Tx, query string, args ...any) error {
 	if rows, err := tx.Query(query, args...); err != nil {
 		return err
 	} else {
 		defer rows.Close()
-		*out = rows.Next()
+		if !rows.Next() {
+			return invar.ErrNotFound
+		}
 	}
 	return nil
 }
