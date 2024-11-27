@@ -210,6 +210,18 @@ func ExistInt64s(totals []int64, items []int64) bool {
 	return false
 }
 
+// ExistStrings check the given string items if any exist in totals.
+func ExistStrings(totals []string, items []string) bool {
+	for _, t := range totals {
+		for _, item := range items {
+			if t == item {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Distinct remove duplicate string from given array.
 //
 // You should call Contain() only for check if exist sub string.
