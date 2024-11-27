@@ -20,6 +20,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/wengoldx/xcore/invar"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Setup search indexs with mapping if the index unexist.
@@ -103,11 +104,7 @@ func (e *ESClient) CreateIndexDoc(index string, doc any, docid ...string) error 
 		return invar.ErrInvalidClient
 	}
 
-	id := ""
-	if len(docid) > 0 {
-		id = docid[0]
-	}
-
+	id := utils.VarString(docid, "")
 	body, err := json.Marshal(doc)
 	if err != nil {
 		esclog.E("Marshal index doc, err:", err)
@@ -188,11 +185,7 @@ func (e *ESClient) SearchIndex(index, query string, page int, limit ...int) (*Re
 		return nil, invar.ErrInvalidClient
 	}
 
-	size := 10
-	if len(limit) > 0 {
-		size = limit[0]
-	}
-
+	size := utils.VarInt(limit, 10)
 	res, err := e.Conn.Search(
 		e.Conn.Search.WithIndex(index),
 		e.Conn.Search.WithSize(size),

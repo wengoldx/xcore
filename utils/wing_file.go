@@ -399,11 +399,7 @@ func HumanReadable(len int64, during int64) string {
 // VerifyFile verify upload file and size, it support jpg/jpeg/JPG/JPEG/png/PNG/mp3/mp4 suffix.
 func VerifyFile(fh *multipart.FileHeader, maxBytes ...int64) (string, error) {
 	suffix := path.Ext(fh.Filename)
-
-	maxSizeInByte := (int64)(0)
-	if len(maxBytes) > 0 && maxBytes[0] > 0 {
-		maxSizeInByte = maxBytes[0]
-	}
+	maxSizeInByte := VarInt64(maxBytes, 0)
 
 	switch suffix {
 	case ".jpg", ".jpeg", ".JPG", ".JPEG", ".png", ".PNG", ".mp3":

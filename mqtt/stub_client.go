@@ -24,6 +24,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/secure"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // MQTT stub to manager MQTT connection.
@@ -110,10 +111,8 @@ func Singleton() *MqttStub {
 //	* The configs input param maybe set as json string from Nacos Configs Server
 //	* Or input Options object refrence created at local
 func GenClient(configs any, server ...string) error {
-	stub, svr := Singleton(), beego.BConfig.AppName
-	if len(server) > 0 && server[0] != "" {
-		svr = server[0]
-	}
+	svr := utils.VarString(server, beego.BConfig.AppName)
+	stub := Singleton()
 
 	// parse MQTT connect configs from json string or Options object refrence
 	switch reflect.ValueOf(configs).Interface().(type) {

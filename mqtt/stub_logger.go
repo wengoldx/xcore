@@ -18,6 +18,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	mq "github.com/eclipse/paho.mqtt.golang"
+	"github.com/wengoldx/xcore/utils"
 )
 
 const (
@@ -89,11 +90,7 @@ func GetOptions(data string, svr ...string) *Options {
 		return nil
 	}
 
-	userkey := beego.BConfig.AppName
-	if len(svr) > 0 && svr[0] != "" {
-		userkey = svr[0]
-	}
-
+	userkey := utils.VarString(svr, beego.BConfig.AppName)
 	if user, ok := cfgs.Users[userkey]; ok {
 		mqxlog.I("Got mqtt options of user:", userkey)
 		return &Options{

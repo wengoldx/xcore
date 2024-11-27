@@ -61,7 +61,7 @@ func Condition(condition bool, trueData any, falseData any) any {
 }
 
 // Check the variable params, return the first value if exist any,
-// or return default string
+// or return default string, int, int64.
 //
 // `USAGE` :
 //
@@ -69,12 +69,38 @@ func Condition(condition bool, trueData any, falseData any) any {
 //		a := GetVariable(params, "def-value").(string)
 //		// Do saming here
 //	}
+//
+// see utils.VarString() to string type only.
 func GetVariable(params any, defvalue any) any {
 	pv := reflect.ValueOf(params)
-	if pv.Len() > 0 {
+	if pv.Kind() == reflect.Slice && pv.Len() > 0 {
 		return pv.Index(0).Interface()
 	}
 	return defvalue
+}
+
+// Return the first element string, or default if empty.
+func VarString(src []string, def string) string {
+	if len(src) > 0 && src[0] != "" {
+		return src[0]
+	}
+	return def
+}
+
+// Return the first element int (> 0), or default if empty.
+func VarInt(src []int, def int) int {
+	if len(src) > 0 && src[0] > 0 {
+		return src[0]
+	}
+	return def
+}
+
+// Return the first element int64 (> 0), or default if empty.
+func VarInt64(src []int64, def int64) int64 {
+	if len(src) > 0 && src[0] > 0 {
+		return src[0]
+	}
+	return def
 }
 
 // Contain check the given string list if contains item.
@@ -274,11 +300,7 @@ func JoinInts(nums []int, sep ...string) string {
 			}
 		}
 	}
-
-	if len(sep) > 0 && sep[0] != "" {
-		return strings.Join(vs, sep[0])
-	}
-	return strings.Join(vs, ",")
+	return strings.Join(vs, VarString(sep, ","))
 }
 
 // JoinInt64s join int64 numbers as string '1,2,3' with ',' default separator,
@@ -292,11 +314,7 @@ func JoinInt64s(nums []int64, sep ...string) string {
 			}
 		}
 	}
-
-	if len(sep) > 0 && sep[0] != "" {
-		return strings.Join(vs, sep[0])
-	}
-	return strings.Join(vs, ",")
+	return strings.Join(vs, VarString(sep, ","))
 }
 
 // JoinFloats join float64 numbers as string '0.1,2,3.45' with ',' default separator,
@@ -310,11 +328,7 @@ func JoinFloats(nums []float64, sep ...string) string {
 			}
 		}
 	}
-
-	if len(sep) > 0 && sep[0] != "" {
-		return strings.Join(vs, sep[0])
-	}
-	return strings.Join(vs, ",")
+	return strings.Join(vs, VarString(sep, ","))
 }
 
 // JoinLines combine strings into multiple lines
@@ -328,12 +342,7 @@ func JoinLines(inputs ...string) string {
 
 // Reversal ints string to int array with default separator , char or custom separator.
 func ReverInts(src string, sep ...string) []int {
-	var vs []string
-	if len(sep) > 0 {
-		vs = strings.Split(src, sep[0])
-	} else {
-		vs = strings.Split(src, ",")
-	}
+	vs := strings.Split(src, VarString(sep, ","))
 
 	out := []int{}
 	for _, v := range vs {
@@ -346,12 +355,7 @@ func ReverInts(src string, sep ...string) []int {
 
 // Reversal int64s string to int64 array with default separator , char or custom separator.
 func ReverInt64s(src string, sep ...string) []int64 {
-	var vs []string
-	if len(sep) > 0 {
-		vs = strings.Split(src, sep[0])
-	} else {
-		vs = strings.Split(src, ",")
-	}
+	vs := strings.Split(src, VarString(sep, ","))
 
 	out := []int64{}
 	for _, v := range vs {

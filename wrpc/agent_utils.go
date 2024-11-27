@@ -45,7 +45,7 @@ func (stub *GrpcStub) SignUrl(res, suffix string, addition ...string) (*UrlPath,
 		return nil, invar.ErrInvalidParams
 	}
 
-	add := utils.GetVariable(addition, "").(string)
+	add := utils.VarString(addition, "")
 	param := &wss.Sign{Res: res, Add: add, Suffix: suffix}
 	signurl, err := stub.Wss.SignFileUrl(context.Background(), param)
 	if err != nil {
@@ -68,7 +68,7 @@ func (stub *GrpcStub) SignUrls(res string, suffixes []string, addition ...string
 		return nil, invar.ErrInvalidParams
 	}
 
-	add := utils.GetVariable(addition, "").(string)
+	add := utils.VarString(addition, "")
 	param := &wss.Signs{Res: res, Add: add, Suffixes: suffixes}
 	signurls, err := stub.Wss.SignFileUrls(context.Background(), param)
 	if err != nil {
@@ -98,7 +98,7 @@ func (stub *GrpcStub) NamedUrl(res, filepath string, addition ...string) (*UrlPa
 	fname := path.Base(filepath)
 	filesuff := strings.Split(fname, ".")
 
-	add := utils.GetVariable(addition, "").(string)
+	add := utils.VarString(addition, "")
 	param := &wss.FName{Res: res, Add: add, Name: filesuff[0], Suffix: path.Ext(fname)}
 	oriurl, err := stub.Wss.OriginalUrl(context.Background(), param)
 	if err != nil {
@@ -121,7 +121,7 @@ func (stub *GrpcStub) NamedUrls(res string, files []*wss.NSuffix, addition ...st
 		return nil, invar.ErrInvalidParams
 	}
 
-	add := utils.GetVariable(addition, "").(string)
+	add := utils.VarString(addition, "")
 	param := &wss.FNames{Res: res, Add: add, Files: files}
 	oriurls, err := stub.Wss.OriginalUrls(context.Background(), param)
 	if err != nil {

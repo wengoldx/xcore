@@ -274,20 +274,14 @@ func DayDiff(start, end time.Time) (int, int, int, int) {
 // you can see the format string, but it must contain 3 %0xd to parse numbers
 func DurHours(start, end time.Time, format ...string) string {
 	h, m, s := HourDiff(start, end)
-	if len(format) > 0 && format[0] != "" {
-		return fmt.Sprintf(format[0], h, m, s)
-	}
-	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+	return fmt.Sprintf(VarString(format, "%02d:%02d:%02d"), h, m, s)
 }
 
 // DurDays return readable time during start to end like 2d 6h 25m 48s,
 // you can set the format string, but it must contain 4 %0xd to parse numbers
 func DurDays(start, end time.Time, format ...string) string {
 	d, h, m, s := DayDiff(start, end)
-	if len(format) > 0 && format[0] != "" {
-		return fmt.Sprintf(format[0], d, h, m, s)
-	}
-	return fmt.Sprintf("%dd %dh %dm %ds", d, h, m, s)
+	return fmt.Sprintf(VarString(format, "%dd %dh %dm %ds"), d, h, m, s)
 }
 
 // DurNowNs return formated second string from given start in unix nanoseconds
@@ -302,10 +296,7 @@ func DurNowNs(start int64) string {
 
 // FormatTime format unix time to TimeLayout or MSLayout layout
 func FormatTime(sec int64, nsec ...int64) string {
-	if len(nsec) > 0 && nsec[0] > 0 {
-		return time.Unix(sec, nsec[0]).Format(MSLayout)
-	}
-	return time.Unix(sec, 0).Format(TimeLayout)
+	return time.Unix(sec, VarInt64(nsec, 0)).Format(TimeLayout)
 }
 
 // FormatUnix format unix time to given time layout with location timezoom
@@ -315,10 +306,7 @@ func FormatUnix(layout string, sec int64, nsec ...int64) string {
 		return time.Unix(sec, 0).Format(layout)
 
 	case MSLayout, MSNoneHyphen:
-		if len(nsec) > 0 && nsec[0] > 0 {
-			return time.Unix(sec, nsec[0]).Format(layout)
-		}
-		return time.Unix(sec, 0).Format(layout)
+		return time.Unix(sec, VarInt64(nsec, 0)).Format(layout)
 	}
 
 	// TimeLayout as the default time layout
@@ -338,19 +326,13 @@ func FormatNow(layout ...string) string {
 // FormatToday format now to today string as '2006-01-02', or custom
 // format set by layout like '2006/01/02', '2006.01.02' and so on.
 func FormatToday(layout ...string) string {
-	if len(layout) > 0 && layout[0] != "" {
-		return time.Now().Format(layout[0])
-	}
-	return time.Now().Format(DateLayout)
+	return time.Now().Format(VarString(layout, DateLayout))
 }
 
 // FormatDay format day string from given unix seconds as '2006-01-02',
 // or custom format like '2006/01/02', '2006.01.02' and so on.
 func FormatDay(sec int64, layout ...string) string {
-	if len(layout) > 0 && layout[0] != "" {
-		return time.Unix(sec, 0).Format(layout[0])
-	}
-	return time.Unix(sec, 0).Format(DateLayout)
+	return time.Unix(sec, 0).Format(VarString(layout, DateLayout))
 }
 
 // FormatDur format the time before or after now by add given duration, it
