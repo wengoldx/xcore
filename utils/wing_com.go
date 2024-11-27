@@ -80,8 +80,28 @@ func GetVariable(params any, defvalue any) any {
 // Contain check the given string list if contains item.
 //
 // You should call Distinct() to filter out the repeat items.
-func Contain(list *[]string, item string) bool {
-	for _, v := range *list {
+func Contain(list []string, item string) bool {
+	for _, v := range list {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Contain check the given int list if contains item.
+func ContainInt(list []int, item int) bool {
+	for _, v := range list {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Contain check the given int64 list if contains item.
+func ContainInt64(list []int64, item int64) bool {
+	for _, v := range list {
 		if v == item {
 			return true
 		}
@@ -143,9 +163,9 @@ func ContainInt64s(totals []int64, items []int64) bool {
 // Distinct remove duplicate string from given array.
 //
 // You should call Contain() only for check if exist sub string.
-func Distinct(src *[]string) []string {
+func Distinct(src []string) []string {
 	dest := make(map[string]byte)
-	for _, str := range *src {
+	for _, str := range src {
 		if _, ok := dest[str]; !ok {
 			dest[str] = byte(0)
 		}
@@ -159,9 +179,9 @@ func Distinct(src *[]string) []string {
 }
 
 // TrimEmpty remove empty string, it maybe return empty result array.
-func TrimEmpty(src *[]string) []string {
+func TrimEmpty(src []string) []string {
 	dst := []string{}
-	for _, str := range *src {
+	for _, str := range src {
 		if str != "" {
 			dst = append(dst, str)
 		}
