@@ -186,6 +186,30 @@ func ContainInt64s(totals []int64, items []int64) bool {
 	return true
 }
 
+// ExistInts check the given int items if any exist in totals.
+func ExistInts(totals []int, items []int) bool {
+	for _, t := range totals {
+		for _, item := range items {
+			if t == item {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ExistInt64s check the given int64 items if any exist in totals.
+func ExistInt64s(totals []int64, items []int64) bool {
+	for _, t := range totals {
+		for _, item := range items {
+			if t == item {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Distinct remove duplicate string from given array.
 //
 // You should call Contain() only for check if exist sub string.
@@ -202,6 +226,38 @@ func Distinct(src []string) []string {
 		st = append(st, str)
 	}
 	return st
+}
+
+// Distinct remove duplicate int from given array.
+func DistInts(src []int) []int {
+	dest := make(map[int]byte)
+	for _, str := range src {
+		if _, ok := dest[str]; !ok {
+			dest[str] = byte(0)
+		}
+	}
+
+	ds := []int{}
+	for d := range dest {
+		ds = append(ds, d)
+	}
+	return ds
+}
+
+// Distinct remove duplicate int64 from given array.
+func DistInt64s(src []int64) []int64 {
+	dest := make(map[int64]byte)
+	for _, str := range src {
+		if _, ok := dest[str]; !ok {
+			dest[str] = byte(0)
+		}
+	}
+
+	ds := []int64{}
+	for d := range dest {
+		ds = append(ds, d)
+	}
+	return ds
 }
 
 // TrimEmpty remove empty string, it maybe return empty result array.
