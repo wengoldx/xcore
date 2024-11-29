@@ -725,6 +725,19 @@ func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
 	return nil
 }
 
+// Excute transaction step to insert a new record and return inserted id.
+func TxInsert(tx *sql.Tx, query string, out *int64, args ...any) error {
+	if rst, err := tx.Exec(query, args...); err != nil {
+		return err
+	} else if rid, err := rst.LastInsertId(); err != nil {
+		return err
+	} else if out != nil {
+		*out = rid
+		return nil
+	}
+	return invar.ErrNotInserted
+}
+
 // Excute transaction step to insert multiple records.
 //
 // ---
