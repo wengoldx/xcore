@@ -103,7 +103,7 @@ func openMySQLPool(charset string, sessions []string) error {
 			// just connect local database server
 			dsn = fmt.Sprintf(mysqldsnLocal, dbuser, dbpwd, dbname, charset)
 		}
-		logger.I("Open MySQL on {", session, ":", dsn, "}")
+		logger.I("Open MySQL from session:", session)
 
 		// open and connect database
 		con, err := sql.Open("mysql", dsn)
@@ -673,7 +673,7 @@ func (w *WingProvider) FormatInserts(values any) (string, error) {
 
 // ----------------------------------------
 
-// Excute transaction step to update, insert, or delete datas.
+// Excute transaction step to update, insert, or delete datas without check result.
 func TxExec(tx *sql.Tx, query string, args ...any) error {
 	_, err := tx.Exec(query, args...)
 	return err
@@ -758,6 +758,18 @@ func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
 	query = query + " " + strings.Join(values, ",")
 	_, err := tx.Exec(query)
 	return err
+}
+
+// Excute transaction step to delete record and check result.
+func TxDelete(tx *sql.Tx, query string, args ...any) error {
+	if rst, err := tx.Exec(query, args...); err != nil {
+		return err
+	} else if cnt, err := rst.RowsAffected(); err != nil {
+		return err
+	} else if cnt == 0 {
+		return invar.ErrNotChanged
+	}
+	return nil
 }
 
 // -------------------------------------------

@@ -109,7 +109,7 @@ func OpenMssql(charset string) error {
 
 	driver := "mssql"
 	dsn := fmt.Sprintf(mssqldsn, server, port, dbn, user, pwd, to, to)
-	logger.I("Open MSSQL Server on {", dsn, "}")
+	logger.I("Open MSSQL from session:", session)
 
 	// open and connect database
 	con, err := sql.Open(driver, dsn)
