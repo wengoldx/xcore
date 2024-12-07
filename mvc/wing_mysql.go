@@ -774,6 +774,169 @@ func TxDelete(tx *sql.Tx, query string, args ...any) error {
 
 // -------------------------------------------
 
+// Table datas for describe table structures.
+type Table struct {
+	Columns []*Column // Table column infos
+	Spans   [6]int    // spans lenght for print table
+}
+
+// Table column datas.
+type Column struct {
+	Field string // Column name
+	Type  string // Field value type
+	Null  string // Flag for indicate field if null
+	Def   string // Field default value
+	Key   string // [Only MySQL] Primary key, foreign key or normal field
+	Extra string // [Only MySQL] Extra infos
+}
+
+// Get target table structs by name from mysql databse.
+func (w *WingProvider) MysqlTable(table string, print ...bool) *Table {
+	rows, err := w.Conn.Query("DESCRIBE " + table + ";")
+	if err != nil {
+		logger.E("Describe table:", table, "err:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	cs, spans := []*Column{}, defPaddings()
+	for rows.Next() {
+		var def *string
+		c := &Column{Def: "NULL"}
+		if err := rows.Scan(&(c.Field), &(c.Type), &(c.Null), &(c.Key), &def, &(c.Extra)); err != nil {
+			logger.E("Scane table:", table, "struct, err:", err)
+			return nil
+		}
+
+		if def != nil {
+			c.Def = *def
+		}
+
+		// calculate spans for format print
+		if len(print) > 0 && print[0] {
+			spans = calculatePaddings(c, spans)
+		}
+		cs = append(cs, c)
+	}
+	return &Table{Columns: cs, Spans: spans}
+}
+
+// Get target table structs by name from mssql database.
+func (w *WingProvider) MssqlTable(table string, print ...bool) *Table {
+	query := "SELECT column_name, data_type, is_nullable, column_default FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" + table + "';"
+	rows, err := w.Conn.Query(query)
+	if err != nil {
+		logger.E("Describe table:", table, "err:", err)
+		return nil
+	}
+	defer rows.Close()
+
+	cs, spans := []*Column{}, defPaddings()
+	for rows.Next() {
+		var def *string
+		c := &Column{Def: "NULL"}
+		if err := rows.Scan(&(c.Field), &(c.Type), &(c.Null), &def); err != nil {
+			logger.E("Scane table:", table, "struct, err:", err)
+			return nil
+		}
+
+		if def != nil {
+			c.Def = *def
+		}
+
+		// calculate spans for format print
+		if len(print) > 0 && print[0] {
+			spans = calculatePaddings(c, spans)
+		}
+		cs = append(cs, c)
+	}
+	return &Table{Columns: cs, Spans: spans}
+}
+
+// Print target table structs.
+//
+// `USAGE`
+//
+//	table := mvc.MysqlTable("config", true)
+//	mvc.PrintTable(table)
+func (w *WingProvider) PrintTable(table *Table) {
+	ps, cnt := table.Spans, len(table.Columns)
+	for i, c := range table.Columns {
+		if i == 0 {
+			printHeader(1, ps) // +------------------------------------------------+
+			printHeader(2, ps) // | FIELD | TYPE | IS NULL | DEFAULT | KEY | EXTRA |
+			printHeader(3, ps) // |-------+------+---------+-----+---------+-------|
+		}
+
+		fmt.Printf("| %s | %s | %s | %s | %s | %s |\n",
+			withSpan(c.Field, ps[0]), withSpan(c.Type, ps[1]), withSpan(c.Null, ps[2]),
+			withSpan(c.Def, ps[3]), withSpan(c.Key, ps[4]), withSpan(c.Extra, ps[5]))
+
+		if i == cnt-1 {
+			printHeader(1, ps) // +------------------------------------------------+
+		}
+	}
+}
+
+// Calculate padding spans to print table struct as formated.
+func calculatePaddings(c *Column, paddings [6]int) [6]int {
+	fields := []string{c.Field, c.Type, c.Null, c.Def, c.Key, c.Extra}
+	for i, field := range fields {
+		if flen := len(field); flen > paddings[i] {
+			paddings[i] = flen
+		}
+	}
+	return paddings
+}
+
+// Return default header paddings.
+//
+// ------------------------------------------------------
+// | FIELD | TYPE | IS NULLABLE | DEFAULT | KEY | EXTRA |
+// ------------------------------------------------------
+func defPaddings() [6]int { return [6]int{5, 4, 11, 7, 3, 5} }
+
+// Tial ' ' chars into given text if length over max.
+func withSpan(text string, max int) string {
+	if cnt := len(text); cnt < max {
+		for i := 0; i < max-cnt; i++ {
+			text += " "
+		}
+	}
+	return text
+}
+
+// Get max length divider as '---'.
+func asDivider(max int) string {
+	devider := ""
+	for i := 0; i < max; i++ {
+		devider += "-"
+	}
+	return devider
+}
+
+// Print table columns labels on formated.
+func printHeader(header int, ps [6]int) {
+	switch header {
+	case 1: // the table start and end line
+		fmt.Printf("+-%s---%s---%s---%s---%s---%s-+\n",
+			asDivider(ps[0]), asDivider(ps[1]), asDivider(ps[2]),
+			asDivider(ps[3]), asDivider(ps[4]), asDivider(ps[5]))
+
+	case 2: // the table header label line
+		fmt.Printf("| %s | %s | %s | %s | %s | %s |\n",
+			withSpan("FIELD", ps[0]), withSpan("TYPE", ps[1]), withSpan("IS NULL", ps[2]),
+			withSpan("DEFAULT", ps[3]), withSpan("KEY", ps[4]), withSpan("EXTRA", ps[5]))
+
+	case 3: // the header and content diliver line
+		fmt.Printf("|-%s-+-%s-+-%s-+-%s-+-%s-+-%s-|\n",
+			asDivider(ps[0]), asDivider(ps[1]), asDivider(ps[2]),
+			asDivider(ps[3]), asDivider(ps[4]), asDivider(ps[5]))
+	}
+}
+
+// -------------------------------------------
+
 // TransactionCallback transaction callback for Transactions().
 //
 // Deprecated: Use TransCallback and mvc.TxExce, mvc.TxQuery instead it.
