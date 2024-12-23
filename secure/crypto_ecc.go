@@ -14,146 +14,139 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/pem"
 	"math/big"
 
 	"github.com/wengoldx/xcore/invar"
 )
 
-// Generate a ECC private key by origin key text
-func GenECCPriKey(prikey string) (*ecdsa.PrivateKey, error) {
-	keylen := len(prikey)
-	if keylen != 97 {
-		return nil, invar.ErrInvalidData
-	}
+const (
+	ECC_PEM_PRI_HEADER = "ECDSA PRIVATE KEY" // private key pem file header
+	ECC_PEM_PUB_HEADER = "ECDSA PUBLIC KEY"  // public  key pem file header
+)
 
-	ecckey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	x, y, d := make([]byte, 32), make([]byte, 32), make([]byte, 32)
-	for i := 1; i < keylen; i++ {
-		if i < 33 {
-			x[i-1] = prikey[i]
-		} else if i < 65 {
-			y[i-33] = prikey[i]
-		} else {
-			d[i-65] = prikey[i]
-		}
-	}
-
-	ecckey.D.SetBytes(d)
-	ecckey.Public().(*ecdsa.PublicKey).X.SetBytes(x)
-	ecckey.Public().(*ecdsa.PublicKey).Y.SetBytes(y)
-	return ecckey, nil
+// A string streaming to write string as writer.
+type Stringer struct {
+	data string
 }
 
-// Generate a ECC public key by origin key text
-func GenECCPubKey(pubkey string) (*ecdsa.PublicKey, error) {
-	keylen := len(pubkey)
-	if keylen != 65 {
-		return nil, invar.ErrInvalidData
-	}
-
-	ecckey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	x, y := make([]byte, 32), make([]byte, 32)
-	for i := 1; i < len(pubkey); i++ {
-		if i < 33 {
-			x[i-1] = pubkey[i]
-		} else {
-			y[i-33] = pubkey[i]
-		}
-	}
-
-	ecckey.Public().(*ecdsa.PublicKey).X.SetBytes(x)
-	ecckey.Public().(*ecdsa.PublicKey).Y.SetBytes(y)
-	return ecckey.Public().(*ecdsa.PublicKey), nil
+// Write data to stringer cache param.
+func (s *Stringer) Write(p []byte) (n int, err error) {
+	s.data += string(p)
+	return len(p), nil
 }
 
-// Generate a ECC private key by base64 formated key text
-func GenECCPriKeyB64(prikeyb64 string) (*ecdsa.PrivateKey, error) {
-	prikey, err := DecodeBase64(prikeyb64)
+// Generate a ECC random private key, then you can get the pair
+// public key from prikey.PublicKey param.
+//
+//	prikey, _ := secure.GenEccPriKey()
+//	pubkey := &prikey.PublicKey // get public key
+func GenEccPriKey() (*ecdsa.PrivateKey, error) {
+	curve := elliptic.P256()
+	prikey, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	return GenECCPriKey(prikey)
+	return prikey, nil
 }
 
-// Generate a ECC public key by base64 formated key text
-func GenECCPubKeyB64(pubkeyb64 string) (*ecdsa.PublicKey, error) {
-	pubkey, err := DecodeBase64(pubkeyb64)
+// Format ECC private key to pem string, it can be save to file directly.
+func EccPriString(prikey *ecdsa.PrivateKey) (string, error) {
+	dertext, err := x509.MarshalECPrivateKey(prikey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return GenECCPubKey(pubkey)
+
+	stringer := &Stringer{}
+	block := &pem.Block{Type: ECC_PEM_PRI_HEADER, Bytes: dertext}
+	if err := pem.Encode(stringer, block); err != nil {
+		return "", err
+	}
+	return stringer.data, nil
 }
 
-// Generate ECC shared keys by ECC public key and private digital signature
-func GenECCShareKeys(pub *ecdsa.PublicKey, priD *big.Int) (*big.Int, *big.Int) {
-	shareX, shareY := elliptic.P256().ScalarMult(pub.X, pub.Y, priD.Bytes())
-	return shareX, shareY
+// Format ECC public key to pem string, it can be save to file directly.
+//
+//	prikey, _ := secure.GenEccPriKey()
+//	pubkey := &prikey.PublicKey              // get public key
+//	pubstr, _ := secure.EccPubString(pubkey) // format public key to pem string
+func EccPubString(pubkey *ecdsa.PublicKey) (string, error) {
+	dertext, err := x509.MarshalPKIXPublicKey(&pubkey)
+	if err != nil {
+		return "", err
+	}
+
+	stringer := &Stringer{}
+	block := &pem.Block{Type: ECC_PEM_PUB_HEADER, Bytes: dertext}
+	if err := pem.Encode(stringer, block); err != nil {
+		return "", err
+	}
+	return stringer.data, nil
 }
 
-// Generate ECC share keys hash data by origin private and public key
-func GenEccShareKeysHash(prikey, pubkey string) ([]byte, error) {
-	eprikey, err := GenECCPriKey(prikey)
+// Generate ECC private key, and format to private and public key as pem string.
+func GenEccKeys() (string, string, error) {
+	prikey, err := GenEccPriKey()
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
-	epubkey, err := GenECCPubKey(pubkey)
+	pripem, err := EccPriString(prikey)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
-	sharex, sharey := GenECCShareKeys(epubkey, eprikey.D)
-	bx, by := sharex.Bytes(), sharey.Bytes()
-	bxlen, bylen := len(bx), len(by)
-
-	sharekey := make([]byte, bxlen+bylen)
-	for i := 0; i < bxlen; i++ {
-		sharekey[i] = bx[i]
+	pubkey := &prikey.PublicKey
+	pubpem, err := EccPubString(pubkey)
+	if err != nil {
+		return "", "", err
 	}
-	for j := 0; j < bylen; j++ {
-		sharekey[bxlen+j] = by[j]
-	}
-
-	return HashSHA256(sharekey), nil
+	return pripem, pubpem, nil
 }
 
-// Generate ECC share keys hash data by base64 formated private and public key
-func GenEccShareKeysHashB64(prikeyb64, pubkeyb64 string) ([]byte, error) {
-	eprikey, err := GenECCPriKeyB64(prikeyb64)
+// Get ECC private key from private pem string.
+//
+//	prikey, _ := GenEccPriKey()
+//	pripem, _ := EccPriString(prikey)
+//	newkey, _ := EccPriKey(pripem) // prikey == newkey
+func EccPriKey(pripem string) (*ecdsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(pripem))
+	pri, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
-
-	epubkey, err := GenECCPubKeyB64(pubkeyb64)
-	if err != nil {
-		return nil, err
-	}
-
-	sharex, sharey := GenECCShareKeys(epubkey, eprikey.D)
-	bx, by := sharex.Bytes(), sharey.Bytes()
-	bxlen, bylen := len(bx), len(by)
-
-	sharekey := make([]byte, bxlen+bylen)
-	for i := 0; i < bxlen; i++ {
-		sharekey[i] = bx[i]
-	}
-	for j := 0; j < bylen; j++ {
-		sharekey[bxlen+j] = by[j]
-	}
-
-	return HashSHA256(sharekey), nil
+	return pri, nil
 }
 
-// Generate R and S from sign data
-func GenRSFromB2BI(sign []byte) (*big.Int, *big.Int) {
+// Get ECC public key from public pem string.
+//
+//	prikey, _ := GenEccPriKey()
+//	pubpem, _ := EccPubString(&prikey.PublicKey)
+//	newkey, _ := EccPubKey(pubpem) // prikey.PublicKey == newkey
+func EccPubKey(pubkey string) (*ecdsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pubkey))
+	pubif, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	pub, success := pubif.(*ecdsa.PublicKey)
+	if !success {
+		return nil, invar.ErrBadPublicKey
+	}
+	return pub, nil
+}
+
+// Parse ECC digital signs from signed string, to veriry plaintext.
+//
+//	prikey, _ := GenEccPriKey()
+//	plaintext := "This is a plainttext to sign and verfiy!"
+//	signb64, _ := EccSign(plaintext, prikey)
+//	valid, _ : EccVerify(plaintext, signb64, &prikey.PublicKey)
+//	fmt.Println("ECC verify result:", valid)
+func EccDigitalSigns(sign []byte) (*big.Int, *big.Int) {
 	if len(sign) != 64 {
 		zero := big.NewInt(0)
 		return zero, zero
@@ -172,41 +165,29 @@ func GenRSFromB2BI(sign []byte) (*big.Int, *big.Int) {
 	return r.SetBytes(rb), s.SetBytes(sb)
 }
 
-// Use ECC to sign hash data to base64 string by given origin private key text
-func ECCHashSignB64(hash []byte, prikeyb64 string) (string, error) {
-	eprikey, err := GenECCPriKeyB64(prikeyb64)
-	if err != nil {
-		return "", err
-	}
-
-	r, s, err := ecdsa.Sign(rand.Reader, eprikey, hash)
+// Sign the given plaintext by ECC private key, and return the signed code
+// on base64 format.
+func EccSign(plaintext string, prikey *ecdsa.PrivateKey) (string, error) {
+	hash := sha256.Sum256([]byte(plaintext))
+	r, s, err := ecdsa.Sign(rand.Reader, prikey, hash[:])
 	if err != nil {
 		return "", err
 	}
 
 	sign, sb := r.Bytes(), s.Bytes()
-	for i, l := 0, len(sb); i < l; i++ {
-		sign = append(sign, sb[i])
-	}
+	sign = append(sign, sb...)
 	return ByteToBase64(sign), nil
 }
 
-// Use ECC public key and rs data to verify given hash data
-func ECCHashVerifyB64(hash []byte, pubkeyb64 string, rsb64 string) (bool, error) {
-	epubkey, err := GenECCPubKeyB64(pubkeyb64)
+// Verify the given plaintext by ECC public key and base64 formated sign code.
+func EccVerify(plaintext, signb64 string, pubkey *ecdsa.PublicKey) (bool, error) {
+	signs, err := Base64ToByte(signb64)
 	if err != nil {
 		return false, err
 	}
 
-	rs, err := Base64ToByte(rsb64)
-	if err != nil {
-		return false, err
-	}
-
-	if len(rs) != 64 {
-		return false, invar.ErrInvalidData
-	}
-
-	r, s := GenRSFromB2BI(rs)
-	return ecdsa.Verify(epubkey, hash, r, s), nil
+	r, s := EccDigitalSigns(signs)
+	hash := sha256.Sum256([]byte(plaintext))
+	valid := ecdsa.Verify(pubkey, hash[:], r, s)
+	return valid, nil
 }
