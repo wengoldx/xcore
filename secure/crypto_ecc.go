@@ -22,6 +22,35 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
+/**
+ * It's a ECC secure utils to support generate keys and sign data, then verify it.
+ *
+ * Here have 3 importent datas:
+ * - The ecc private key, it contain a pair public key.
+ * - The sign string, use private key and plaintext to signed result.
+ * - The plaintext data to sign and verify compare check.
+ *
+ * ---
+ *
+ * `WARNING`:
+ *
+ * ECC not best for encript/decript, but better for sign/verify, if you want
+ * encript/decript data with high performence, please use RSA to implement them.
+ *
+ * `USAGE`:
+ *
+ * 1. Call secure.GenEccPriKey() create a ecc private key.
+ * 2. Call secure.EccKeysString(prikey) return private and public keys pem datas to save.
+ * 3. Call secure.EccSign(plaintext, prikey) sign plaintext.
+ * 4. Call secure.EccVerify(plaintext, signstring, pubkey) to verify valid.
+ *
+ * `Extend`:
+ *
+ * - Call secure.EccPriKey(pripem) return private key from pem data.
+ * - Call secure.EccPubKey(pubpem) return public key from pem data.
+ * - Call secure.EccDigitalSigns(signstring) return R and S digitals.
+ */
+
 const (
 	ECC_PEM_PRI_HEADER = "ECDSA PRIVATE KEY" // private key pem file header
 	ECC_PEM_PUB_HEADER = "ECDSA PUBLIC KEY"  // public  key pem file header
@@ -38,18 +67,49 @@ func (s *Stringer) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// Generate a ECC random private key, then you can get the pair
-// public key from prikey.PublicKey param.
+// Generate a ECC random private key with curve type one of P224, P256, P384,
+// P521, or use P256 curve as default, then you can get the pair public key
+// from prikey.PublicKey param.
 //
-//	prikey, _ := secure.GenEccPriKey()
-//	pubkey := &prikey.PublicKey // get public key
-func GenEccPriKey() (*ecdsa.PrivateKey, error) {
-	curve := elliptic.P256()
+//	prikey, _ := secure.GenEccPriKey() // same as secure.GenEccPriKey("P256")
+//	pubkey := &prikey.PublicKey        // get public key
+func GenEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
+	curvetype := "P256"
+	if len(sign) > 0 && sign[0] != "" {
+		curvetype = sign[0]
+	}
+
+	var curve elliptic.Curve
+	switch curvetype {
+	case "P224":
+		curve = elliptic.P224()
+	case "P384":
+		curve = elliptic.P384()
+	case "P521":
+		curve = elliptic.P521()
+	default: // P256 as default
+		curve = elliptic.P256()
+	}
+
+	// generate random ecc private key
 	prikey, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 	return prikey, nil
+}
+
+// Generate ECC private key, and format private and public keys as pem strings,
+// by default it create P256 curve to sign data, or you can create other keys
+// for set sign param as P224, P384, P521.
+//
+// @see secure.GenEccPriKey()
+func GenEccKeys(sign ...string) (string, string, error) {
+	prikey, err := GenEccPriKey(sign...)
+	if err != nil {
+		return "", "", err
+	}
+	return EccKeysString(prikey)
 }
 
 // Format ECC private key to pem string, it can be save to file directly.
@@ -86,24 +146,15 @@ func EccPubString(pubkey *ecdsa.PublicKey) (string, error) {
 	return stringer.data, nil
 }
 
-// Generate ECC private key, and format to private and public key as pem string.
-func GenEccKeys() (string, string, error) {
-	prikey, err := GenEccPriKey()
-	if err != nil {
+// Format ECC private and public keys to pem strings.
+func EccKeysString(prikey *ecdsa.PrivateKey) (string, string, error) {
+	if pripem, err := EccPriString(prikey); err != nil {
 		return "", "", err
-	}
-
-	pripem, err := EccPriString(prikey)
-	if err != nil {
+	} else if pubpem, err := EccPubString(&prikey.PublicKey); err != nil {
 		return "", "", err
+	} else {
+		return pripem, pubpem, nil
 	}
-
-	pubkey := &prikey.PublicKey
-	pubpem, err := EccPubString(pubkey)
-	if err != nil {
-		return "", "", err
-	}
-	return pripem, pubpem, nil
 }
 
 // Get ECC private key from private pem string.
