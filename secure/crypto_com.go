@@ -38,7 +38,7 @@ const (
 	oauthCodeSeedsChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	radixCodeCharLoNum  = "0123456789abcdefghijklmnopqrstuvwxyz"
 	radixCodeCharUpNum  = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	radixCodeCharMap    = "01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	radixCodeCharMap    = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	passwordHashBytes   = 64 // default password hash length
 )
 
