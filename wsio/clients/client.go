@@ -13,7 +13,6 @@ package clients
 import (
 	sio "github.com/googollee/go-socket.io"
 	"github.com/wengoldx/xcore/invar"
-	"github.com/wengoldx/xcore/utils"
 )
 
 // socket connected client
@@ -135,7 +134,12 @@ func (c *client) Broadcast(evt, msg string, rooms ...string) error {
 	}
 
 	// get target rooms from input params or joined
-	tagrooms := utils.Condition(len(rooms) > 0, rooms, c.socket.Rooms()).([]string)
+	var tagrooms []string
+	if len(rooms) > 0 {
+		tagrooms = rooms
+	} else {
+		tagrooms = c.socket.Rooms()
+	}
 
 	// execute broadcast to valid target rooms
 	for _, room := range tagrooms {

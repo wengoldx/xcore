@@ -49,10 +49,10 @@ type DisconnectHandler func(cid, opt string)
 // Socket signlaing event function
 type SignalingEvent func(sc sio.Socket, params string) string
 
-// Socket signlaing event controller
-type WsioController struct {
+// Socket signlaing event callback
+type WsioCallback struct {
 	Evt    string         // Signaling event key
-	hander SignalingEvent // Signaling event callback
+	Hander SignalingEvent // Signaling event callback
 }
 
 // Socket event ack
@@ -67,14 +67,14 @@ const (
 )
 
 // Response normal ack to socket client
-func (c *WsioController) AckResp(msg string) string {
+func (c *WsioCallback) AckResp(msg string) string {
 	resp, _ := json.Marshal(&EvtAck{State: WsioOK, Message: msg})
 	siolog.I("Ack evt[", c.Evt, "] resp: ", msg)
 	return string(resp)
 }
 
 // Response error ack to socket client
-func (c *WsioController) AckError(msg string) string {
+func (c *WsioCallback) AckError(msg string) string {
 	resp, _ := json.Marshal(&EvtAck{State: WsioErr, Message: msg})
 	siolog.E("Ack  evt[", c.Evt, "] err: ", msg)
 	return string(resp)

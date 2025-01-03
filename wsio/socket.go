@@ -56,9 +56,9 @@ type clientOpt struct {
 //			AuthHandler: authHandlerFunc, ConnHandler: connHandlerFunc,
 //			WillHandler: willHandlerFunc, DiscHandler: discHandlerFunc,
 //		}
-//		events := map[string]wsio.SignalingEvent{
-//			"evt_msg"   : (&SocketController{Evt: "evt_msg"}).askMessage,
-//			"evt_create": (&SocketController{Evt: "evt_create"}).createRoom,
+//		events := []*wsio.WsioCallback{
+//			&WsioCallback{Evt: "evt_msg",    Hander: a.askMessage}),
+//			&WsioCallback{Evt: "evt_create", Hander: a.createRoom}),
 //		}
 //		wsio.SetupServer(handlers, events)
 //	}
@@ -89,7 +89,7 @@ type wingSIO struct {
 	handlers Handlers
 
 	// socket events map, registry on server start.
-	events map[string]SignalingEvent
+	events []*WsioCallback
 
 	// http request pointer to client, cache datas temporary
 	// only for client authenticate-connect process.
@@ -132,7 +132,7 @@ var (
 )
 
 // Setup socket.io server by manual called.
-func SetupServer(cbs Handlers, evts map[string]SignalingEvent) {
+func SetupServer(cbs Handlers, evts []*WsioCallback) {
 	loadWsioConfigs()
 	wsc = &wingSIO{
 		options:   make(map[uintptr]*clientOpt),
@@ -212,11 +212,10 @@ func (cc *wingSIO) registryEvents() {
 	}
 
 	// register socket signaling events
-	for evt, callback := range cc.events {
-		if evt != "" && callback != nil {
-			controller := &WsioController{Evt: evt, hander: callback}
-			if err := wsc.server.On(evt, controller.hander); err != nil {
-				siolog.E("Bind socket event:", evt, "err:", err)
+	for _, cb := range cc.events {
+		if cb.Evt != "" && cb.Hander != nil {
+			if err := wsc.server.On(cb.Evt, cb.Hander); err != nil {
+				siolog.E("Bind socket event:", cb.Evt, "err:", err)
 				continue
 			}
 		}
