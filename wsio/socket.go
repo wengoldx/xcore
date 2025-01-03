@@ -51,17 +51,26 @@ type clientOpt struct {
 //	// routers.go : register socket events
 //	import "github.com/wengoldx/xcore/wsio"
 //
+//	type SocketController {
+//		wsio.WsioCallback
+//	}
+//
 //	init() {
 //		handlers := Handlers{
 //			AuthHandler: authHandlerFunc, ConnHandler: connHandlerFunc,
 //			WillHandler: willHandlerFunc, DiscHandler: discHandlerFunc,
 //		}
+//      ctr := &SocketController{}
 //		events := []*wsio.WsioCallback{
-//			&WsioCallback{Evt: "evt_msg",    Hander: a.askMessage}),
-//			&WsioCallback{Evt: "evt_create", Hander: a.createRoom}),
+//			{Evt: "evt_msg",    Hander: a.askMessage}),
+//			{Evt: "evt_create", Hander: a.createRoom}),
 //		}
 //		wsio.SetupServer(handlers, events)
 //	}
+//
+//	// implement wsio.SignalingEvent in SocketController's methods
+//	// func (c *SocketController) askMessage(sc sio.Socket, params string) string {}
+//	// func (c *SocketController) createRoom(sc sio.Socket, params string) string {}
 //
 // You may config socket ping interval, timeout and using optinal data
 // check in app.conf file as follow:
