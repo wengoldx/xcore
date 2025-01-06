@@ -105,6 +105,7 @@ var (
 	ErrSetLifecycleTag     = WingErr{errors.New("failed set file lifecycle tag") /*                */, 0x104B}
 	ErrInactiveAccount     = WingErr{errors.New("inactive status account") /*                      */, 0x104C}
 	ErrCaseException       = WingErr{errors.New("case exception") /*                               */, 0x104D}
+	ErrBadDBConnect        = WingErr{errors.New("database not connnect") /*                        */, 0x104E}
 )
 
 // Create a WExErr from given code and message
