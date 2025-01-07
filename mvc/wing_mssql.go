@@ -37,7 +37,7 @@ const (
 	mssqlConfigTout = "%s::timeout" // configs key of mssql database connect timeout
 
 	// Microsoft SQL Server database source name
-	mssqldsn = "server=%s;port=%d;database=%s;user id=%s;password=%s;Connection Timeout=%d;Connect Timeout=%d;"
+	mssqldsn = "server=%s;port=%d;database=%s;user id=%s;password=%s;connection timeout=%d;dial timeout=%d;"
 )
 
 // MssqlHelper content provider to hold mssql database connections,
@@ -52,7 +52,7 @@ func readMssqlCofnigs(session string) (string, string, string, int, string, int,
 	host := beego.AppConfig.DefaultString(fmt.Sprintf(mssqlConfigHost, session), "127.0.0.1")
 	port := beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigPort, session), 1433)
 	name := beego.AppConfig.String(fmt.Sprintf(mssqlConfigName, session))
-	timeout := beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigTout, session), 600)
+	timeout := beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigTout, session), 30) // seconds
 
 	if user == "" || pwd == "" || name == "" {
 		return "", "", "", 0, "", 0, invar.ErrInvalidConfigs
@@ -78,7 +78,7 @@ func readMssqlCofnigs(session string) (string, string, string, int, string, int,
 //	name    = "sampledb"
 //	user    = "sa"
 //	pwd     = "123456"
-//	timeout = 600
+//	timeout = 30
 //
 // #### Case 2 For connect on dev mode.
 //
@@ -88,7 +88,7 @@ func readMssqlCofnigs(session string) (string, string, string, int, string, int,
 //	name    = "sampledb"
 //	user    = "sa"
 //	pwd     = "123456"
-//	timeout = 600
+//	timeout = 30
 //
 // #### Case 3 For both dev and prod mode, you can config all of up cases.
 func OpenMssql(charset string) error {
@@ -100,15 +100,12 @@ func OpenMssql(charset string) error {
 	user, pwd, server, port, dbn, to, err := readMssqlCofnigs(session)
 	if err != nil {
 		return err
+	} else if to <= 0 { // check connection timeout
+		to = 30 // fix the dial timeout over 5s
 	}
 
-	// get connection and connect timeouts
-	if to <= 0 {
-		to = 600
-	}
-
-	driver := "mssql"
-	dsn := fmt.Sprintf(mssqldsn, server, port, dbn, user, pwd, to, to)
+	driver := "mssql" // mssql for processQueryText=true, sqlserver for false
+	dsn := fmt.Sprintf(mssqldsn, server, port, dbn, user, pwd, to, to+5)
 	logger.I("Open MSSQL from session:", session)
 
 	// open and connect database
