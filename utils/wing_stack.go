@@ -36,10 +36,13 @@ type Stack struct {
 	mutex sync.Mutex
 }
 
-// GenStack generat a new stack instance
-func GenStack() *Stack {
+// Create a new stack instance.
+func NewStack() *Stack {
 	return &Stack{list: list.New()}
 }
+
+// Deprecated: use utils.NewQTask instead it.
+func GenStack() *Stack { return NewStack() }
 
 // Push push a data to stack top one if the data not nil
 func (s *Stack) Push(data any) {

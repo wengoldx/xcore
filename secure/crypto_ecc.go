@@ -39,7 +39,7 @@ import (
  *
  * `USAGE`:
  *
- * 1. Call secure.GenEccPriKey() create a ecc private key.
+ * 1. Call secure.NewEccPriKey() create a ecc private key.
  * 2. Call secure.EccKeysString(prikey) return private and public keys pem datas to save.
  * 3. Call secure.EccSign(plaintext, prikey) sign plaintext.
  * 4. Call secure.EccVerify(plaintext, signstring, pubkey) to verify valid.
@@ -67,13 +67,16 @@ func (s *Stringer) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// Generate a ECC random private key with curve type one of P224, P256, P384,
+// Deprecated: use utils.NewEccPriKey instead it.
+func GenEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) { return NewEccPriKey(sign...) }
+
+// Create a ECC random private key with curve type one of P224, P256, P384,
 // P521, or use P256 curve as default, then you can get the pair public key
 // from prikey.PublicKey param.
 //
-//	prikey, _ := secure.GenEccPriKey() // same as secure.GenEccPriKey("P256")
+//	prikey, _ := secure.NewEccPriKey() // same as secure.NewEccPriKey("P256")
 //	pubkey := &prikey.PublicKey        // get public key
-func GenEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
+func NewEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
 	curvetype := "P256"
 	if len(sign) > 0 && sign[0] != "" {
 		curvetype = sign[0]
@@ -99,13 +102,16 @@ func GenEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
 	return prikey, nil
 }
 
-// Generate ECC private key, and format private and public keys as pem strings,
+// Deprecated: use utils.NewEccKeys instead it.
+func GenEccKeys(sign ...string) (string, string, error) { return NewEccKeys(sign...) }
+
+// Create ECC private key, and format private and public keys as pem strings,
 // by default it create P256 curve to sign data, or you can create other keys
 // for set sign param as P224, P384, P521.
 //
-// @see secure.GenEccPriKey()
-func GenEccKeys(sign ...string) (string, string, error) {
-	prikey, err := GenEccPriKey(sign...)
+// @see secure.NewEccPriKey()
+func NewEccKeys(sign ...string) (string, string, error) {
+	prikey, err := NewEccPriKey(sign...)
 	if err != nil {
 		return "", "", err
 	}
@@ -129,7 +135,7 @@ func EccPriString(prikey *ecdsa.PrivateKey) (string, error) {
 
 // Format ECC public key to pem string, it can be save to file directly.
 //
-//	prikey, _ := secure.GenEccPriKey()
+//	prikey, _ := secure.NewEccPriKey()
 //	pubkey := &prikey.PublicKey              // get public key
 //	pubstr, _ := secure.EccPubString(pubkey) // format public key to pem string
 func EccPubString(pubkey *ecdsa.PublicKey) (string, error) {
@@ -159,7 +165,7 @@ func EccKeysString(prikey *ecdsa.PrivateKey) (string, string, error) {
 
 // Get ECC private key from private pem string.
 //
-//	prikey, _ := GenEccPriKey()
+//	prikey, _ := NewEccPriKey()
 //	pripem, _ := EccPriString(prikey)
 //	newkey, _ := EccPriKey(pripem) // prikey == newkey
 func EccPriKey(pripem string) (*ecdsa.PrivateKey, error) {
@@ -173,7 +179,7 @@ func EccPriKey(pripem string) (*ecdsa.PrivateKey, error) {
 
 // Get ECC public key from public pem string.
 //
-//	prikey, _ := GenEccPriKey()
+//	prikey, _ := NewEccPriKey()
 //	pubpem, _ := EccPubString(&prikey.PublicKey)
 //	newkey, _ := EccPubKey(pubpem) // prikey.PublicKey == newkey
 func EccPubKey(pubkey string) (*ecdsa.PublicKey, error) {
@@ -192,7 +198,7 @@ func EccPubKey(pubkey string) (*ecdsa.PublicKey, error) {
 
 // Parse ECC digital signs from signed string, to veriry plaintext.
 //
-//	prikey, _ := GenEccPriKey()
+//	prikey, _ := NewEccPriKey()
 //	plaintext := "This is a plainttext to sign and verfiy!"
 //	signb64, _ := EccSign(plaintext, prikey)
 //	valid, _ : EccVerify(plaintext, signb64, &prikey.PublicKey)

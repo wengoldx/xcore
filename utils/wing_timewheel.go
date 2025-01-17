@@ -37,8 +37,8 @@ type TimeWheel struct {
 	timer_stop    chan struct{}
 }
 
-// GenTimeWheel generat a new time wheel
-func GenTimeWheel() *TimeWheel {
+// Create a new time wheel.
+func NewTimeWheel() *TimeWheel {
 	wheel := &TimeWheel{
 		current_index: 0,
 		start_time:    time.Now(),

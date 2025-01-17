@@ -34,7 +34,7 @@ import (
 //
 // UseCase 1 : Using nacos MQTT configs and connect without callbacks.
 //
-//	if err := mqtt.GenClient(data); err != nil {
+//	if err := mqtt.NewClient(data); err != nil {
 //		mqxlog.E("Connect client err:", err)
 //		return
 //	}
@@ -44,7 +44,7 @@ import (
 //
 //	stub := mqtt.SetOptions(2)
 //	stub.ConnectHandler = ConnectHandler
-//	if err := mqtt.GenClient(data); err != nil {
+//	if err := mqtt.NewClient(data); err != nil {
 //		mqxlog.E("Connect client err:", err)
 //		return
 //	}
@@ -105,12 +105,15 @@ func Singleton() *MqttStub {
 	return mqttStub
 }
 
-// Generate mqtt client and connect with MQTT broker, the client using
+// Deprecated: use utils.NewClient instead it.
+func GenClient(configs any, server ...string) error { return NewClient(configs, server...) }
+
+// Create a new mqtt client and connect with MQTT broker, the client using
 // 'tcp' protocol and fixed id as format 'server@12345678'.
 //
 //	* The configs input param maybe set as json string from Nacos Configs Server
 //	* Or input Options object refrence created at local
-func GenClient(configs any, server ...string) error {
+func NewClient(configs any, server ...string) error {
 	svr := utils.VarString(server, beego.BConfig.AppName)
 	stub := Singleton()
 
@@ -123,7 +126,7 @@ func GenClient(configs any, server ...string) error {
 	case *Options:
 		stub.Options = configs.(*Options)
 		if stub.Options.ClientID == "" {
-			stub.Options.ClientID = svr + "." + secure.GenCode()
+			stub.Options.ClientID = svr + "." + secure.NewCode()
 		}
 	default:
 		return invar.ErrInvalidConfigs
@@ -131,7 +134,7 @@ func GenClient(configs any, server ...string) error {
 
 	opt := stub.GetConnOptions() // using default tcp protocol
 	if err := stub.Connect(opt); err != nil {
-		mqxlog.E("Generate", svr, "mqtt client err:", err)
+		mqxlog.E("New", svr, "mqtt client err:", err)
 		return err
 	}
 	return nil
@@ -147,7 +150,7 @@ func SetOptions(qos byte, remain ...bool) *MqttStub {
 	return stub
 }
 
-// Generate mqtt config, default connection protocol using tcp, you can
+// Create mqtt config, default connection protocol using tcp, you can
 // set mode 'tls' and cert files to using ssl protocol.
 func (stub *MqttStub) GetConnOptions(mode ...string) *mq.ClientOptions {
 	options, protocol := mq.NewClientOptions(), protFormatTCP
@@ -315,7 +318,7 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 
 		// Random client id if not fixed
 		if stub.Options.ClientID == "" {
-			stub.Options.ClientID = svr + "." + secure.GenCode()
+			stub.Options.ClientID = svr + "." + secure.NewCode()
 		}
 	}
 	return nil
@@ -348,7 +351,7 @@ func SetupMQClient(data string, handler mq.OnConnectHandler, opts ...any) bool {
 		stub.ConnectHandler = handler
 	}
 
-	if err := GenClient(data, svr); err != nil {
+	if err := NewClient(data, svr); err != nil {
 		mqxlog.E("Create mqtt client, err:", err)
 		return false
 	}

@@ -34,10 +34,13 @@ type Queue struct {
 	mutex sync.Mutex
 }
 
-// GenQueue generat a new queue instance
-func GenQueue() *Queue {
+// Create a new queue instance.
+func NewQueue() *Queue {
 	return &Queue{list: list.New()}
 }
+
+// Deprecated: use utils.NewQueue instead it.
+func GenQueue() *Queue { return NewQueue() }
 
 // Push push a data to queue back if the data not nil
 func (q *Queue) Push(data any) {

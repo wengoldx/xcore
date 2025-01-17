@@ -128,8 +128,11 @@ var (
 	aesKeyLength = len(aesInitVector)
 )
 
-// Generate AES key range chars in [0-9a-z]{16}
-func GenAESKey() string {
+// Deprecated: use utils.NewAESKey instead it.
+func GenAESKey() string { return NewAESKey() }
+
+// Create a new AES key range chars in [0-9a-z]{16}
+func NewAESKey() string {
 	rander.Seed(time.Now().UnixNano())
 	secretkey := make([]rune, aesKeyLength)
 	sendslen := (int32)(len(aesKeySeeds))
@@ -150,7 +153,7 @@ func GenAESKey() string {
 //
 // ----
 //
-//	secretkey := secure.GenAESKey()
+//	secretkey := secure.NewAESKey()
 //	original := []byte("original-content")
 //	ciphertext, _ := secure.AESEncrypt([]byte(secretkey), original)
 //
@@ -226,15 +229,15 @@ func pkcs5Unpadding(encrypt []byte) []byte {
 //
 // `NOTICE` :
 //
-// You can use secure.GenAESKey() to generate a AES-256-GSM secret key
+// You can use secure.NewAESKey() to generate a AES-256-GSM secret key
 // to as secretkey input param, or use hex.EncodeToString() encode any
 // secret string, but use hex.DecodeString() decode the encode hash key
 // before call this function.
 //
 // ----
 //
-//	// use secure.GenAESKey() generate a secretkey
-//	secretkey := secure.GenAESKey()
+//	// use secure.NewAESKey() generate a secretkey
+//	secretkey := secure.NewAESKey()
 //	ciphertex, noncestr, err := secure.GCMEncrypt(secretkey, original)
 //	ciphertex, noncestr, err := secure.GCMEncrypt(secretkey, original, additional)
 //

@@ -19,7 +19,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
-// Generate a login token with account and password.
+// Encode account and password as a simple login token.
 //
 // ---
 //
@@ -32,11 +32,14 @@ import (
 //         +------- "."---------|
 //                   |
 //                base64 => token
-func GenLoginToken(acc, pwd string) string {
+func EncLoginToken(acc, pwd string) string {
 	timestamp := fmt.Sprintf("%v", time.Now().UnixNano())
 	origin := EncodeB64MD5(acc+"."+pwd) + "." + EncodeBase64(timestamp)
 	return EncodeBase64(origin)
 }
+
+// Deprecated: use utils.EncLoginToken instead it.
+func GenLoginToken(acc, pwd string) string { return EncLoginToken(acc, pwd) }
 
 // Verify login token.
 //

@@ -148,8 +148,11 @@ func (stub *GrpcStub) ParseAndStart(data string) error {
 	return nil
 }
 
-// Generate grpc client handler
-func (stub *GrpcStub) GenClient(svrkey, addr string, port int) {
+// Deprecated: use wrpc.NewClient instead it.
+func (stub *GrpcStub) GenClient(svrkey, addr string, port int) { stub.NewClient(svrkey, addr, port) }
+
+// Create a new grpc client as stub handler.
+func (stub *GrpcStub) NewClient(svrkey, addr string, port int) {
 	if svrkey != SVR_ACC && svrkey != SVR_MEA && svrkey != SVR_WSS &&
 		svrkey != SVR_CHAT && svrkey != SVR_PAY {
 		rpclog.E("Invalid target grpc server:", svrkey)
@@ -259,7 +262,7 @@ func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 
 // Target services listing callback for create grpc client after registred.
 func listingCallback(svr string, addr string, port int) {
-	Singleton().GenClient(svr, addr, port)
+	Singleton().NewClient(svr, addr, port)
 }
 
 // Register server to nacos and listen tags for grpc

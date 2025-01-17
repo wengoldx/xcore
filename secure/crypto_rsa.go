@@ -24,7 +24,7 @@ import (
 
 // ### 1. How to encrypt and decrypt by RSA
 //
-// - (1). use secure.GenRSAKeys() to generate RSA keys, and set content bits length.
+// - (1). use secure.NewRSAKeys() to generate RSA keys, and set content bits length.
 //
 // - (2). use secure.RSAEncrypt() to encrypt original data with given public key.
 //
@@ -33,7 +33,7 @@ import (
 // `USAGE`
 //
 //	// Use the pubkey to encrypt and use the prikey to decrypt
-//	prikey, pubkey, _ := secure.GenRSAKeys(1024)
+//	prikey, pubkey, _ := secure.NewRSAKeys(1024)
 //	logger.I("public  key:", pubkey, "private key:", prikey)
 //
 //	ciphertext, _ := secure.RSAEncrypt([]byte(pubkey), []byte("original-content"))
@@ -49,7 +49,7 @@ import (
 //
 // ### 2. How to digital signature and verify by RSA
 //
-// - (1). use secure.GenRSAKeys() to generate RSA keys, and set content bits length.
+// - (1). use secure.NewRSAKeys() to generate RSA keys, and set content bits length.
 //
 // - (2). use secure.RSASign() to make digital signature with given private key.`
 //
@@ -58,7 +58,7 @@ import (
 // `USAGE`
 //
 //	// Use the private key to create digital signature and use pubkey to verify it
-//	prikey, pubkey, _ := secure.GenRSAKeys(1024)
+//	prikey, pubkey, _ := secure.NewRSAKeys(1024)
 //	logger.I("public  key:", pubkey, "private key:", prikey)
 //
 //	original := []byte("original-content")
@@ -80,7 +80,7 @@ const (
 
 // Load RSA private or public key content from the given pem file,
 // and the input buffer size of buffbits must larger than pem file size
-// by call GenRSAKeys to set bits.
+// by call NewRSAKeys to set bits.
 func LoadRSAKey(filepath string, buffbits ...int) ([]byte, error) {
 	if len(buffbits) > 0 && buffbits[0] > 0 {
 		pemfile, err := os.Open(filepath)
@@ -105,17 +105,20 @@ func LoadRSAKey(filepath string, buffbits ...int) ([]byte, error) {
 }
 
 // -------------------------------------------------------------------
-// Generate a RSA key as PKCS#1, ASN.1 format and encrypt by public
+// Create a RSA key as PKCS#1, ASN.1 format and encrypt by public
 // key, than decrypt by private key.
 // -------------------------------------------------------------------
 
-// Generate RSA private and public keys in PKCS#1, ASN.1 DER format,
+// Deprecated: use utils.NewRSAKeys instead it.
+func GenRSAKeys(bits int) (string, string, error) { return NewRSAKeys(bits) }
+
+// Create RSA private and public keys in PKCS#1, ASN.1 DER format,
 // and limit bits length of key cert.
 //	@param bits Limit bits length of key cert
 //	@return - string Private key original string
 //			- string Public key original string
 //			- error Exception message
-func GenRSAKeys(bits int) (string, string, error) {
+func NewRSAKeys(bits int) (string, string, error) {
 	// generate private key
 	prikey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {

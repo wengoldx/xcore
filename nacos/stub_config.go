@@ -35,7 +35,7 @@ type ConfigKey struct {
 // Callback to listen config changed
 type ListenCallback func(namespace, group, dataId, data string)
 
-// Generate a ConfigStub instance
+// Create a new ConfigStub instance.
 //	@params ns  string config namespace id
 //	@params svr string remote nacos server ip address
 //	@return - *ConfigStub config stub instance

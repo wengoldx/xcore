@@ -58,7 +58,7 @@ func init() {
 	}
 }
 
-// Generate a code from given chars mapping, params src must over 0, mapping not empty.
+// Create a code from given chars mapping, params src must over 0, mapping not empty.
 func genCodeFromMapping(src int64, mapping string) string {
 	radix := (int64)(len(mapping))
 	if src <= 0 || radix == 0 {
@@ -79,18 +79,18 @@ func genCodeFromMapping(src int64, mapping string) string {
 	return (string)(code)
 }
 
-// Generate a new uuid in int64
-func GenUUID() int64 {
+// Create a new uuid in int64
+func NewUID() int64 {
 	return uuidNode.Generate().Int64()
 }
 
-// Generate a new uuid in string
-func GenUUIDString() string {
+// Create a new uuid in string
+func NewSUID() string {
 	return uuidNode.Generate().String()
 }
 
-// Generate a random number uuid with specified digits
-func GenRandUUID(buflen ...int) string {
+// Create a random number uuid with specified digits
+func NewRUID(buflen ...int) string {
 	length := passwordHashBytes
 	if len(buflen) > 0 && buflen[0] > 0 {
 		length = buflen[0]
@@ -104,45 +104,45 @@ func GenRandUUID(buflen ...int) string {
 	return string(buf)
 }
 
-// Generate a code just as current nano seconds time, e.g. 1693359476235899600
-func GenNano() string {
+// Create a code just as current nano seconds time, e.g. 1693359476235899600
+func NewNano() string {
 	return strconv.FormatInt(time.Now().UnixNano(), 10)
 }
 
-// Generate a code by using current nanosecond, e.g. M25eNdE4rF5
-func GenCode() string {
+// Create a code by using current nanosecond, e.g. M25eNdE4rF5
+func NewCode() string {
 	return genCodeFromMapping(time.Now().UnixNano(), radixCodeCharMap)
 }
 
-// Generate a code from given int64 data, e.g. M25eNdE4rF5
-func GenCodeFrom(src int64) string {
+// Create a code from given int64 data, e.g. M25eNdE4rF5
+func NewCodeFrom(src int64) string {
 	return genCodeFromMapping(src, radixCodeCharMap)
 }
 
-// Generate a code formated only lower chars, e.g. mabendecrfdme
-func GenLowCode() string {
+// Create a code formated only lower chars, e.g. mabendecrfdme
+func NewLowCode() string {
 	return genCodeFromMapping(time.Now().UnixNano(), oauthCodeSeedsLower)
 }
 
-// Generate a code formated only upper chars, e.g. MABENDECRFDME
-func GenUpCode() string {
+// Create a code formated only upper chars, e.g. MABENDECRFDME
+func NewUpCode() string {
 	return genCodeFromMapping(time.Now().UnixNano(), oauthCodeSeedsUpper)
 }
 
-// Generate a code formated only number and lower chars, e.g. m25ende4rf5m
-func GenLowNum() string {
+// Create a code formated only number and lower chars, e.g. m25ende4rf5m
+func NewLowNum() string {
 	return genCodeFromMapping(time.Now().UnixNano(), radixCodeCharLoNum)
 }
 
-// Generate a code formated only number and upper chars, e.g. M25ENDE4RF5M
-func GenUpNum() string {
+// Create a code formated only number and upper chars, e.g. M25ENDE4RF5M
+func NewUpNum() string {
 	return genCodeFromMapping(time.Now().UnixNano(), radixCodeCharUpNum)
 }
 
-// Generate a code by using current nanosecond and append random suffix, e.g. M25eNdE4rF50987
-func GenRandCode(seednum ...int64) string {
+// Create a code by using current nanosecond and append random suffix, e.g. M25eNdE4rF50987
+func NewRandCode(seednum ...int64) string {
 	if len(seednum) > 0 {
-		// It maybe excute GenRandCode() multiple times in 1 nano second
+		// It maybe excute NewRandCode() multiple times in 1 nano second
 		// on hight performance device to generate same rand int number.
 		// so, input the increase seed number necessarily!
 		rander.Seed(seednum[0])
@@ -150,22 +150,22 @@ func GenRandCode(seednum ...int64) string {
 	} else {
 		rander.Seed(time.Now().UnixNano())
 	}
-	return fmt.Sprintf("%s%04d", GenCode(), rander.Intn(1000))
+	return fmt.Sprintf("%s%04d", NewCode(), rander.Intn(1000))
 }
 
-// Generate a code from given int64 data and append random suffix, e.g. M25eNdE4rF50987
-func GenRandCodeFrom(src int64) string {
+// Create a code from given int64 data and append random suffix, e.g. M25eNdE4rF50987
+func NewRandCodeFrom(src int64) string {
 	rander.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%s%04d", GenCodeFrom(src), rand.Intn(1000))
+	return fmt.Sprintf("%s%04d", NewCodeFrom(src), rand.Intn(1000))
 }
 
 // Convert to lower string and encode by base64 -> md5
-func GenToken(original string) string {
+func NewToken(original string) string {
 	return EncodeB64MD5(strings.ToLower(original))
 }
 
-// Generate a random num and convert to string
-func GenNonce() string {
+// Create a random num and convert to string
+func NewNonce() string {
 	res := make([]byte, 32)
 	seeds := [][]int{{10, 48}, {26, 97}, {26, 65}}
 
@@ -177,8 +177,8 @@ func GenNonce() string {
 	return string(res)
 }
 
-// Generate a random OAuth code
-func GenOAuthCode(length int, randomType string) (string, error) {
+// Create a random OAuth code
+func NewOAuthCode(length int, randomType string) (string, error) {
 	// fill random seeds chars
 	buf := bytes.Buffer{}
 	if strings.Contains(randomType, "0") {
@@ -207,10 +207,10 @@ func GenOAuthCode(length int, randomType string) (string, error) {
 	return buf.String(), nil
 }
 
-// Generates a random salt, default length is 64 * 2,
+// Create a random salt, default length is 64 * 2,
 // you may set buffer length by buflen input param, and return
 // (buflen * 2) length salt string.
-func GenSalt(buflen ...int) (string, error) {
+func NewSalt(buflen ...int) (string, error) {
 	length := passwordHashBytes
 	if len(buflen) > 0 && buflen[0] > 0 {
 		length = buflen[0]
@@ -226,7 +226,7 @@ func GenSalt(buflen ...int) (string, error) {
 // Hash the given source with salt, default length is 64 * 2,
 // you may set buffer length by buflen input param, and return
 // (buflen * 2) length hash string.
-func GenHash(src, salt string, buflen ...int) (string, error) {
+func NewHash(src, salt string, buflen ...int) (string, error) {
 	length := passwordHashBytes
 	if len(buflen) > 0 && buflen[0] > 0 {
 		length = buflen[0]

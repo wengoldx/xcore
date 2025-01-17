@@ -93,7 +93,7 @@ func RegisterServer() *ServerStub {
 		panic("Find proxy local ip, err:" + err.Error())
 	}
 
-	// Generate nacos server stub and setup it
+	// Create nacos server stub and setup it
 	stub := NewServerStub(ns, svr)
 	if err := stub.Setup(); err != nil {
 		panic(err)
@@ -162,7 +162,10 @@ type MetaConfig struct {
 // Callback to listen server address and port changes
 type MetaConfigCallback func(dataId, data string)
 
-// Generate a meta config client to get or listen configs changes
+// Deprecated: use utils.NewMetaConfig instead it.
+func GenMetaConfig() *MetaConfig { return NewMetaConfig() }
+
+// Create meta config client to get or listen configs changes
 //	@return - *MetaConfig nacos config client instance
 //
 //	`NOTICE` : nacos config as follows.
@@ -171,7 +174,7 @@ type MetaConfigCallback func(dataId, data string)
 //
 //	; Nacos remote server host
 //	nacossvr = "xx.xxx.40.218"
-func GenMetaConfig() *MetaConfig {
+func NewMetaConfig() *MetaConfig {
 	svr := beego.AppConfig.String(configKeySvr)
 	if svr == "" {
 		panic("Not found nacos server host!")
@@ -180,10 +183,10 @@ func GenMetaConfig() *MetaConfig {
 	// Namespace id of meta configs
 	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV).(string)
 
-	// Generate nacos config stub and setup it
+	// Create nacos config stub and setup it
 	stub := NewConfigStub(ns, svr)
 	if err := stub.Setup(); err != nil {
-		panic("Gen config stub, err:" + err.Error())
+		panic("New config stub, err:" + err.Error())
 	}
 
 	// Fix the all config group as wengold
@@ -281,7 +284,7 @@ func (mc *MetaConfig) UpdateChineses(descs []*utils.SvrDesc) error {
 
 // ----------------------------------------
 
-// Generate nacos client config, contain nacos remote server and
+// Create nacos client config, contain nacos remote server and
 // current business servers configs, this client keep alive with
 // 5s pingpong heartbeat and output logs on warn leven.
 //

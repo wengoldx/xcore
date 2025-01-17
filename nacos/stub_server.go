@@ -28,7 +28,7 @@ type ServerStub struct {
 // Callback to listen server register status changed
 type SubscribeCallback func(services []model.Instance, err error)
 
-// Generate a ServerStub instance
+// Create a new ServerStub instance.
 //	@params ns  string server namespace id
 //	@params svr string remote nacos server ip address
 //	@return - *ServerStub server stub instance
@@ -163,7 +163,7 @@ func (s *ServerStub) Subscribe(name string, cb SubscribeCallback, opts ...string
 		return invar.ErrInvalidParams
 	}
 
-	sp := s.genSubscribeParam(name, cb, opts...)
+	sp := s.newSubscribeParam(name, cb, opts...)
 	if err := s.Stub.Subscribe(sp); err != nil {
 		return err
 	}
@@ -182,15 +182,15 @@ func (s *ServerStub) Unsubscribe(name string, cb SubscribeCallback, opts ...stri
 		return invar.ErrInvalidParams
 	}
 
-	sp := s.genSubscribeParam(name, cb, opts...)
+	sp := s.newSubscribeParam(name, cb, opts...)
 	if err := s.Stub.Unsubscribe(sp); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Generate subscribe param for server registry changed events
-func (s *ServerStub) genSubscribeParam(name string, cb SubscribeCallback, opts ...string) *vo.SubscribeParam {
+// Create subscribe param for server registry changed events
+func (s *ServerStub) newSubscribeParam(name string, cb SubscribeCallback, opts ...string) *vo.SubscribeParam {
 	param := &vo.SubscribeParam{ServiceName: name, SubscribeCallback: cb}
 	if cnt := len(opts); cnt > 0 {
 		if opts[0] != "" /* group name */ {

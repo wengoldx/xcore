@@ -60,6 +60,10 @@ func Condition(condition bool, trueData any, falseData any) any {
 	return falseData
 }
 
+// ----------------------------------------
+// Variable
+// ----------------------------------------
+
 // Check the variable params, return the first value if exist any,
 // or return default string, int, int64.
 //
@@ -102,6 +106,10 @@ func VarInt64(src []int64, def int64) int64 {
 	}
 	return def
 }
+
+// ----------------------------------------
+// Contain
+// ----------------------------------------
 
 // Contain check the given string list if contains item.
 //
@@ -186,6 +194,10 @@ func ContainInt64s(totals []int64, items []int64) bool {
 	return true
 }
 
+// ----------------------------------------
+// Exist
+// ----------------------------------------
+
 // ExistInts check the given int items if any exist in totals.
 func ExistInts(totals []int, items []int) bool {
 	for _, t := range totals {
@@ -222,54 +234,25 @@ func ExistStrings(totals []string, items []string) bool {
 	return false
 }
 
+// ----------------------------------------
+// Distinct
+// ----------------------------------------
+
 // Distinct remove duplicate string from given array.
 //
 // You should call Contain() only for check if exist sub string.
 func Distinct(src []string) []string {
-	dest := make(map[string]byte)
-	for _, str := range src {
-		if _, ok := dest[str]; !ok {
-			dest[str] = byte(0)
-		}
-	}
-
-	st := []string{}
-	for str := range dest {
-		st = append(st, str)
-	}
-	return st
+	return NewSets().AddStrings(src).ArrayString()
 }
 
 // Distinct remove duplicate int from given array.
 func DistInts(src []int) []int {
-	dest := make(map[int]byte)
-	for _, str := range src {
-		if _, ok := dest[str]; !ok {
-			dest[str] = byte(0)
-		}
-	}
-
-	ds := []int{}
-	for d := range dest {
-		ds = append(ds, d)
-	}
-	return ds
+	return NewSets().AddInts(src).ArrayInt()
 }
 
 // Distinct remove duplicate int64 from given array.
 func DistInt64s(src []int64) []int64 {
-	dest := make(map[int64]byte)
-	for _, str := range src {
-		if _, ok := dest[str]; !ok {
-			dest[str] = byte(0)
-		}
-	}
-
-	ds := []int64{}
-	for d := range dest {
-		ds = append(ds, d)
-	}
-	return ds
+	return NewSets().AddInt64s(src).ArrayInt64()
 }
 
 // TrimEmpty remove empty string, it maybe return empty result array.
@@ -282,6 +265,10 @@ func TrimEmpty(src []string) []string {
 	}
 	return dst
 }
+
+// ----------------------------------------
+// Translate
+// ----------------------------------------
 
 // To2Digits fill zero if input digit not enough 2
 func To2Digits(input any) string {
@@ -357,6 +344,10 @@ func ToXMLReplace(input any, from, to string) (string, error) {
 	return xmlout, nil
 }
 
+// ----------------------------------------
+// Join
+// ----------------------------------------
+
 // JoinInts join int numbers as string '1,2,3' with ',' default separator,
 // or custom separator '-' like '1-2-3'.
 func JoinInts(nums []int, sep ...string) string {
@@ -408,6 +399,10 @@ func JoinLines(inputs ...string) string {
 	return packet
 }
 
+// ----------------------------------------
+// Reversal
+// ----------------------------------------
+
 // Reversal ints string to int array with default separator , char or custom separator.
 func ReverInts(src string, sep ...string) []int {
 	vs := strings.Split(src, VarString(sep, ","))
@@ -433,6 +428,10 @@ func ReverInt64s(src string, sep ...string) []int64 {
 	}
 	return out
 }
+
+// ----------------------------------------
+// Split
+// ----------------------------------------
 
 // SplitTrim extend strings.Split to trim space and sub strings before split.
 //
@@ -479,6 +478,10 @@ func SplitAfterTrim(src, sub string) []string {
 	}
 	return rst
 }
+
+// ----------------------------------------
+// Others
+// ----------------------------------------
 
 // GetSortKey get first letter of Chinese Pinyin
 func GetSortKey(str string) string {

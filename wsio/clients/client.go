@@ -22,7 +22,7 @@ type client struct {
 	socket sio.Socket // Client socket.io connection.
 }
 
-// Generate a new client, just init client id.
+// Create a new client with unique id.
 func newClient(cid string) *client {
 	return &client{id: cid, socket: nil}
 }

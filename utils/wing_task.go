@@ -41,7 +41,7 @@ func AddTask(tname, spec string, f toolbox.TaskFunc) {
 	toolbox.AddTask(tname, monitor)
 }
 
-// Generate tasks and start them as monitors.
+// Create tasks and start them as monitors.
 func StartTasks(monitors []*WTask) {
 	for _, m := range monitors {
 		if m.ForProd && beego.BConfig.RunMode != "prod" {
@@ -81,17 +81,20 @@ var ttaskchan = make(chan string)
 // TaskCallback task callback function
 type TaskCallback func(data any) error
 
-// Generat a new task monitor instance.
+// Deprecated: use utils.NewQTask instead it.
+func GenQTask(callback TaskCallback, configs ...int) *QTask { return NewQTask(callback, configs...) }
+
+// Create a new task monitor instance.
 //
 // Custom interval duration and interrupt flag by input params as follow:
 //
 //	interrupt := 1  // interrupt to execut the remain tasks when case error
 //	interval := 500 // sleep interval between tasks in microseconds
-//	task := comm.GenTask(callback, interrupt, interval)
+//	task := utils.NewTask(callback, interrupt, interval)
 //	task.Post(taskdata)
-func GenQTask(callback TaskCallback, configs ...int) *QTask {
+func NewQTask(callback TaskCallback, configs ...int) *QTask {
 	task := &QTask{
-		queue: GenQueue(), interrupt: false, interval: 0, executing: false,
+		queue: NewQueue(), interrupt: false, interval: 0, executing: false,
 	}
 
 	// set task configs from given data
