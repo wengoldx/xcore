@@ -145,53 +145,17 @@ func ContainInt64(list []int64, item int64) bool {
 
 // Contains check the given strings items if contains in totals.
 func Contains(totals []string, items []string) bool {
-	for _, item := range items {
-		found := false
-		for _, t := range totals {
-			if t == item {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
+	return NewSets().AddStrings(totals).ContainStrings(items)
 }
 
 // ContainInts check the given int items if contains in totals.
 func ContainInts(totals []int, items []int) bool {
-	for _, item := range items {
-		found := false
-		for _, t := range totals {
-			if t == item {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
+	return NewSets().AddInts(totals).ContainInts(items)
 }
 
 // ContainInt64s check the given int64 items if contains in totals.
 func ContainInt64s(totals []int64, items []int64) bool {
-	for _, item := range items {
-		found := false
-		for _, t := range totals {
-			if t == item {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
+	return NewSets().AddInt64s(totals).ContainInt64s(items)
 }
 
 // ----------------------------------------
@@ -200,38 +164,17 @@ func ContainInt64s(totals []int64, items []int64) bool {
 
 // ExistInts check the given int items if any exist in totals.
 func ExistInts(totals []int, items []int) bool {
-	for _, t := range totals {
-		for _, item := range items {
-			if t == item {
-				return true
-			}
-		}
-	}
-	return false
+	return NewSets().AddInts(totals).ExistInts(items)
 }
 
 // ExistInt64s check the given int64 items if any exist in totals.
 func ExistInt64s(totals []int64, items []int64) bool {
-	for _, t := range totals {
-		for _, item := range items {
-			if t == item {
-				return true
-			}
-		}
-	}
-	return false
+	return NewSets().AddInt64s(totals).ExistInt64s(items)
 }
 
 // ExistStrings check the given string items if any exist in totals.
 func ExistStrings(totals []string, items []string) bool {
-	for _, t := range totals {
-		for _, item := range items {
-			if t == item {
-				return true
-			}
-		}
-	}
-	return false
+	return NewSets().AddStrings(totals).ExistStrings(items)
 }
 
 // ----------------------------------------

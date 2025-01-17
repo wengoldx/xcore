@@ -67,10 +67,10 @@ func (s *Sets) Remove(value any) *Sets {
 
 // Remove the values from sets.
 //
-//	utils.NewSets().Removes(1, "2", byte(3))
+//	utils.NewSets().Adds(1, "2", byte(3)).Removes(1, "2")
 //
-//	vs := []any{1, "2", byte(3)}
-//	utils.NewSets().Removes(vs...)
+//	vs := []any{"2", byte(3)}
+//	utils.NewSets().Adds(1, "2", byte(3)).Removes(vs...)
 func (s *Sets) Removes(values ...any) *Sets {
 	for _, value := range values {
 		delete(s.sets, value)
@@ -100,10 +100,10 @@ func (s *Sets) Contain(value any) bool {
 
 // Check the values if contain in self sets.
 //
-//	ok := utils.NewSets().Contains(1, "2", byte(3))
+//	ok := utils.NewSets().Adds(1, "2", byte(3)).Contains(1, "2")
 //
-//	vs := []any{1, "2", byte(3)}
-//	ok := utils.NewSets().Contains(vs...)
+//	vs := []any{"2", byte(3)}
+//	ok := utils.NewSets().Adds(1, "2", byte(3)).Contains(vs...)
 func (s *Sets) Contains(values ...any) bool {
 	for _, ov := range values {
 		if _, exist := s.sets[ov]; !exist {
@@ -121,6 +121,21 @@ func (s *Sets) ContainSets(other *Sets) bool {
 		}
 	}
 	return true
+}
+
+// Check the values if any one exist in self sets.
+//
+//	ok := utils.NewSets().Adds(1, "2", byte(3)).Exists(1, "2")
+//
+//	vs := []any{"2", byte(3)}
+//	ok := utils.NewSets().Adds(1, "2", byte(3)).Exists(vs...)
+func (s *Sets) Exists(values ...any) bool {
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			return true
+		}
+	}
+	return false
 }
 
 // Fetch all sets values by scaner callback.
@@ -171,6 +186,16 @@ func (s *Sets) ContainInts(values []int) bool {
 	return true
 }
 
+// Check the int array values if any one exist in self sets.
+func (s *Sets) ExistInts(values []int) bool {
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			return true
+		}
+	}
+	return false
+}
+
 // Return all exist int values as unorderd int array.
 func (s *Sets) ArrayInt() []int {
 	rst, vtype := []int{}, reflect.TypeOf(int(0))
@@ -212,6 +237,16 @@ func (s *Sets) ContainInt64s(values []int64) bool {
 	return true
 }
 
+// Check the int64 array values if any one exist in self sets.
+func (s *Sets) ExistInt64s(values []int64) bool {
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			return true
+		}
+	}
+	return false
+}
+
 // Return all exist int64 values as unorderd int64 array.
 func (s *Sets) ArrayInt64() []int64 {
 	rst, vtype := []int64{}, reflect.TypeOf(int64(0))
@@ -251,6 +286,16 @@ func (s *Sets) ContainStrings(values []string) bool {
 		}
 	}
 	return true
+}
+
+// Check the string array values if any one exist in self sets.
+func (s *Sets) ExistStrings(values []string) bool {
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			return true
+		}
+	}
+	return false
 }
 
 // Return all exist string values as unorderd string array.
