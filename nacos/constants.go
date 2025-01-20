@@ -50,6 +50,7 @@ const (
 	DID_MQTT_AGENTS  = "dunyu.mqtt.agents"  // Fixed group, data id of mqtt agents
 	DID_OTA_BUILDS   = "dunyu.ota.builds"   // Fixed group, data id of all projects OTA infos, get data from mc.OTA maps
 	DID_WX_AGENTS    = "dunyu.wx.agents"    // Fixed group, data id of wechat agents
+	DID_QK_WORDS     = "dunyu.qk.words"     // Fixed group, data id for excel words to parse rules
 )
 
 /* -------------------------- */
@@ -132,4 +133,34 @@ type ESConfig struct {
 	User    string   `json:"user"`
 	Pwd     string   `json:"pwd"`
 	CFP     string   `json:"cfp"`
+}
+
+// Conflicts format string for excel rules join
+type EConflicts struct {
+	Older   string `json:"older"`
+	Versing string `json:"version"`
+	Broker  string `json:"broker"`
+	Topics  string `json:"topics"`
+	Dicts   string `json:"dicts"`
+	Devices string `json:"devices"`
+}
+
+// Excel rule words
+type EWords struct {
+	Instruct  string            `json:"instruct"`  // sheet name of instruct
+	Broker    string            `json:"broker"`    // sheet name of broker
+	Topics    string            `json:"topics"`    // sheet name of topics
+	Dicts     string            `json:"dicts"`     // sheet name of dicts
+	Devices   string            `json:"devices"`   // sheet name of devices
+	Prefix    string            `json:"prefix"`    // sheets perfix of topics rule
+	Sheets    []string          `json:"sheets"`    // sheets seqence for parse rule
+	StartCell string            `json:"startcell"` // rule policy start cell label
+	Threshold string            `json:"threshold"` // threshold mark
+	Conflicts EConflicts        `json:"conflicts"` // conflicts format strings for join multiple excels
+	Policies  map[string]int    `json:"policies"`  // excel words to policy types
+	Keeps     map[string]int    `json:"keeps"`     // excel words to save keeping mintues
+	Purposes  map[string]int    `json:"purposes"`  // excel words to purposes types
+	Analysis  map[string]int    `json:"analysis"`  // excel words to analysis types
+	Actions   map[string]int    `json:"actions"`   // excel words to action types
+	StartEnd  map[string]string `json:"startend"`  // excel words to start and end keywords
 }

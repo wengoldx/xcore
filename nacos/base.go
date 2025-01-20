@@ -157,6 +157,7 @@ type MetaConfig struct {
 	Agents  map[string]*wechat.WxIFAgent // DID_WX_AGENTS    : Wechat agents
 	Paths   map[string][]*ResPath        // DID_MIO_PATHS    : MinIO export resource paths
 	Users   map[string]string            // DID_MIO_USERS    : MinIO access service users
+	Words   EWords                       // DID_QK_WORDS     : Excel rule words
 }
 
 // Callback to listen server address and port changes
@@ -378,6 +379,8 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 		mc.parseUsers(data)
 	case DID_MIO_PATHS:
 		mc.parsePaths(data)
+	case DID_QK_WORDS:
+		mc.parseWords(data)
 	case DID_ES_AGENTS:
 		mc.setEsAgent(data)
 	case DID_MQTT_AGENTS:
@@ -451,6 +454,17 @@ func (mc *MetaConfig) parsePaths(data string) {
 	}
 	mc.Paths = paths
 	naclog.I("Updated minio paths!")
+}
+
+// Parse excel rule words when project register DID_QK_WORDS change event
+func (mc *MetaConfig) parseWords(data string) {
+	words := EWords{}
+	if err := json.Unmarshal([]byte(data), &words); err != nil {
+		naclog.E("Unmarshal excel rule words, err:", err)
+		return
+	}
+	mc.Words = words
+	naclog.I("Updated excel rule words!")
 }
 
 // Parse elastic server config and create es client
