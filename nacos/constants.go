@@ -138,7 +138,7 @@ type ESConfig struct {
 // Conflicts format string for excel rules join
 type EConflicts struct {
 	Older   string `json:"older"`
-	Versing string `json:"version"`
+	Version string `json:"version"`
 	Broker  string `json:"broker"`
 	Topics  string `json:"topics"`
 	Dicts   string `json:"dicts"`
