@@ -195,14 +195,15 @@ func OpenMysqlName(charset, name string, fix bool) error {
 		return err
 	}
 
-	WingHelper = Select(sessions[0])
+	WingHelper = Select(sessions[0], true)
 	return nil
 }
 
 // Select mysql Connection by request key words
 // if mode is dev, the key will auto splice '-dev'
-func Select(session string) *WingProvider {
-	if beego.BConfig.RunMode == "dev" {
+func Select(session string, fix ...bool) *WingProvider {
+	auto := !(len(fix) > 0 && fix[0])
+	if auto && beego.BConfig.RunMode == "dev" {
 		session = session + "-dev"
 	}
 	return connPool[session]
