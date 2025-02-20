@@ -10,7 +10,6 @@ require (
 	github.com/go-ego/gse v0.70.2
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/googollee/go-socket.io v1.0.1
 	github.com/mozillazg/go-pinyin v0.19.0
 	github.com/nacos-group/nacos-sdk-go/v2 v2.1.0
