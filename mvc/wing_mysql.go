@@ -195,7 +195,7 @@ func OpenMysqlName(charset, name string, fix bool) error {
 		return err
 	}
 
-	WingHelper = Select(sessions[0], true)
+	WingHelper = Select(sessions[0], fix)
 	return nil
 }
 
