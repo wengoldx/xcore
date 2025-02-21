@@ -73,7 +73,7 @@ const (
 
 var (
 	// WingHelper content provider to hold database connections,
-	// it will nil before mvc.OpenMySQL() called.
+	// the WingHelper.Conn pointer will nil before mvc.OpenMySQL() called.
 	WingHelper = &WingProvider{} // empty as default
 
 	// Cache all mysql providers into pool for multiple databases server connect.
