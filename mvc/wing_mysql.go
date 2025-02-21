@@ -199,10 +199,10 @@ func OpenMySQL(charset string, sessions ...string) error {
 	return nil
 }
 
-// OpenMysqlName connect database with target name, set fix=ture for ignore
+// OpenMySQLName connect database with target name, set fix=ture for ignore
 // server runmode, it will read configs from fixed 'mysql' session, not from
 // auto append 'mysql-dev' session when runmode on 'dev'.
-func OpenMysqlName(charset, name string, fix bool) error {
+func OpenMySQLName(charset, name string, fix bool) error {
 	sessions := []string{"mysql"}
 	if err := openMySQLPool(charset, name, fix, sessions); err != nil {
 		return err
