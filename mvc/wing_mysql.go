@@ -30,7 +30,20 @@ import (
 	// ----------------------------------------
 )
 
-// WingProvider content provider to support database utils
+// WingProvider content provider to support database utils,
+// you can implement custom helper to access any table with mvc.WingHelper
+// like the follow codes:
+//
+//	types CustomHelper struct {
+//		mvc.WingProvider
+//	}
+//
+//	func HStub() *CustomHelper {
+//		return &CustomHelper{*mvc.WingHelper}
+//	}
+//
+// `WARNING`: The Conn instance maybe not inited when database configs
+// invalid by call mvc.OpenMySQL(), OpenMysqlName().
 type WingProvider struct {
 	Conn *sql.DB
 }
@@ -61,7 +74,7 @@ const (
 var (
 	// WingHelper content provider to hold database connections,
 	// it will nil before mvc.OpenMySQL() called.
-	WingHelper *WingProvider
+	WingHelper = &WingProvider{} // empty as default
 
 	// Cache all mysql providers into pool for multiple databases server connect.
 	connPool = make(map[string]*WingProvider)
