@@ -48,6 +48,14 @@ type WingProvider struct {
 	Conn *sql.DB
 }
 
+// Confs database connect configs.
+type Confs struct {
+	Host string // Database host address and port
+	User string // Database connect auth user
+	Pwd  string // Database connect auth password
+	Name string // Target database name
+}
+
 // ScanCallback use for scan query result from rows
 type ScanCallback func(rows *sql.Rows) error
 
@@ -80,66 +88,44 @@ var (
 	connPool = make(map[string]*WingProvider)
 )
 
-// readMySQLCofnigs read mysql database params from config file,
-// than verify them if empty except host.
-func readMySQLCofnigs(session string, check bool) (string, string, string, string, error) {
-	user := beego.AppConfig.String(fmt.Sprintf(mysqlConfigUser, session))
-	pwd := beego.AppConfig.String(fmt.Sprintf(mysqlConfigPwd, session))
-	host := beego.AppConfig.String(fmt.Sprintf(mysqlConfigHost, session))
-	name := beego.AppConfig.String(fmt.Sprintf(mysqlConfigName, session))
-
-	if user == "" || pwd == "" || (check && name == "") {
-		return "", "", "", "", invar.ErrInvalidConfigs
+// connectMySQL connect target mysql database with configs.
+func connectMySQL(charset, session string, c *Confs) error {
+	dsn := ""
+	if len(c.Host) > 0 /* check database host whether using TCP to connect */ {
+		// conntect with remote host database server
+		dsn = fmt.Sprintf(mysqldsnTcp, c.User, c.Pwd, c.Host, c.Name, charset)
+	} else {
+		// just connect local database server
+		dsn = fmt.Sprintf(mysqldsnLocal, c.User, c.Pwd, c.Name, charset)
 	}
-	return user, pwd, host, name, nil
+	logger.I("Open MySQL from session:", session)
+
+	// open and connect database
+	con, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return err
+	}
+
+	// check database validable
+	if err = con.Ping(); err != nil {
+		return err
+	}
+
+	con.SetMaxIdleConns(100)
+	con.SetMaxOpenConns(100)
+	con.SetConnMaxLifetime(28740)
+	connPool[session] = &WingProvider{con}
+	return nil
 }
 
-// openMySQLPool open mysql and cached to connection pool by given session keys.
-func openMySQLPool(charset, name string, fix bool, sessions []string) error {
-	for _, session := range sessions {
-		// combine develop session key on dev mode
-		if !fix && beego.BConfig.RunMode == "dev" {
-			session = session + "-dev"
-		}
-
-		// check database name config when not set as param
-		check := name == ""
-
-		// load configs by session key
-		user, pwd, host, dbn, err := readMySQLCofnigs(session, check)
-		if err != nil {
-			return err
-		} else if check {
-			name = dbn // use database name from config file
-		}
-
-		dsn := ""
-		if len(host) > 0 /* check database host whether using TCP to connect */ {
-			// conntect with remote host database server
-			dsn = fmt.Sprintf(mysqldsnTcp, user, pwd, host, name, charset)
-		} else {
-			// just connect local database server
-			dsn = fmt.Sprintf(mysqldsnLocal, user, pwd, name, charset)
-		}
-		logger.I("Open MySQL from session:", session)
-
-		// open and connect database
-		con, err := sql.Open("mysql", dsn)
-		if err != nil {
-			return err
-		}
-
-		// check database validable
-		if err = con.Ping(); err != nil {
-			return err
-		}
-
-		con.SetMaxIdleConns(100)
-		con.SetMaxOpenConns(100)
-		con.SetConnMaxLifetime(28740)
-		connPool[session] = &WingProvider{con}
+// MySqlConfigs read mysql database params from config file.
+func MySqlConfigs(session string) *Confs {
+	return &Confs{
+		User: beego.AppConfig.String(fmt.Sprintf(mysqlConfigUser, session)),
+		Pwd:  beego.AppConfig.String(fmt.Sprintf(mysqlConfigPwd, session)),
+		Host: beego.AppConfig.String(fmt.Sprintf(mysqlConfigHost, session)),
+		Name: beego.AppConfig.String(fmt.Sprintf(mysqlConfigName, session)),
 	}
-	return nil
 }
 
 // OpenMySQL connect database and check ping result, the connection holded
@@ -190,8 +176,21 @@ func OpenMySQL(charset string, sessions ...string) error {
 	}
 
 	// connect all mysql from sessions
-	if err := openMySQLPool(charset, "", false, sessions); err != nil {
-		return err
+	for _, session := range sessions {
+		// combine develop session key on dev mode
+		if beego.BConfig.RunMode == "dev" {
+			session = session + "-dev"
+		}
+
+		// load configs by session key
+		confs := MySqlConfigs(session)
+		if confs.User == "" || confs.Pwd == "" || confs.Name == "" {
+			return invar.ErrInvalidConfigs
+		}
+
+		if err := connectMySQL(charset, session, confs); err != nil {
+			return err
+		}
 	}
 
 	// using the first connection as primary helper
@@ -199,16 +198,18 @@ func OpenMySQL(charset string, sessions ...string) error {
 	return nil
 }
 
-// OpenMySQLName connect database with target name, set fix=ture for ignore
-// server runmode, it will read configs from fixed 'mysql' session, not from
-// auto append 'mysql-dev' session when runmode on 'dev'.
-func OpenMySQLName(charset, name string, fix bool) error {
-	sessions := []string{"mysql"}
-	if err := openMySQLPool(charset, name, fix, sessions); err != nil {
+// OpenMySQL2 connect database with given configs, not from app.conf file.
+func OpenMySQL2(charset string, confs *Confs) error {
+	if confs.User == "" || confs.Pwd == "" || confs.Name == "" {
+		return invar.ErrInvalidConfigs
+	}
+
+	session := "mysql"
+	if err := connectMySQL(charset, session, confs); err != nil {
 		return err
 	}
 
-	WingHelper = Select(sessions[0], fix)
+	WingHelper = Select(session, true)
 	return nil
 }
 
