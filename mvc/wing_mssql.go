@@ -27,6 +27,16 @@ import (
 	// ----------------------------------------
 )
 
+// MsConfs mssql database connect configs.
+type MsConfs struct {
+	Host    string // Database host address
+	Port    int    // Database port number
+	User    string // Database connect auth user
+	Pwd     string // Database connect auth password
+	Name    string // Target database name
+	Timeout int    // Connect timeout seconds
+}
+
 // Microsoft SQL Server configs
 const (
 	mssqlConfigUser = "%s::user"    // configs key of mssql database user
@@ -41,23 +51,19 @@ const (
 )
 
 // MssqlHelper content provider to hold mssql database connections,
-// it will nil before mvc.OpenMssql() called.
-var MssqlHelper *WingProvider
+// the MssqlHelper.Conn pointer is nil before mvc.OpenMySQL() called.
+var MssqlHelper = &WingProvider{}
 
-// readMssqlCofnigs read mssql database params from config file,
-// than verify them if empty.
-func readMssqlCofnigs(session string) (string, string, string, int, string, int, error) {
-	user := beego.AppConfig.String(fmt.Sprintf(mssqlConfigUser, session))
-	pwd := beego.AppConfig.String(fmt.Sprintf(mssqlConfigPwd, session))
-	host := beego.AppConfig.DefaultString(fmt.Sprintf(mssqlConfigHost, session), "127.0.0.1")
-	port := beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigPort, session), 1433)
-	name := beego.AppConfig.String(fmt.Sprintf(mssqlConfigName, session))
-	timeout := beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigTout, session), 30) // seconds
-
-	if user == "" || pwd == "" || name == "" {
-		return "", "", "", 0, "", 0, invar.ErrInvalidConfigs
+// MssqlCofnigs read mssql database params from config file.
+func MssqlCofnigs(session string) *MsConfs {
+	return &MsConfs{
+		User:    beego.AppConfig.String(fmt.Sprintf(mssqlConfigUser, session)),
+		Pwd:     beego.AppConfig.String(fmt.Sprintf(mssqlConfigPwd, session)),
+		Host:    beego.AppConfig.DefaultString(fmt.Sprintf(mssqlConfigHost, session), "127.0.0.1"),
+		Port:    beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigPort, session), 1433),
+		Name:    beego.AppConfig.String(fmt.Sprintf(mssqlConfigName, session)),
+		Timeout: beego.AppConfig.DefaultInt(fmt.Sprintf(mssqlConfigTout, session), 30), // seconds
 	}
-	return user, pwd, host, port, name, timeout, nil
 }
 
 // OpenMssql connect mssql database and check ping result,
@@ -97,15 +103,15 @@ func OpenMssql(charset string) error {
 		session = session + "-dev"
 	}
 
-	user, pwd, server, port, dbn, to, err := readMssqlCofnigs(session)
-	if err != nil {
-		return err
-	} else if to <= 0 { // check connection timeout
-		to = 30 // fix the dial timeout over 5s
+	confs := MssqlCofnigs(session)
+	if confs.User == "" || confs.Pwd == "" || confs.Name == "" {
+		return invar.ErrInvalidConfigs
+	} else if confs.Timeout <= 0 { // check connection timeout
+		confs.Timeout = 30 // fix the dial timeout over 5s
 	}
 
 	driver := "mssql" // mssql for processQueryText=true, sqlserver for false
-	dsn := fmt.Sprintf(mssqldsn, server, port, dbn, user, pwd, to, to+5)
+	dsn := fmt.Sprintf(mssqldsn, confs.Host, confs.Port, confs.Name, confs.User, confs.Pwd, confs.Timeout, confs.Timeout+5)
 	logger.I("Open MSSQL from session:", session)
 
 	// open and connect database
