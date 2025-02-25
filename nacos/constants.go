@@ -147,14 +147,9 @@ type EConflicts struct {
 
 // Excel rule words
 type EWords struct {
-	Instruct  string            `json:"instruct"`  // sheet name of instruct
-	Broker    string            `json:"broker"`    // sheet name of broker
-	Topics    string            `json:"topics"`    // sheet name of topics
-	Dicts     string            `json:"dicts"`     // sheet name of dicts
-	Devices   string            `json:"devices"`   // sheet name of devices
-	Prefix    string            `json:"prefix"`    // sheets perfix of topics rule
-	Sheets    []string          `json:"sheets"`    // sheets seqence for parse rule
-	StartCell string            `json:"startcell"` // rule policy start cell label
+	Sheets    []string          `json:"sheets"`    // sheets name, instruct, broker, topics, dicts, devices, topics prefix, quality, arm ...
+	Targets   []string          `json:"targets"`   // target labels as start cells for policy parse
+	Prefix    string            `json:"prefix"`    // The prefix of topic rule sheet name
 	Threshold string            `json:"threshold"` // threshold mark
 	Conflicts EConflicts        `json:"conflicts"` // conflicts format strings for join multiple excels
 	Policies  map[string]int    `json:"policies"`  // excel words to policy types
