@@ -192,24 +192,18 @@ func Select(session string, fix ...bool) *WingProvider {
 }
 
 // CloseMySQL close target session database provider.
-func CloseMySQL(check, fix bool, sessions ...string) error {
-	for _, session := range sessions {
-		if session == "" {
-			continue
-		}
+func CloseMySQL(session string, fix ...bool) error {
+	auto := !(len(fix) > 0 && fix[0])
+	if !auto && beego.BConfig.RunMode == "dev" {
+		session = session + "-dev"
+	}
 
-		// combine develop session key on dev mode
-		if !fix && beego.BConfig.RunMode == "dev" {
-			session = session + "-dev"
+	provider := connPool[session]
+	if provider != nil && provider.Conn != nil {
+		if err := provider.Conn.Close(); err != nil {
+			return err
 		}
-
-		provider := connPool[session]
-		if provider != nil && provider.Conn != nil {
-			if err := provider.Conn.Close(); check && err != nil {
-				return err // check database close result
-			}
-			provider.Conn = nil
-		}
+		provider.Conn = nil
 	}
 	return nil
 }
