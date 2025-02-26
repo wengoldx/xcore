@@ -130,3 +130,14 @@ func OpenMssql(charset string) error {
 	MssqlHelper = &WingProvider{con}
 	return nil
 }
+
+// CloseMssql close target session database provider.
+func CloseMssql(check bool) error {
+	if MssqlHelper.Conn != nil {
+		if err := MssqlHelper.Conn.Close(); check && err != nil {
+			return err // check database close result
+		}
+		MssqlHelper.Conn = nil
+	}
+	return nil
+}
