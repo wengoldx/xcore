@@ -328,6 +328,20 @@ func (c *WingController) GetInt64Def(key string, def int64) int64 {
 	return rst
 }
 
+// OutHeader set none-empty response header as key:value to frontend.
+func (c *WingController) OutHeader(key, value string) {
+	if key != "" && value != "" {
+		c.Ctx.Output.Header(key, value)
+	}
+}
+
+// OutRole set role as response header to frontend.
+func (c *WingController) OutRole(role string, status int) {
+	if status == invar.StatusOK && role != "" {
+		c.Ctx.Output.Header("role", role)
+	}
+}
+
 // ----------------------------------------
 
 // DoAfterValidated do bussiness action after success validate the given json data.
