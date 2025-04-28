@@ -159,6 +159,25 @@ func ContainInt64s(totals []int64, items []int64) bool {
 }
 
 // ----------------------------------------
+// Fileter
+// ----------------------------------------
+
+// Filters remove the strings from items which not exist in totals.
+func Filters(totals []string, items []string) []string {
+	return NewSets().AddStrings(totals).FilterStrings(items)
+}
+
+// FilterInts remove the int values from items which not exist in totals.
+func FilterInts(totals []int, items []int) []int {
+	return NewSets().AddInts(totals).FilterInts(items)
+}
+
+// FilterInt64s remove the int64 values from items which not exist in totals.
+func FilterInt64s(totals []int64, items []int64) []int64 {
+	return NewSets().AddInt64s(totals).FilterInt64s(items)
+}
+
+// ----------------------------------------
 // Exist
 // ----------------------------------------
 

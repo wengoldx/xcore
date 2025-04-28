@@ -186,6 +186,17 @@ func (s *Sets) ContainInts(values []int) bool {
 	return true
 }
 
+// Fetch the given values and remove the numbers which not contained in sets.
+func (s *Sets) FilterInts(values []int) []int {
+	valids := []int{}
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			valids = append(valids, ov)
+		}
+	}
+	return valids
+}
+
 // Check the int array values if any one exist in self sets.
 func (s *Sets) ExistInts(values []int) bool {
 	for _, ov := range values {
@@ -237,6 +248,17 @@ func (s *Sets) ContainInt64s(values []int64) bool {
 	return true
 }
 
+// Fetch the given values and remove the numbers which not contained in sets.
+func (s *Sets) FilterInt64s(values []int64) []int64 {
+	valids := []int64{}
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			valids = append(valids, ov)
+		}
+	}
+	return valids
+}
+
 // Check the int64 array values if any one exist in self sets.
 func (s *Sets) ExistInt64s(values []int64) bool {
 	for _, ov := range values {
@@ -286,6 +308,17 @@ func (s *Sets) ContainStrings(values []string) bool {
 		}
 	}
 	return true
+}
+
+// Fetch the given values and remove the strings which not contained in sets.
+func (s *Sets) FilterStrings(values []string) []string {
+	valids := []string{}
+	for _, ov := range values {
+		if _, exist := s.sets[ov]; exist {
+			valids = append(valids, ov)
+		}
+	}
+	return valids
 }
 
 // Check the string array values if any one exist in self sets.
