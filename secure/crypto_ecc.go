@@ -18,6 +18,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/big"
+	"os"
 
 	"github.com/wengoldx/xcore/invar"
 )
@@ -85,11 +86,11 @@ func NewEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
 	var curve elliptic.Curve
 	switch curvetype {
 	case "P224":
-		curve = elliptic.P224()
+		curve = elliptic.P224() // FIXME: Sign<->Verify Error!
 	case "P384":
-		curve = elliptic.P384()
+		curve = elliptic.P384() // FIXME: Sign<->Verify Error!
 	case "P521":
-		curve = elliptic.P521()
+		curve = elliptic.P521() // FIXME: Sign<->Verify Error!
 	default: // P256 as default
 		curve = elliptic.P256()
 	}
@@ -118,6 +119,26 @@ func NewEccKeys(sign ...string) (string, string, error) {
 	return EccKeysString(prikey)
 }
 
+// Create ECC private key and save to target pem file.
+func NewEccPemFile(outfile string, sign ...string) error {
+	if prikey, err := NewEccPriKey(sign...); err != nil {
+		return err
+	} else if pripem, err := EccPriString(prikey); err != nil {
+		return err
+	} else {
+		return os.WriteFile(outfile, []byte(pripem), 0666)
+	}
+}
+
+// Load ECC private pem file and return private key.
+func LoadEccPemFile(pemfile string) (*ecdsa.PrivateKey, error) {
+	pripem, err := os.ReadFile(pemfile)
+	if err != nil {
+		return nil, err
+	}
+	return EccPriKey(string(pripem))
+}
+
 // Format ECC private key to pem string, it can be save to file directly.
 func EccPriString(prikey *ecdsa.PrivateKey) (string, error) {
 	dertext, err := x509.MarshalECPrivateKey(prikey)
@@ -139,7 +160,7 @@ func EccPriString(prikey *ecdsa.PrivateKey) (string, error) {
 //	pubkey := &prikey.PublicKey              // get public key
 //	pubstr, _ := secure.EccPubString(pubkey) // format public key to pem string
 func EccPubString(pubkey *ecdsa.PublicKey) (string, error) {
-	dertext, err := x509.MarshalPKIXPublicKey(&pubkey)
+	dertext, err := x509.MarshalPKIXPublicKey(pubkey)
 	if err != nil {
 		return "", err
 	}
