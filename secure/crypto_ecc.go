@@ -86,11 +86,11 @@ func NewEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
 	var curve elliptic.Curve
 	switch curvetype {
 	case "P224":
-		curve = elliptic.P224() // FIXME: Sign<->Verify Error!
+		curve = elliptic.P224()
 	case "P384":
-		curve = elliptic.P384() // FIXME: Sign<->Verify Error!
+		curve = elliptic.P384()
 	case "P521":
-		curve = elliptic.P521() // FIXME: Sign<->Verify Error!
+		curve = elliptic.P521()
 	default: // P256 as default
 		curve = elliptic.P256()
 	}
@@ -219,45 +219,64 @@ func EccPubKey(pubkey string) (*ecdsa.PublicKey, error) {
 
 // Parse ECC digital signs from signed string, to veriry plaintext.
 //
-//	prikey, _ := NewEccPriKey()
-//	plaintext := "This is a plainttext to sign and verfiy!"
-//	signb64, _ := EccSign(plaintext, prikey)
-//	valid, _ : EccVerify(plaintext, signb64, &prikey.PublicKey)
-//	fmt.Println("ECC verify result:", valid)
-func EccDigitalSigns(sign []byte) (*big.Int, *big.Int) {
-	if len(sign) != 64 {
+//	NOTICE: signs length match like:
+//		 56 for P224
+//		 64 for P256 // maybe 63
+//		 96 for P384
+//		130 for P521 // maybe 131 or 132
+//
+//	See: EccSign(), EccVerify().
+func EccDigitalSigns(signs []byte) (*big.Int, *big.Int) {
+	cnt, signlen := 0, 0
+	if cnt = len(signs); cnt <= 1 {
+		zero := big.NewInt(0)
+		return zero, zero
+	} else if signlen = int(signs[cnt-1]); signlen <= 0 {
 		zero := big.NewInt(0)
 		return zero, zero
 	}
 
-	rb, sb := make([]byte, 32), make([]byte, 32)
-	for i := 0; i < len(sign); i++ {
-		if i < 32 {
-			rb[i] = sign[i]
-		} else {
-			sb[i-32] = sign[i]
-		}
-	}
-
+	/* -------------------------------------------------
+	 * The signed string format as: sign + sb + sign_len
+	 * ------------------------------------------------- */
+	rb, sb := signs[:signlen], signs[signlen:cnt-1]
 	r, s := new(big.Int), new(big.Int)
 	return r.SetBytes(rb), s.SetBytes(sb)
 }
 
 // Sign the given plaintext by ECC private key, and return the signed code
 // on base64 format.
+//
+//	prikey, _ := NewEccPriKey()
+//	plaintext := "This is a plainttext to sign and verfiy!"
+//	signb64, _ := EccSign(plaintext, prikey)
+//	valid, _ : EccVerify(plaintext, signb64, &prikey.PublicKey)
+//	fmt.Println("ECC verify result:", valid)
 func EccSign(plaintext string, prikey *ecdsa.PrivateKey) (string, error) {
-	hash := sha256.Sum256([]byte(plaintext))
+	hash := sha256.Sum256([]byte(plaintext)) // or sha512.Sum512()
 	r, s, err := ecdsa.Sign(rand.Reader, prikey, hash[:])
 	if err != nil {
 		return "", err
 	}
 
 	sign, sb := r.Bytes(), s.Bytes()
+	signlen := byte(len(sign))
+
+	/* -------------------------------------------------
+	 * The signed string format as: sign + sb + sign_len
+	 * ------------------------------------------------- */
 	sign = append(sign, sb...)
+	sign = append(sign, signlen) // append sign length
 	return ByteToBase64(sign), nil
 }
 
 // Verify the given plaintext by ECC public key and base64 formated sign code.
+//
+//	prikey, _ := NewEccPriKey()
+//	plaintext := "This is a plainttext to sign and verfiy!"
+//	signb64, _ := EccSign(plaintext, prikey)
+//	valid, _ : EccVerify(plaintext, signb64, &prikey.PublicKey)
+//	fmt.Println("ECC verify result:", valid)
 func EccVerify(plaintext, signb64 string, pubkey *ecdsa.PublicKey) (bool, error) {
 	signs, err := Base64ToByte(signb64)
 	if err != nil {
@@ -265,7 +284,7 @@ func EccVerify(plaintext, signb64 string, pubkey *ecdsa.PublicKey) (bool, error)
 	}
 
 	r, s := EccDigitalSigns(signs)
-	hash := sha256.Sum256([]byte(plaintext))
+	hash := sha256.Sum256([]byte(plaintext)) // or sha512.Sum512()
 	valid := ecdsa.Verify(pubkey, hash[:], r, s)
 	return valid, nil
 }
