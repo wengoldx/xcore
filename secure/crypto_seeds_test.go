@@ -46,3 +46,17 @@ func TestViaSignCode(t *testing.T) {
 		})
 	}
 }
+
+func TestViaSignOne(t *testing.T) {
+	signSeeds := "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
+	CreateSeeds(signSeeds)
+
+	t.Run("Verify Manual2", func(t *testing.T) {
+		sign := "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
+		code := "5hUjz/MA"
+
+		if !ViaSignCode(sign, code) {
+			t.Fatal("Verify sign&code failed!")
+		}
+	})
+}
