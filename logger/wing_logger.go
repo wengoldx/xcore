@@ -118,6 +118,12 @@ func SetOutputLogger() {
 	}
 }
 
+// Remove console and file loggers as slient status, it usefull for unit test.
+func SilentLoggers() {
+	beego.BeeLogger.DelLogger(logs.AdapterFile)
+	beego.BeeLogger.DelLogger(logs.AdapterConsole)
+}
+
 // GetLevel return current logger output level
 func GetLevel() string {
 	switch beego.BeeLogger.GetLevel() {
