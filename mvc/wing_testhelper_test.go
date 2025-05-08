@@ -138,7 +138,7 @@ func TestRecordMults(t *testing.T) {
 // Connect the fixed test database with secure account.
 func setupTestDatabase() error {
 	/* instead the database valid configs before excute unit test! */
-	confs := &MyConfs{Host: "10.239.20.135:3306", User: "root", Pwd: "dunyu123", Name: "rbtest"}
+	confs := &MyConfs{Host: "192.168.1.100:3306", User: "user", Pwd: "123456", Name: "testdb"}
 	if err := OpenMySQL2("utf8mb4", confs); err != nil {
 		return err
 	}
