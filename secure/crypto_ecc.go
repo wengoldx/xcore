@@ -49,7 +49,6 @@ import (
  *
  * - Call secure.EccPriKey(pripem) return private key from pem data.
  * - Call secure.EccPubKey(pubpem) return public key from pem data.
- * - Call secure.EccDigitalSigns(signstring) return R and S digitals.
  */
 
 const (
@@ -217,33 +216,6 @@ func EccPubKey(pubkey string) (*ecdsa.PublicKey, error) {
 	return pub, nil
 }
 
-// Parse ECC digital signs from signed string, to veriry plaintext.
-//
-//	NOTICE: signs length match like:
-//		 56 for P224
-//		 64 for P256 // maybe 63
-//		 96 for P384
-//		130 for P521 // maybe 131 or 132
-//
-//	See: EccSign(), EccVerify().
-func EccDigitalSigns(signs []byte) (*big.Int, *big.Int) {
-	cnt, signlen := 0, 0
-	if cnt = len(signs); cnt <= 1 {
-		zero := big.NewInt(0)
-		return zero, zero
-	} else if signlen = int(signs[cnt-1]); signlen <= 0 {
-		zero := big.NewInt(0)
-		return zero, zero
-	}
-
-	/* -------------------------------------------------
-	 * The signed string format as: sign + sb + sign_len
-	 * ------------------------------------------------- */
-	rb, sb := signs[:signlen], signs[signlen:cnt-1]
-	r, s := new(big.Int), new(big.Int)
-	return r.SetBytes(rb), s.SetBytes(sb)
-}
-
 // Sign the given plaintext by ECC private key, and return the signed code
 // on base64 format.
 //
@@ -259,15 +231,8 @@ func EccSign(plaintext string, prikey *ecdsa.PrivateKey) (string, error) {
 		return "", err
 	}
 
-	sign, sb := r.Bytes(), s.Bytes()
-	signlen := byte(len(sign))
-
-	/* -------------------------------------------------
-	 * The signed string format as: sign + sb + sign_len
-	 * ------------------------------------------------- */
-	sign = append(sign, sb...)
-	sign = append(sign, signlen) // append sign length
-	return ByteToBase64(sign), nil
+	signs := marshalEccSigns(r, s)
+	return ByteToBase64(signs), nil
 }
 
 // Verify the given plaintext by ECC public key and base64 formated sign code.
@@ -283,8 +248,59 @@ func EccVerify(plaintext, signb64 string, pubkey *ecdsa.PublicKey) (bool, error)
 		return false, err
 	}
 
-	r, s := EccDigitalSigns(signs)
+	r, s := parseEccSigns(signs)
 	hash := sha256.Sum256([]byte(plaintext)) // or sha512.Sum512()
 	valid := ecdsa.Verify(pubkey, hash[:], r, s)
 	return valid, nil
+}
+
+// -------------------------------------------------------------------
+// Private methods define.
+// -------------------------------------------------------------------
+
+// Marshal ECC digital signs to custom formated string for next decode
+// by parseEccSigns() method.
+//
+//	See: EccSign(), EccVerify().
+func marshalEccSigns(r *big.Int, s *big.Int) []byte {
+	rb, sb := r.Bytes(), s.Bytes()
+	rblen := byte(len(rb)) // maybe 28, 32(or 31), 48, 65(or 66)
+
+	/* ---------------------------------------------
+	 * The signed string format as: rb + sb + rb_len
+	 * --------------------------------------------- */
+	sign := append(rb, sb...)
+	sign = append(sign, rblen) // append rb buffers length
+	return sign
+}
+
+// Parse ECC digital signs from signed string by marshalEccSigns() method,
+// to veriry plaintext.
+//
+//	NOTICE: signs length (sign + sb) matched as numbers:
+//		 56 for P224
+//		 64 for P256 // maybe 63
+//		 96 for P384
+//		130 for P521 // maybe 131 or 132
+//
+//	See: EccSign(), EccVerify().
+func parseEccSigns(signs []byte) (*big.Int, *big.Int) {
+	cnt, rblen, decode := 0, 0, true
+	if cnt = len(signs) - 1; cnt <= 0 {
+		decode = false
+	} else if rblen = int(signs[cnt]); rblen <= 0 && rblen >= cnt {
+		decode = false
+	}
+
+	/* ---------------------------------------------
+	 * The signed string format as: rb + sb + rb_len
+	 * --------------------------------------------- */
+	if decode {
+		rb, sb := signs[:rblen], signs[rblen:cnt]
+		r, s := new(big.Int), new(big.Int)
+		return r.SetBytes(rb), s.SetBytes(sb)
+	}
+
+	zero := big.NewInt(0)
+	return zero, zero
 }

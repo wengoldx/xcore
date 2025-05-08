@@ -74,22 +74,22 @@ import (
 const RSA_UTIL_DESCRIPTION = 0 /* just use for description */
 
 const (
-	blockRsaPrivateKey = "RSA Private key"
-	blockRsaPublicKey  = "RSA Public key"
+	RSA_PEM_PRI_HEADER = "RSA PRIVATE KEY" // private key pem file header
+	RSA_PEM_PUB_HEADER = "RSA PUBLIC KEY"  // public  key pem file header
 )
 
 // Load RSA private or public key content from the given pem file,
-// and the input buffer size of buffbits must larger than pem file size
+// and the input buffer size of bits must larger than pem file size
 // by call NewRSAKeys to set bits.
-func LoadRSAKey(filepath string, buffbits ...int) ([]byte, error) {
-	if len(buffbits) > 0 && buffbits[0] > 0 {
+func LoadRSAKey(filepath string, bits ...int) ([]byte, error) {
+	if len(bits) > 0 && bits[0] > 0 {
 		pemfile, err := os.Open(filepath)
 		if err != nil {
 			return nil, err
 		}
 		defer pemfile.Close()
 
-		keybuf := make([]byte, buffbits[0])
+		keybuf := make([]byte, bits[0])
 		num, err := pemfile.Read(keybuf)
 		if err != nil {
 			return nil, err
@@ -463,18 +463,18 @@ func newRSAKeysByType(pkcs string, bits ...int) (string, string, error) {
 	case "PKCS1":
 		derstream = x509.MarshalPKCS1PrivateKey(prikey)
 	case "PKCS8":
-		tmp, err := x509.MarshalPKCS8PrivateKey(prikey)
+		cs8stream, err := x509.MarshalPKCS8PrivateKey(prikey)
 		if err != nil {
 			return "", "", err
 		}
-		derstream = tmp
+		derstream = cs8stream
 	default:
 		return "", "", invar.ErrInvalidOptions
 	}
 
 	// create buffer to save private pem content
 	pribuff := new(bytes.Buffer)
-	block := &pem.Block{Type: blockRsaPrivateKey, Bytes: derstream}
+	block := &pem.Block{Type: RSA_PEM_PRI_HEADER, Bytes: derstream}
 	if err = pem.Encode(pribuff, block); err != nil {
 		return "", "", err
 	}
@@ -486,7 +486,7 @@ func newRSAKeysByType(pkcs string, bits ...int) (string, string, error) {
 	}
 
 	pubbuff := new(bytes.Buffer)
-	block = &pem.Block{Type: blockRsaPublicKey, Bytes: derpkix}
+	block = &pem.Block{Type: RSA_PEM_PUB_HEADER, Bytes: derpkix}
 	if err = pem.Encode(pubbuff, block); err != nil {
 		return "", "", err
 	}

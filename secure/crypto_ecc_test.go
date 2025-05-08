@@ -100,7 +100,7 @@ func TestEccPubKey(t *testing.T) {
 	}
 }
 
-// Test NewEccPriKey, EccSign, EccVerify, EccDigitalSigns.
+// Test NewEccPriKey, EccSign, EccVerify.
 func TestEccVerify(t *testing.T) {
 	cases := []struct {
 		Case  string
