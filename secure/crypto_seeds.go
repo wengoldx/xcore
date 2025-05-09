@@ -107,3 +107,14 @@ func ViaSignCode(sign, code string) bool {
 	}
 	return true
 }
+
+// Encode signature plaintexts for next ECC sign and verfiy.
+func SignPlaintext(datas ...string) string {
+	signs := []string{}
+	for _, str := range datas {
+		if str != "" {
+			signs = append(signs, str)
+		}
+	}
+	return strings.Join(signs, "\n")
+}

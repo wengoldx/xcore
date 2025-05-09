@@ -45,22 +45,22 @@ func TestRecordOne(t *testing.T) {
 	}
 	defer CloseMySQL("mysql")
 
-	ut, table := UTest(), "UnitTest"
+	ut := UTest()
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
 			if last, err := insertTestValues(ut, c.Case, c.Creates, c.Number); err != nil {
 				t.Fatal("Insert a test record, err:", err)
-			} else if id, err := ut.LastID(table, "number"); err != nil {
+			} else if id, err := ut.LastID(_ut_table, "number"); err != nil {
 				t.Fatal("Query last id, err:", err)
 			} else if last != id {
 				t.Fatal("Verify last id failed!")
-			} else if text, err := ut.LastField(table, "text", c.Order); err != nil {
+			} else if text, err := ut.LastField(_ut_table, "text", c.Order); err != nil {
 				t.Fatal("Query last field, err:", err)
 			} else if text != c.Case {
 				t.Fatal("Verify last field failed!")
 			} else {
 				t.Log("Inserted id:", id, "- Order by", c.Order+",", "text:", text)
-				ut.DelOne("UnitTest", "id", last)
+				ut.DelOne(_ut_table, "id", last)
 			}
 		})
 	}
@@ -82,10 +82,10 @@ func TestRecordMults(t *testing.T) {
 	}
 	defer CloseMySQL("mysql")
 
-	ut, table := UTest(), "UnitTest"
+	ut := UTest()
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
-			ut.Clear(table)
+			ut.Clear(_ut_table)
 
 			// insert 3 test record for next query and delete.
 			if id1, err := insertTestValues(ut, c.Case, c.Creates, c.Number+rand.Int64()); err != nil {
@@ -97,7 +97,7 @@ func TestRecordMults(t *testing.T) {
 			} else {
 
 				// test query last ids.
-				lasts, err := ut.LastIDs(table, "id", 0)
+				lasts, err := ut.LastIDs(_ut_table, "id", 0)
 				if err != nil {
 					t.Fatal("Query remained ids, err:", err)
 				} else if len(lasts) < 3 {
@@ -110,7 +110,7 @@ func TestRecordMults(t *testing.T) {
 				for _, id := range lasts {
 					strids = append(strids, strconv.FormatInt(id, 10))
 				}
-				values, err := ut.Datas(table, "number", "id", strings.Join(strids, ","))
+				values, err := ut.Datas(_ut_table, "number", "id", strings.Join(strids, ","))
 				if err != nil {
 					t.Fatal("Query inserted numbers, err:", err)
 				}
@@ -118,14 +118,14 @@ func TestRecordMults(t *testing.T) {
 
 				// test delete multi record by ids.
 				strids = strids[:len(strids)-1]
-				ut.DelMults(table, "id", strings.Join(strids, ","))
+				ut.DelMults(_ut_table, "id", strings.Join(strids, ","))
 
 				// test last id verify.
 				if lasts[2] != id1 && lasts[2] != id2 && lasts[2] != id3 {
 					t.Fatal("Queried ids exist no-inserted id!")
 				}
 
-				ut.Clear(table)
+				ut.Clear(_ut_table)
 			}
 		})
 	}
@@ -135,7 +135,26 @@ func TestRecordMults(t *testing.T) {
 // Private methods define.
 // -------------------------------------------------------------------
 
+const _ut_table = "UnitTest"
+
 // Connect the fixed test database with secure account.
+//
+//	NOTICE: The testdb must create as as follows script, and change the connect
+//	configs to valid before excute go test of wing_texthepler_test.go:
+//
+//	`
+//	CREATE DATABASE IF NOT EXISTS testdb CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+//
+//	USE testdb;
+//
+//	CREATE TABLE IF NOT EXISTS UnitTest (
+//	    id               int                NOT NULL AUTO_INCREMENT,
+//	    text             varchar (256)      DEFAULT '',
+//	    number           int                DEFAULT 0,
+//	    creates          datetime           DEFAULT CURRENT_TIMESTAMP,
+//	    PRIMARY KEY (id)
+//	) COMMENT='UnitTest table';
+//	`
 func setupTestDatabase() error {
 	/* instead the database valid configs before excute unit test! */
 	confs := &MyConfs{Host: "192.168.1.100:3306", User: "user", Pwd: "123456", Name: "testdb"}
@@ -147,5 +166,5 @@ func setupTestDatabase() error {
 
 // Insert test record data to test database, and return inserted id.
 func insertTestValues(t *utestHelper, text, creates string, number int64) (int64, error) {
-	return t.Insert("INSERT UnitTest (text, number, creates) VALUE (?, ?, ?)", text, number, creates)
+	return t.Insert("INSERT "+_ut_table+" (text, number, creates) VALUE (?, ?, ?)", text, number, creates)
 }
