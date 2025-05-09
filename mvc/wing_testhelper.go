@@ -184,6 +184,12 @@ const (
 )
 
 // Get last id from given table, or with time confitions.
+//
+//	SQL: SELECT id FROM %s %s ORDER BY %s DESC LIMIT 1
+//
+//	@param table Target table name.
+//	@param field Field name to order by.
+//	@param times Where conditions contain field name and value.
 func (t *utestHelper) LastID(table, field string, times ...string) (id int64, e error) {
 	where := ""
 	if len(times) >= 2 {
@@ -200,6 +206,12 @@ func (t *utestHelper) LastID(table, field string, times ...string) (id int64, e 
 }
 
 // Get last ids from given table and query time, or compare condition value.
+//
+//	SQL: SELECT id FROM %s WHERE %s >= ?
+//
+//	@param table Target table name.
+//	@param field Field name as where condition like: field > value.
+//	@param value Where condition value to filter.
 func (t *utestHelper) LastIDs(table, field string, value any) ([]int64, error) {
 	ids, query := []int64{}, fmt.Sprintf(_sql_ut_last_ids, table, field)
 	return ids, t.Query(query, func(rows *sql.Rows) error {
@@ -214,6 +226,12 @@ func (t *utestHelper) LastIDs(table, field string, value any) ([]int64, error) {
 }
 
 // Query the target field value by the top most given order field.
+//
+//	SQL: SELECT %s FROM %s ORDER BY %s DESC LIMIT 1
+//
+//	@param table  Target table name.
+//	@param target Target field name to output query result.
+//	@param order  Field name to order by.
 func (t *utestHelper) LastField(table string, target string, order string) (v string, e error) {
 	query := fmt.Sprintf(_sql_ut_last_field, target, table, order)
 	return v, t.One(query, func(rows *sql.Rows) error {
@@ -225,6 +243,13 @@ func (t *utestHelper) LastField(table string, target string, order string) (v st
 }
 
 // Query the target field last value by given condition field and value.
+//
+//	SQL: SELECT %s FROM %s WHERE %s = ? ORDER BY id DESC LIMIT 1
+//
+//	@param table  Target table name.
+//	@param target Target field name to output query result.
+//	@param field  Field name as where condition like: field = value.
+//	@param value  Where condition value to query.
 func (t *utestHelper) Target(table, target, field, value string) (v string, e error) {
 	query := fmt.Sprintf(_sql_ut_get_target, target, table, field)
 	return v, t.One(query, func(rows *sql.Rows) error {
@@ -236,6 +261,12 @@ func (t *utestHelper) Target(table, target, field, value string) (v string, e er
 }
 
 // Query the target field last id by given condition field and value.
+//
+//	SQL: SELECT id FROM %s WHERE %s = ? ORDER BY id DESC LIMIT 1
+//
+//	@param table  Target table name.
+//	@param field  Field name as where condition like: field = value.
+//	@param value  Where condition value to query.
 func (t *utestHelper) TagID(table, field, value string) (id int64, e error) {
 	query := fmt.Sprintf(_sql_ut_get_tgt_id, table, field)
 	return id, t.One(query, func(rows *sql.Rows) error {
@@ -247,6 +278,13 @@ func (t *utestHelper) TagID(table, field, value string) (id int64, e error) {
 }
 
 // Query the target field values by given condition field and values.
+//
+//	SQL: SELECT %s FROM %s WHERE %s IN (%s)
+//
+//	@param table  Target table name.
+//	@param target Target field name to output query results.
+//	@param field  Field name as where condition like: field IN (values).
+//	@param values Where condition values to query.
 func (t *utestHelper) Datas(table string, target string, field string, values string) ([]string, error) {
 	rsts, query := []string{}, fmt.Sprintf(_sql_ut_get_datas, target, table, field, values)
 	return rsts, t.Query(query, func(rows *sql.Rows) error {
@@ -260,16 +298,33 @@ func (t *utestHelper) Datas(table string, target string, field string, values st
 }
 
 // Deleta records by target field on equal condition.
+//
+//	SQL: DELETE FROM %s WHERE %s = ?
+//
+//	@param table Target table name.
+//	@param field Field name as where condition like: field = value.
+//	@param value Where condition value to query.
 func (t *utestHelper) DelOne(table, field string, value any) {
 	t.Execute(fmt.Sprintf(_sql_ut_del_one, table, field), value)
 }
 
 // Deleta records by target field on in range condition.
+//
+//	SQL: DELETE FROM %s WHERE %s IN (%s)
+//
+//	@param table Target table name.
+//	@param field Field name as where condition like: field IN (values).
+//	@param value Where condition values to query.
 func (t *utestHelper) DelMults(table, field, values string) {
 	t.Execute(fmt.Sprintf(_sql_ut_del_multis, table, field, values))
 }
 
 // Clear the target table all datas, or ranged datas of in given conditions.
+//
+//	SQL: DELETE FROM %s %s
+//
+//	@param table  Target table name.
+//	@param wheres Where conditions append to sql command tails if exist.
 func (t *utestHelper) Clear(table string, wheres ...string) {
 	t.Execute(fmt.Sprintf(_sql_ut_clear, table, strings.Join(wheres, " ")))
 }
