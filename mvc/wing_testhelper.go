@@ -176,6 +176,7 @@ const (
 	_sql_ut_last_ids   = "SELECT id FROM %s WHERE %s >= ?"
 	_sql_ut_last_field = "SELECT %s FROM %s ORDER BY %s DESC LIMIT 1"
 	_sql_ut_get_target = "SELECT %s FROM %s WHERE %s = ? ORDER BY id DESC LIMIT 1"
+	_sql_ut_get_tgt_id = "SELECT id FROM %s WHERE %s = ? ORDER BY id DESC LIMIT 1"
 	_sql_ut_get_datas  = "SELECT %s FROM %s WHERE %s IN (%s)"
 	_sql_ut_del_one    = "DELETE FROM %s WHERE %s = ?"
 	_sql_ut_del_multis = "DELETE FROM %s WHERE %s IN (%s)"
@@ -228,6 +229,17 @@ func (t *utestHelper) Target(table, target, field, value string) (v string, e er
 	query := fmt.Sprintf(_sql_ut_get_target, target, table, field)
 	return v, t.One(query, func(rows *sql.Rows) error {
 		if e = rows.Scan(&v); e != nil {
+			return e
+		}
+		return nil
+	}, value)
+}
+
+// Query the target field last id by given condition field and value.
+func (t *utestHelper) TagID(table, field, value string) (id int64, e error) {
+	query := fmt.Sprintf(_sql_ut_get_tgt_id, table, field)
+	return id, t.One(query, func(rows *sql.Rows) error {
+		if e = rows.Scan(&id); e != nil {
 			return e
 		}
 		return nil
