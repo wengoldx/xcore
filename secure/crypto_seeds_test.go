@@ -50,21 +50,27 @@ func TestViaSignCode(t *testing.T) {
 // Test SignPlaintext.
 func TestSignPlaintext(t *testing.T) {
 	cases := []struct {
-		Case   string
-		Inputs []string
-		Want   string
+		Case string
+		Data string
+		Opts []string
+		Want string
 	}{
-		{"Append plaintexts", []string{"123", "abc", "ABC"}, "123\nabc\nABC"},
-		{"Append empty plaintext", []string{"123", "", "ABC"}, "123\nABC"},
-		{"Append empty start", []string{"", "abc", "ABC"}, "abc\nABC"},
-		{"Append empty end", []string{"123", "abc", ""}, "123\nabc"},
+		{"Append plaintexts", "data", []string{"123", "abc", "ABC"}, "data\n123\nabc\nABC"},
+		{"Append empty data", "", []string{"123", "abc", "ABC"}, "123\nabc\nABC"},
+		{"Append empty plaintext", "data", []string{"123", "", "ABC"}, "data\n123\nABC"},
+		{"Append empty start", "data", []string{"", "abc", "ABC"}, "data\nabc\nABC"},
+		{"Append empty end", "data", []string{"123", "abc", ""}, "data\n123\nabc"},
+		{"Append emptys", "", []string{"", "", ""}, ""},
+		{"All emptys", "", []string{}, ""},
 	}
 
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
-			code := SignPlaintext(c.Inputs...)
+			code := SignPlaintext(c.Data, c.Opts...)
 			if code != c.Want {
 				t.Fatal("Failed sign plaintexts!")
+			} else if SignPlaintext(c.Data) != c.Data {
+				t.Fatal("Failed sign data!")
 			}
 		})
 	}

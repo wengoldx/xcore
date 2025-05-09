@@ -109,9 +109,13 @@ func ViaSignCode(sign, code string) bool {
 }
 
 // Encode signature plaintexts for next ECC sign and verfiy.
-func SignPlaintext(datas ...string) string {
+func SignPlaintext(data string, options ...string) string {
 	signs := []string{}
-	for _, str := range datas {
+	if data != "" {
+		signs = append(signs, data)
+	}
+
+	for _, str := range options {
 		if str != "" {
 			signs = append(signs, str)
 		}
