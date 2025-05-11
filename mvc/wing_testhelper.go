@@ -102,8 +102,8 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 	})
 
 	// Logout response datas if exist.
-	if datas := resp.Body.String(); datas != "" && datas != "<nil>" {
-		t.Log("Test response:", datas)
+	if rst := resp.Body.String(); rst != "" && rst != "<nil>" && rst != "null" {
+		t.Log("Test response:", rst)
 	}
 }
 
