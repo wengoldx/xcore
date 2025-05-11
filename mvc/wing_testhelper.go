@@ -185,17 +185,23 @@ const (
 
 // Get last id from given table, or with time confitions.
 //
-//	SQL: SELECT id FROM %s %s ORDER BY %s DESC LIMIT 1
+//	SQL: SELECT id FROM %s ORDER BY %s DESC LIMIT 1
+//	                    ^           ^
+//	                    table       order
 //
-//	@param table Target table name.
-//	@param field Field name to order by.
-//	@param times Where conditions contain field name and value.
-func (t *utestHelper) LastID(table, field string, times ...string) (id int64, e error) {
+//	SQL: SELECT id FROM %s WHERE %s >= "%s" ORDER BY %s DESC LIMIT 1
+//	                    ^        ^      ^            ^
+//	                 table wheres[0,    1]           order
+//
+//	@param table  Target table name.
+//	@param order  Field name to order by.
+//	@param wheres Where conditions contain field name and value.
+func (t *utestHelper) LastID(table, order string, wheres ...string) (id int64, e error) {
 	where := ""
-	if len(times) >= 2 {
-		where = fmt.Sprintf("WHERE %s >= \"%s\"", times[0], times[1])
+	if len(wheres) >= 2 {
+		where = fmt.Sprintf("WHERE %s >= \"%s\"", wheres[0], wheres[1])
 	}
-	query := fmt.Sprintf(_sql_ut_last_id, table, where, field)
+	query := fmt.Sprintf(_sql_ut_last_id, table, where, order)
 
 	return id, t.One(query, func(rows *sql.Rows) error {
 		if e = rows.Scan(&id); e != nil {
@@ -208,12 +214,14 @@ func (t *utestHelper) LastID(table, field string, times ...string) (id int64, e 
 // Get last ids from given table and query time, or compare condition value.
 //
 //	SQL: SELECT id FROM %s WHERE %s >= ?
+//	                    ^        ^     ^
+//	                    table    where value
 //
 //	@param table Target table name.
-//	@param field Field name as where condition like: field > value.
+//	@param where Field name as where condition like: field > value.
 //	@param value Where condition value to filter.
-func (t *utestHelper) LastIDs(table, field string, value any) ([]int64, error) {
-	ids, query := []int64{}, fmt.Sprintf(_sql_ut_last_ids, table, field)
+func (t *utestHelper) LastIDs(table, where string, value any) ([]int64, error) {
+	ids, query := []int64{}, fmt.Sprintf(_sql_ut_last_ids, table, where)
 	return ids, t.Query(query, func(rows *sql.Rows) error {
 		var id int64
 		if err := rows.Scan(&(id)); err != nil {
@@ -228,6 +236,8 @@ func (t *utestHelper) LastIDs(table, field string, value any) ([]int64, error) {
 // Query the target field value by the top most given order field.
 //
 //	SQL: SELECT %s FROM %s ORDER BY %s DESC LIMIT 1
+//	            ^       ^           ^
+//	            target  table       order
 //
 //	@param table  Target table name.
 //	@param target Target field name to output query result.
@@ -245,13 +255,15 @@ func (t *utestHelper) LastField(table string, target string, order string) (v st
 // Query the target field last value by given condition field and value.
 //
 //	SQL: SELECT %s FROM %s WHERE %s = ? ORDER BY id DESC LIMIT 1
+//	            ^       ^        ^    ^
+//	            target  table  where  value
 //
 //	@param table  Target table name.
 //	@param target Target field name to output query result.
-//	@param field  Field name as where condition like: field = value.
+//	@param where  Field name as where condition like: field = value.
 //	@param value  Where condition value to query.
-func (t *utestHelper) Target(table, target, field, value string) (v string, e error) {
-	query := fmt.Sprintf(_sql_ut_get_target, target, table, field)
+func (t *utestHelper) Target(table, target, where, value string) (v string, e error) {
+	query := fmt.Sprintf(_sql_ut_get_target, target, table, where)
 	return v, t.One(query, func(rows *sql.Rows) error {
 		if e = rows.Scan(&v); e != nil {
 			return e
@@ -263,12 +275,14 @@ func (t *utestHelper) Target(table, target, field, value string) (v string, e er
 // Query the target field last id by given condition field and value.
 //
 //	SQL: SELECT id FROM %s WHERE %s = ? ORDER BY id DESC LIMIT 1
+//	                    ^        ^    ^
+//	                    table  where  value
 //
 //	@param table  Target table name.
-//	@param field  Field name as where condition like: field = value.
+//	@param where  Field name as where condition like: field = value.
 //	@param value  Where condition value to query.
-func (t *utestHelper) TagID(table, field, value string) (id int64, e error) {
-	query := fmt.Sprintf(_sql_ut_get_tgt_id, table, field)
+func (t *utestHelper) TagID(table, where, value string) (id int64, e error) {
+	query := fmt.Sprintf(_sql_ut_get_tgt_id, table, where)
 	return id, t.One(query, func(rows *sql.Rows) error {
 		if e = rows.Scan(&id); e != nil {
 			return e
@@ -280,10 +294,12 @@ func (t *utestHelper) TagID(table, field, value string) (id int64, e error) {
 // Query the target field values by given condition field and values.
 //
 //	SQL: SELECT %s FROM %s WHERE %s IN (%s)
+//	            ^       ^        ^      ^
+//	            target  table    where  values
 //
 //	@param table  Target table name.
 //	@param target Target field name to output query results.
-//	@param field  Field name as where condition like: field IN (values).
+//	@param where  Field name as where condition like: field IN (values).
 //	@param values Where condition values to query.
 func (t *utestHelper) Datas(table string, target string, field string, values string) ([]string, error) {
 	rsts, query := []string{}, fmt.Sprintf(_sql_ut_get_datas, target, table, field, values)
@@ -300,28 +316,34 @@ func (t *utestHelper) Datas(table string, target string, field string, values st
 // Deleta records by target field on equal condition.
 //
 //	SQL: DELETE FROM %s WHERE %s = ?
+//	                 ^        ^    ^
+//	                 table  where  value
 //
 //	@param table Target table name.
-//	@param field Field name as where condition like: field = value.
+//	@param where Field name as where condition like: field = value.
 //	@param value Where condition value to query.
-func (t *utestHelper) DelOne(table, field string, value any) {
-	t.Execute(fmt.Sprintf(_sql_ut_del_one, table, field), value)
+func (t *utestHelper) DelOne(table, where string, value any) {
+	t.Execute(fmt.Sprintf(_sql_ut_del_one, table, where), value)
 }
 
 // Deleta records by target field on in range condition.
 //
 //	SQL: DELETE FROM %s WHERE %s IN (%s)
+//	                 ^        ^      ^
+//	                 table    where  values
 //
 //	@param table Target table name.
-//	@param field Field name as where condition like: field IN (values).
+//	@param where Field name as where condition like: field IN (values).
 //	@param value Where condition values to query.
-func (t *utestHelper) DelMults(table, field, values string) {
-	t.Execute(fmt.Sprintf(_sql_ut_del_multis, table, field, values))
+func (t *utestHelper) DelMults(table, where, values string) {
+	t.Execute(fmt.Sprintf(_sql_ut_del_multis, table, where, values))
 }
 
 // Clear the target table all datas, or ranged datas of in given conditions.
 //
 //	SQL: DELETE FROM %s %s
+//	                 ^  ^
+//	             table  wheres
 //
 //	@param table  Target table name.
 //	@param wheres Where conditions append to sql command tails if exist.
