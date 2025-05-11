@@ -262,7 +262,7 @@ func (t *utestHelper) LastField(table string, target string, order string) (v st
 //	@param target Target field name to output query result.
 //	@param where  Field name as where condition like: field = value.
 //	@param value  Where condition value to query.
-func (t *utestHelper) Target(table, target, where, value string) (v string, e error) {
+func (t *utestHelper) Target(table, target, where string, value any) (v string, e error) {
 	query := fmt.Sprintf(_sql_ut_get_target, target, table, where)
 	return v, t.One(query, func(rows *sql.Rows) error {
 		if e = rows.Scan(&v); e != nil {
@@ -281,7 +281,7 @@ func (t *utestHelper) Target(table, target, where, value string) (v string, e er
 //	@param table  Target table name.
 //	@param where  Field name as where condition like: field = value.
 //	@param value  Where condition value to query.
-func (t *utestHelper) TagID(table, where, value string) (id int64, e error) {
+func (t *utestHelper) TagID(table, where string, value any) (id int64, e error) {
 	query := fmt.Sprintf(_sql_ut_get_tgt_id, table, where)
 	return id, t.One(query, func(rows *sql.Rows) error {
 		if e = rows.Scan(&id); e != nil {
