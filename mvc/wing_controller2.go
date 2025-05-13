@@ -16,6 +16,8 @@ import (
 	"github.com/wengoldx/xcore/logger"
 )
 
+// Deprecated: This controller deprecated! use WRoleController instead it.
+//
 // WAuthController the extend controller base on WingController to support
 // auth account from http headers, the client caller must append two headers
 // before post request if expect the controller method enable execute token
@@ -115,32 +117,34 @@ type WAuthController struct {
 	WingController
 }
 
-// NextFunc2 do action after input params validated, it decode token to get account uuid.
+// Deprecated: Do action after input params validated, it decode token to get account uuid.
 type NextFunc2 func(uuid string) (int, any)
 
-// NextFunc3 do action after input params validated, it decode token to get account uuid and password.
+// Deprecated: Do action after input params validated, it decode token to get account uuid and password.
 type NextFunc3 func(uuid, pwd string) (int, any)
 
-// AuthHandlerFunc auth request token from http header and returen account secures.
+// Deprecated: Auth request token from http header and returen account secures.
 type AuthHandlerFunc func(token string) (string, string)
 
-// RoleHandlerFunc verify role access permission from account service.
+// Deprecated: Verify role access permission from account service.
 type RoleHandlerFunc func(sub, obj, act string) bool
 
-// Global handler function to auth token from http header
+// Deprecated: Global handler function to auth token from http header.
 var GAuthHandlerFunc AuthHandlerFunc
 
-// Global handler function to verify role from http header
+// Deprecated: Global handler function to verify role from http header.
 var GRoleHandlerFunc RoleHandlerFunc
 
-// Get authoration and token from http header, than verify it and return account secures.
+// Deprecated: Get authoration and token from http header, than verify it and return account secures.
+//
 //	@Return 401, 403 codes returned on error.
 func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 	uuid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[1])
 	return uuid
 }
 
-// DoAfterValidated do bussiness action after success validate the given json data.
+// Deprecated: Do bussiness action after success validate the given json data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -149,7 +153,8 @@ func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, fs ...bo
 	}
 }
 
-// DoAfterUnmarshal do bussiness action after success unmarshaled the given json data.
+// Deprecated: Do bussiness action after success unmarshaled the given json data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -158,7 +163,8 @@ func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, fs ...bo
 	}
 }
 
-// DoAfterValidatedXml do bussiness action after success validate the given xml data.
+// Deprecated: Do bussiness action after success validate the given xml data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterValidatedXml(ps any, nextFunc2 NextFunc2, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -167,7 +173,8 @@ func (c *WAuthController) DoAfterValidatedXml(ps any, nextFunc2 NextFunc2, fs ..
 	}
 }
 
-// DoAfterUnmarshalXml do bussiness action after success unmarshaled the given xml data.
+// Deprecated: Do bussiness action after success unmarshaled the given xml data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterUnmarshalXml(ps any, nextFunc2 NextFunc2, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -178,7 +185,8 @@ func (c *WAuthController) DoAfterUnmarshalXml(ps any, nextFunc2 NextFunc2, fs ..
 
 // ----------------------------------------
 
-// DoAfterAuthValidated do bussiness action after success validate the given json data.
+// Deprecated: Do bussiness action after success validate the given json data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -187,7 +195,8 @@ func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, fs .
 	}
 }
 
-// DoAfterAuthUnmarshal do bussiness action after success unmarshaled the given json data.
+// Deprecated: Do bussiness action after success unmarshaled the given json data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -196,7 +205,8 @@ func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, fs .
 	}
 }
 
-// DoAfterAuthValidatedXml do bussiness action after success validate the given xml data.
+// Deprecated: Do bussiness action after success validate the given xml data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterAuthValidatedXml(ps any, nextFunc3 NextFunc3, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -205,7 +215,8 @@ func (c *WAuthController) DoAfterAuthValidatedXml(ps any, nextFunc3 NextFunc3, f
 	}
 }
 
-// DoAfterAuthUnmarshalXml do bussiness action after success unmarshaled the given xml data.
+// Deprecated: Do bussiness action after success unmarshaled the given xml data.
+//
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterAuthUnmarshalXml(ps any, nextFunc3 NextFunc3, fs ...bool) {
 	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
@@ -217,6 +228,7 @@ func (c *WAuthController) DoAfterAuthUnmarshalXml(ps any, nextFunc3 NextFunc3, f
 // ----------------------------------------
 
 // Get authoration and token from http header, than verify it and return account secures.
+//
 //	@return 401: Unsupport author header or auth token failed.
 //	@return 403: Denied permission of user access the rest4 API.
 func (c *WAuthController) innerAuthHeader(hidelog bool) (string, string) {
@@ -262,6 +274,7 @@ func (c *WAuthController) innerAuthHeader(hidelog bool) (string, string) {
 
 // doAfterValidatedInner do bussiness action after success unmarshal params or
 // validate the unmarshaled json data.
+//
 //	@See validatrParams() for more 400, 404 error code returned.
 func (c *WAuthController) doAfterValidatedInner(datatype string,
 	ps any, nextFunc2 NextFunc2, uuid string, validate, protect, hidelog bool) {
@@ -279,6 +292,7 @@ func (c *WAuthController) doAfterValidatedInner(datatype string,
 
 // doAfterValidatedInner3 do bussiness action after success unmarshal params or
 // validate the unmarshaled json data.
+//
 //	@See validatrParams() for more 400, 404 error code returned.
 func (c *WAuthController) doAfterValidatedInner3(datatype string,
 	ps any, nextFunc3 NextFunc3, uuid, pwd string, validate, protect, hidelog bool) {
