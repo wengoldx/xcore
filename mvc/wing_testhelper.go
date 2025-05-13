@@ -91,7 +91,7 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 		req, _ := http.NewRequest(method, url, requestBody)
 		req.Header.Add("Content-Type", contentType)
 		if uid != "" {
-			req.Header.Add("Author", "WENGOLD-V1.2")
+			req.Header.Add("Author", Wter.Author)
 			req.Header.Add("Token", Wter.getToken(uid))
 		}
 
@@ -109,9 +109,10 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 
 // Restful api tester runtime configs.
 type rest4Tester struct {
-	authTokens map[string]string // Auth token of test user, format as {uuid:token}.
-	TokenApi   string            // Rest4 API to get user token, like 'http://192.168.1.100:8000/server/token?id=%s'
-	User       string            // User uuid for testing
+	tokens   map[string]string // Auth token of test user, format as {uuid:token}.
+	Author   string            // Author header, such as 'WENGOLD-V1.1', 'WENGOLD-V1.2', 'WENGOLD-V2.0'
+	TokenApi string            // Rest4 API to get user token, like 'http://192.168.1.100:8000/server/token?id=%s'
+	User     string            // User uuid for testing
 
 	// Env params for testing, set param by code 'Wter.Env["param-name"] = param-vaule'
 	// and used as 'value := Wter.Env["param-name"].(string)' to get string value.
@@ -124,12 +125,13 @@ type rest4Tester struct {
 //
 //	func init() {
 //		// logger.SilentLoggers() // slient logger if comment out.
+//		mvc.Wter.Author = "WENGOLD-V2.0"
 //		mvc.Wter.TokenApi = "http://192.168.1.100:8000/server/token?id=%s"
 //		mvc.Wter.User = "12345678"
 //	}
 var Wter = &rest4Tester{
-	authTokens: make(map[string]string),
-	Env:        make(map[string]any),
+	tokens: make(map[string]string),
+	Env:    make(map[string]any),
 }
 
 // Transform url params map to url.Values for http GET method.
@@ -143,7 +145,7 @@ func (t *rest4Tester) parseForms(params TestForm) string {
 
 // Get test token of target user from cachs map, or request by restful api.
 func (t *rest4Tester) getToken(uid string) string {
-	if token, ok := t.authTokens[uid]; ok {
+	if token, ok := t.tokens[uid]; ok {
 		return token
 	} else if t.TokenApi == "" {
 		return ""
@@ -151,7 +153,7 @@ func (t *rest4Tester) getToken(uid string) string {
 
 	// request user token from remote server by given debug api.
 	if token, err := utils.HttpGetString(t.TokenApi, uid); err == nil {
-		t.authTokens[uid] = token
+		t.tokens[uid] = token
 		return token
 	}
 	return ""
