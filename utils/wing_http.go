@@ -31,94 +31,107 @@ const (
 
 	// ContentTypeForm form content type
 	ContentTypeForm = "application/x-www-form-urlencoded"
+
+	// ContentTypeFile file upload data type
+	ContentTypeFile = "multipart/form-data"
 )
 
-// SetRequest use for set http request before execute http.Client.Do,
-// you can use this middle-ware to set auth as username and passord, and so on.
+// A middleware method called before execute http.Client.Do to set http request
+// headers which such as username and passord of authentications or others.
+//
 //	@param req Http requester
-//	@return - bool If current request ignore TLS verify or not, false is verify by default.
+//	@return - bool  Retrun true for using TLS, or false by default not verify.
 //			- error Exception message
+//
+//	@See more [content-types](https://www.runoob.com/http/http-content-type.html).
 type SetRequest func(req *http.Request) (bool, error)
 
-// httpUtils inner http utils struct
+// A utils struct for http accesss.
 type httpUtils struct{ silent bool }
 
-// getHttpUtils return http utils instanse with silent status
-func getHttpUtils(silent bool) *httpUtils { return &httpUtils{silent: silent} }
+// The global singleton of httpUtils for easy handle http GET or POST request.
+var (
+	HttpUtils  = &httpUtils{silent: false}
+	HttpSlient = &httpUtils{silent: true}
+)
 
-// readResponse read response body after executed request, it should return
-// invar.ErrInvalidState when response code is not http.StatusOK.
-func (u *httpUtils) readResponse(resp *http.Response) ([]byte, error) {
+// Read response body after executed request, it should return invar.ErrInvalidState
+// when response code is not http.StatusOK (200).
+func (u *httpUtils) readResponse(resp *http.Response, parse bool) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
-		logger.E("Failed http client, status:", resp.StatusCode)
+		logger.E("Http request failed, code:", resp.StatusCode)
 		return nil, invar.ErrInvalidState
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.E("Failed read response, err:", err)
-		return nil, err
-	} else if !u.silent {
-		logger.D("Response:", string(body))
+	// parse response data if require.
+	if parse {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			logger.E("Read response, err:", err)
+			return nil, err
+		} else if !u.silent {
+			logger.D("Response:", string(body))
+		}
+		return body, nil
 	}
-	return body, nil
+
+	// return success without parse response
+	return nil, nil
 }
 
-// unmarshalResponse unmarshal response body after execute request,
-// it may not check the given body if empty.
+// Unmarshal response body after execute request, it not check the body whether empty.
 func (u *httpUtils) unmarshalResponse(body []byte, out any) error {
 	if err := json.Unmarshal(body, out); err != nil {
-		logger.E("Unmarshal body to struct err:", err)
+		logger.E("Unmarshal response, err:", err)
 		return err
-	} else if !u.silent {
-		logger.D("Response struct:", out)
 	}
+	u.log("Response struct:", out)
 	return nil
 }
 
-// httpPostJson http post method, you can set post data as json struct.
-func (u *httpUtils) httpPostJson(tagurl string, postdata any) ([]byte, error) {
-	params, err := json.Marshal(postdata)
+// Post http request with json params.
+func (u *httpUtils) postJson(tagurl string, datas any, parse bool) ([]byte, error) {
+	params, err := json.Marshal(datas)
 	if err != nil {
-		logger.E("Marshal post data err:", err)
+		logger.E("Marshal post datas, err:", err)
 		return nil, err
 	}
 
 	resp, err := http.Post(tagurl, ContentTypeJson, bytes.NewReader(params))
 	if err != nil {
-		logger.E("Http post json err:", err)
+		logger.E("Http post, err:", err)
 		return nil, err
 	}
 
 	defer resp.Body.Close()
-	return u.readResponse(resp)
+	return u.readResponse(resp, parse)
 }
 
-// httpPostForm http post method, you can set post data as url.Values.
-func (u *httpUtils) httpPostForm(tagurl string, postdata url.Values) ([]byte, error) {
-	resp, err := http.PostForm(tagurl, postdata)
+// Post http request with form valus as url.Values.
+func (u *httpUtils) postForm(tagurl string, datas url.Values, parse bool) ([]byte, error) {
+	resp, err := http.PostForm(tagurl, datas)
 	if err != nil {
-		logger.E("Http post form err:", err)
+		logger.E("Http post, err:", err)
 		return nil, err
 	}
 
 	defer resp.Body.Close()
-	return u.readResponse(resp)
+	return u.readResponse(resp, parse)
 }
 
-// httpClientDo handle http client DO method, and return response.
-func (u *httpUtils) httpClientDo(req *http.Request, setRequestFunc SetRequest) ([]byte, error) {
+// Excute http.Client.Do with request header set callback, and return response results.
+func (u *httpUtils) clientDo(req *http.Request, setRequestFunc SetRequest) ([]byte, error) {
 	client := &http.Client{}
 
 	// use middle-ware to set request header
 	if setRequestFunc != nil {
 		ignoreTLS, err := setRequestFunc(req)
 		if err != nil {
-			logger.E("Set http request err:", err)
+			logger.E("Set http header, err:", err)
 			return nil, err
 		}
 
-		logger.I("httpClientDo: ignore TLS:", ignoreTLS)
+		logger.I("httpUtils: ignore TLS >", ignoreTLS)
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: ignoreTLS,
@@ -129,23 +142,22 @@ func (u *httpUtils) httpClientDo(req *http.Request, setRequestFunc SetRequest) (
 	// execute http request
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.E("Execute client DO, err:", err)
+		logger.E("Execute client.DO, err:", err)
 		return nil, err
 	}
 
 	defer resp.Body.Close()
-	return u.readResponse(resp)
+	return u.readResponse(resp, true)
 }
 
-func (u *httpUtils) Get(tagurl string, params ...any) ([]byte, error) {
+// Handle http GET method request and parse response data if required.
+func (u *httpUtils) handleGet(tagurl string, parse bool, params ...any) ([]byte, error) {
 	if len(params) > 0 {
 		tagurl = fmt.Sprintf(tagurl, params...)
 	}
 
 	rawurl := EncodeUrl(tagurl)
-	if !u.silent {
-		logger.D("Http Get:", rawurl)
-	}
+	u.log("Http Get:", rawurl)
 
 	resp, err := http.Get(rawurl)
 	if err != nil {
@@ -153,27 +165,48 @@ func (u *httpUtils) Get(tagurl string, params ...any) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	return u.readResponse(resp)
+	return u.readResponse(resp, parse)
 }
 
-func (u *httpUtils) Post(tagurl string, postdata any, contentType ...string) ([]byte, error) {
-	ct := ContentTypeJson
-	if len(contentType) > 0 {
-		ct = contentType[0]
-	} else if !u.silent {
-		logger.D("Http Post:", tagurl, "ContentType:", ct)
-	}
+// Handle http POST method request and parse response data if required.
+func (u *httpUtils) handlePost(tagurl string, datas any, parse bool, contentType ...string) ([]byte, error) {
+	ct := VarString(contentType, ContentTypeJson)
+	u.log("Http Post:", tagurl, "ContentType:", ct)
 
 	switch ct {
 	case ContentTypeJson:
-		return u.httpPostJson(tagurl, postdata)
+		return u.postJson(tagurl, datas, parse)
 	case ContentTypeForm:
-		return u.httpPostForm(tagurl, postdata.(url.Values))
+		return u.postForm(tagurl, datas.(url.Values), parse)
 	}
 	return nil, invar.ErrInvalidParams
 }
 
-func (u *httpUtils) GetString(tagurl string, params ...any) (string, error) {
+// Output debug logs if require not slient.
+func (u *httpUtils) log(msgs ...any) {
+	if !u.silent {
+		logger.D(msgs...)
+	}
+}
+
+// Handle http GET method and return original response bytes.
+//
+//	USAGE:
+//
+//	params := "key=Value&id=123"
+//	resp, err := utils.HttpUtils.Get(tagurl, params)
+func (u *httpUtils) Get(tagurl string, params ...any) ([]byte, error) {
+	return u.handleGet(tagurl, true, params...)
+}
+
+// Handle http GET method without parse any response datas.
+func (u *httpUtils) GEmit(tagurl string, params ...any) (e error) {
+	_, e = u.handleGet(tagurl, false, params...)
+	return
+}
+
+// Handle http GET method and return response datas as string.
+func (u *httpUtils) GString(tagurl string, params ...any) (string, error) {
 	resp, err := u.Get(tagurl, params...)
 	if err != nil {
 		return "", err
@@ -181,15 +214,8 @@ func (u *httpUtils) GetString(tagurl string, params ...any) (string, error) {
 	return strings.Trim(string(resp), "\""), nil
 }
 
-func (u *httpUtils) PostString(tagurl string, postdata any, contentType ...string) (string, error) {
-	resp, err := u.Post(tagurl, postdata, contentType...)
-	if err != nil {
-		return "", err
-	}
-	return strings.Trim(string(resp), "\""), nil
-}
-
-func (u *httpUtils) GetStruct(tagurl string, out any, params ...any) error {
+// Handle http GET method and parse response datas to given struct object.
+func (u *httpUtils) GStruct(tagurl string, out any, params ...any) error {
 	body, err := u.Get(tagurl, params...)
 	if err != nil {
 		return err
@@ -197,23 +223,65 @@ func (u *httpUtils) GetStruct(tagurl string, out any, params ...any) error {
 	return u.unmarshalResponse(body, out)
 }
 
-func (u *httpUtils) PostStruct(tagurl string, postdata, out any, contentType ...string) error {
-	body, err := u.Post(tagurl, postdata, contentType...)
+// Handle http POST method and return original response bytes,
+// the content-type header can be set as utils.ContentTypeJson, utils.ContentTypeForm,
+// utils.ContentTypeFile or others which you want.
+//
+//	USAGE:
+//
+//	// set post datas as json string.
+//	datas := struct {"key": "Value", "id": "123"}
+//	resp, err := utils.HttpUtils.Post(tagurl, data)
+//
+//	// set post datas as form string.
+//	datas := "key=Value&id=123"
+//	resp, err := utils.HttpUtils.Post(tagurl, datas, comm.ContentTypeForm)
+func (u *httpUtils) Post(tagurl string, datas any, contentType ...string) ([]byte, error) {
+	return u.handlePost(tagurl, datas, true, contentType...)
+}
+
+// Handle http POST method without parse any response datas.
+func (u *httpUtils) PEmit(tagurl string, datas any, contentType ...string) (e error) {
+	_, e = u.handlePost(tagurl, datas, false, contentType...)
+	return
+}
+
+// Handle http POST method and return response datas as string.
+func (u *httpUtils) PString(tagurl string, datas any, contentType ...string) (string, error) {
+	resp, err := u.Post(tagurl, datas, contentType...)
+	if err != nil {
+		return "", err
+	}
+	return strings.Trim(string(resp), "\""), nil
+}
+
+// Handle http POST method and parse response datas to given struct object.
+func (u *httpUtils) PStruct(tagurl string, datas, out any, contentType ...string) error {
+	body, err := u.Post(tagurl, datas, contentType...)
 	if err != nil {
 		return err
 	}
 	return u.unmarshalResponse(body, out)
 }
 
-func (u *httpUtils) ClientGet(tagurl string, setRequestFunc SetRequest, params ...any) ([]byte, error) {
+// Handle http GET method by http.Client and return original response bytes,
+// use the setRequstFunc middleware callback to set request headers, or ignore
+// TLS verfiy of https auth.
+//
+//	USAGE:
+//
+//	resp, err := utils.HttpUtils.CGet(tagurl, func(req *http.Request) (bool, error) {
+//		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
+//		req.SetBasicAuth("username", "password") // set auther header
+//		return true, nil                         // true is ignore TLS verify of https url.
+//	}, "get-form-params");
+func (u *httpUtils) CGet(tagurl string, setRequestFunc SetRequest, params ...any) ([]byte, error) {
 	if len(params) > 0 {
 		tagurl = fmt.Sprintf(tagurl, params...)
 	}
 
 	rawurl := EncodeUrl(tagurl)
-	if !u.silent {
-		logger.D("Http Client Get:", rawurl)
-	}
+	u.log("Http Client Get:", rawurl)
 
 	// generate new request instanse
 	req, err := http.NewRequest(http.MethodGet, rawurl, http.NoBody)
@@ -221,14 +289,33 @@ func (u *httpUtils) ClientGet(tagurl string, setRequestFunc SetRequest, params .
 		logger.E("Create http request err:", err)
 		return nil, err
 	}
-
-	return u.httpClientDo(req, setRequestFunc)
+	return u.clientDo(req, setRequestFunc)
 }
 
-func (u *httpUtils) ClientPost(tagurl string, setRequestFunc SetRequest, postdata ...any) ([]byte, error) {
+// Handle http GET method by http.Client and parse response datas to given struct object.
+func (u *httpUtils) CGStruct(tagurl string, setRequestFunc SetRequest, out any, params ...any) error {
+	body, err := u.CGet(tagurl, setRequestFunc, params...)
+	if err != nil {
+		return err
+	}
+	return u.unmarshalResponse(body, out)
+}
+
+// Handle http POST method by http.Client and return original response bytes,
+// use the setRequstFunc middleware callback to set request headers, or ignore
+// TLS verfiy of https auth.
+//
+//	USAGE:
+//
+//	resp, err := utils.HttpUtils.CPost(tagurl, func(req *http.Request) (bool, error) {
+//		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
+//		req.SetBasicAuth("username", "password") // set auther header
+//		return true, nil                         // true is ignore TLS verify of https auth.
+//	}, "post-data")
+func (u *httpUtils) CPost(tagurl string, setRequestFunc SetRequest, datas ...any) ([]byte, error) {
 	var body io.Reader
-	if len(postdata) > 0 {
-		params, err := json.Marshal(postdata[0])
+	if len(datas) > 0 {
+		params, err := json.Marshal(datas[0])
 		if err != nil {
 			logger.E("Marshal post data err:", err)
 			return nil, err
@@ -238,10 +325,7 @@ func (u *httpUtils) ClientPost(tagurl string, setRequestFunc SetRequest, postdat
 		body = http.NoBody
 	}
 
-	if !u.silent {
-		logger.D("Http Client Post:", tagurl)
-	}
-
+	u.log("Http Client Post:", tagurl)
 	// generate new request instanse
 	req, err := http.NewRequest(http.MethodPost, tagurl, body)
 	if err != nil {
@@ -251,19 +335,12 @@ func (u *httpUtils) ClientPost(tagurl string, setRequestFunc SetRequest, postdat
 
 	// set json as default content type
 	req.Header.Set("Content-Type", ContentTypeJson)
-	return u.httpClientDo(req, setRequestFunc)
+	return u.clientDo(req, setRequestFunc)
 }
 
-func (u *httpUtils) ClientGetStruct(tagurl string, setRequestFunc SetRequest, out any, params ...any) error {
-	body, err := u.ClientGet(tagurl, setRequestFunc, params...)
-	if err != nil {
-		return err
-	}
-	return u.unmarshalResponse(body, out)
-}
-
-func (u *httpUtils) ClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, postdata ...any) error {
-	body, err := u.ClientPost(tagurl, setRequestFunc, postdata...)
+// Handle http POST method by http.Client and parse response datas to given struct object.
+func (u *httpUtils) CPStruct(tagurl string, setRequestFunc SetRequest, out any, datas ...any) error {
+	body, err := u.CPost(tagurl, setRequestFunc, datas...)
 	if err != nil {
 		return err
 	}
@@ -328,133 +405,102 @@ func EncodeUrl(rawurl string) string {
 
 // ----------------------------------------
 
-// HttpGet handle http get method
+// Deprecated: Handle http get method.
 func HttpGet(tagurl string, params ...any) ([]byte, error) {
-	return getHttpUtils(false).Get(tagurl, params...)
+	return HttpUtils.Get(tagurl, params...)
 }
 
-// HttpPost handle http post method, you can set content type as
-// comm.ContentTypeJson or comm.ContentTypeForm, or other you need set.
-//
-// ---
-//
-//	// set post data as json string
-//	data := struct {"key": "Value", "id": "123"}
-//	resp, err := comm.HttpPost(tagurl, data)
-//
-//	// set post data as form string
-//	data := "key=Value&id=123"
-//	resp, err := comm.HttpPost(tagurl, data, comm.ContentTypeForm)
-func HttpPost(tagurl string, postdata any, contentType ...string) ([]byte, error) {
-	return getHttpUtils(false).Post(tagurl, postdata, contentType...)
+// Deprecated: Handle http post method.
+func HttpPost(tagurl string, datas any, contentType ...string) ([]byte, error) {
+	return HttpUtils.Post(tagurl, datas, contentType...)
 }
 
-// HttpGetString call HttpGet and trim " char both begin and end
+// Deprecated: Call HttpGet and trim " char both begin and end.
 func HttpGetString(tagurl string, params ...any) (string, error) {
-	return getHttpUtils(false).GetString(tagurl, params...)
+	return HttpUtils.GString(tagurl, params...)
 }
 
-// HttpPostString call HttpPost and trim " char both begin and end.
-func HttpPostString(tagurl string, postdata any, contentType ...string) (string, error) {
-	return getHttpUtils(false).PostString(tagurl, postdata, contentType...)
+// Deprecated: Call HttpPost and trim " char both begin and end.
+func HttpPostString(tagurl string, datas any, contentType ...string) (string, error) {
+	return HttpUtils.PString(tagurl, datas, contentType...)
 }
 
-// HttpGetStruct handle http get method and unmarshal data to struct object
+// Deprecated: Handle http get method and unmarshal data to struct object.
 func HttpGetStruct(tagurl string, out any, params ...any) error {
-	return getHttpUtils(false).GetStruct(tagurl, out, params...)
+	return HttpUtils.GStruct(tagurl, out, params...)
 }
 
-// HttpPostStruct handle http post method and unmarshal data to struct object
-func HttpPostStruct(tagurl string, postdata, out any, contentType ...string) error {
-	return getHttpUtils(false).PostStruct(tagurl, postdata, out, contentType...)
+// Deprecated: Handle http post method and unmarshal data to struct object.
+func HttpPostStruct(tagurl string, datas, out any, contentType ...string) error {
+	return HttpUtils.PStruct(tagurl, datas, out, contentType...)
 }
 
-// HttpClientGet handle http get by http.Client, you can set request headers or
-// ignore TLS verfiy of https url by setRequstFunc middle-ware function as :
-//
-// ---
-//
-//	resp, err := comm.HttpClientGet(tagurl, func(req *http.Request) (bool, error) {
-//		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
-//		req.SetBasicAuth("username", "password") // set auther header
-//		return true, nil  // true is ignore TLS verify of https url
-//	}, "same-params");
+// Deprecated: Handle http get by http.Client.
 func HttpClientGet(tagurl string, setRequestFunc SetRequest, params ...any) ([]byte, error) {
-	return getHttpUtils(false).ClientGet(tagurl, setRequestFunc, params...)
+	return HttpUtils.CGet(tagurl, setRequestFunc, params...)
 }
 
-// HttpClientPost handle https post by http.Client, you can set request headers or
-// ignore TLS verfiy of https url by setRequstFunc middle-ware function as :
-//
-// ---
-//
-//	resp, err := comm.HttpClientPost(tagurl, func(req *http.Request) (bool, error) {
-//		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
-//		req.SetBasicAuth("username", "password") // set auther header
-//		return true, nil  // true is ignore TLS verify of https url
-//	}, "post-data")
-func HttpClientPost(tagurl string, setRequestFunc SetRequest, postdata ...any) ([]byte, error) {
-	return getHttpUtils(false).ClientPost(tagurl, setRequestFunc, postdata...)
+// Deprecated: Handle https post by http.Client.
+func HttpClientPost(tagurl string, setRequestFunc SetRequest, datas ...any) ([]byte, error) {
+	return HttpUtils.CPost(tagurl, setRequestFunc, datas...)
 }
 
-// HttpClientGetStruct handle http get method and unmarshal data to struct object
+// Deprecated: Handle http get method and unmarshal data to struct object.
 func HttpClientGetStruct(tagurl string, setRequestFunc SetRequest, out any, params ...any) error {
-	return getHttpUtils(false).ClientGetStruct(tagurl, setRequestFunc, out, params...)
+	return HttpUtils.CGStruct(tagurl, setRequestFunc, out, params...)
 }
 
-// HttpClientPostStruct handle http post method and unmarshal data to struct object
-func HttpClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, postdata ...any) error {
-	return getHttpUtils(false).ClientPostStruct(tagurl, setRequestFunc, out, postdata...)
+// Deprecated: Handle http post method and unmarshal data to struct object.
+func HttpClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, datas ...any) error {
+	return HttpUtils.CPStruct(tagurl, setRequestFunc, out, datas...)
 }
 
-// ----------------------------------------
-
-// SilentGet call httpUtils.Get() on silent state
+// Deprecated: Call httpUtils.Get() on silent state.
 func SilentGet(tagurl string, params ...any) ([]byte, error) {
-	return getHttpUtils(true).Get(tagurl, params...)
+	return HttpSlient.Get(tagurl, params...)
 }
 
-// SilentPost call httpUtils.Post() on silent state
-func SilentPost(tagurl string, postdata any, contentType ...string) ([]byte, error) {
-	return getHttpUtils(true).Post(tagurl, postdata, contentType...)
+// Deprecated: all httpUtils.Post() on silent state.
+func SilentPost(tagurl string, datas any, contentType ...string) ([]byte, error) {
+	return HttpSlient.Post(tagurl, datas, contentType...)
 }
 
-// SilentGetString call httpUtils.GetString() on silent state
+// Deprecated: Call httpUtils.GString() on silent state.
 func SilentGetString(tagurl string, params ...any) (string, error) {
-	return getHttpUtils(true).GetString(tagurl, params...)
+	return HttpSlient.GString(tagurl, params...)
 }
 
-// SilentPostString call httpUtils.PostString() on silent state
-func SilentPostString(tagurl string, postdata any, contentType ...string) (string, error) {
-	return getHttpUtils(true).PostString(tagurl, postdata, contentType...)
+// Deprecated: Call httpUtils.PString() on silent state.
+func SilentPostString(tagurl string, datas any, contentType ...string) (string, error) {
+	return HttpSlient.PString(tagurl, datas, contentType...)
 }
 
-// SilentGetStruct call httpUtils.GetStruct() on silent state
+// Deprecated: Call httpUtils.GStruct() on silent state.
 func SilentGetStruct(tagurl string, out any, params ...any) error {
-	return getHttpUtils(true).GetStruct(tagurl, out, params...)
+	return HttpSlient.GStruct(tagurl, out, params...)
 }
 
-// SilentPostStruct call httpUtils.PostStruct() on silent state
-func SilentPostStruct(tagurl string, postdata, out any, contentType ...string) error {
-	return getHttpUtils(true).PostStruct(tagurl, postdata, out, contentType...)
+// Deprecated: Call httpUtils.PStruct() on silent state.
+func SilentPostStruct(tagurl string, datas, out any, contentType ...string) error {
+	return HttpSlient.PStruct(tagurl, datas, out, contentType...)
 }
 
-// SilentClientGet call httpUtils.ClientGet() on silent state
+// Deprecated: Call httpUtils.CGet() on silent state.
 func SilentClientGet(tagurl string, setRequestFunc SetRequest, params ...any) ([]byte, error) {
-	return getHttpUtils(true).ClientGet(tagurl, setRequestFunc, params...)
+	return HttpSlient.CGet(tagurl, setRequestFunc, params...)
 }
 
-// SilentClientPost call httpUtils.ClientPost() on silent state
-func SilentClientPost(tagurl string, setRequestFunc SetRequest, postdata ...any) ([]byte, error) {
-	return getHttpUtils(true).ClientPost(tagurl, setRequestFunc, postdata...)
+// Deprecated: Call httpUtils.CPost() on silent state.
+func SilentClientPost(tagurl string, setRequestFunc SetRequest, datas ...any) ([]byte, error) {
+	return HttpSlient.CPost(tagurl, setRequestFunc, datas...)
 }
 
-// SilentClientGetStruct call httpUtils.ClientGetStruct() on silent state
+// Deprecated: Call httpUtils.CGStruct() on silent state.
 func SilentClientGetStruct(tagurl string, setRequestFunc SetRequest, out any, params ...any) error {
-	return getHttpUtils(true).ClientGetStruct(tagurl, setRequestFunc, out, params...)
+	return HttpSlient.CGStruct(tagurl, setRequestFunc, out, params...)
 }
 
-// SilentClientPostStruct call httpUtils.ClientPostStruct() on silent state
-func SilentClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, postdata ...any) error {
-	return getHttpUtils(true).ClientPostStruct(tagurl, setRequestFunc, out, postdata...)
+// Deprecated: Call httpUtils.CPStruct() on silent state.
+func SilentClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, datas ...any) error {
+	return HttpSlient.CPStruct(tagurl, setRequestFunc, out, datas...)
 }
