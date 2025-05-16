@@ -164,8 +164,8 @@ func (c *WingController) SilentYAML(state int, data ...any) {
 	c.responCheckState("yaml", true, true, state, data...)
 }
 
-// SlientData sends JSON, JSONNP, XML, YAML, response data to client without output ok log.
-func (c *WingController) SlientData(state int, data ...map[any]any) {
+// SilentData sends JSON, JSONNP, XML, YAML, response data to client without output ok log.
+func (c *WingController) SilentData(state int, data ...map[any]any) {
 	if state != invar.StatusOK {
 		c.ErrorState(state)
 		return

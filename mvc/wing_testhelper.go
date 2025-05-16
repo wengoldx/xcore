@@ -124,7 +124,7 @@ type rest4Tester struct {
 //	USAGE: Init mvc.Wter configs before use it as follow:
 //
 //	func init() {
-//		// logger.SilentLoggers() // slient logger if comment out.
+//		// logger.SilentLoggers() // silent logger if comment out.
 //		mvc.Wter.Author = "WENGOLD-V2.0"
 //		mvc.Wter.TokenApi = "http://192.168.1.100:8000/server/token?id=%s"
 //		mvc.Wter.User = "12345678"

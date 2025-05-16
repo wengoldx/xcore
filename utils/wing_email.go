@@ -64,8 +64,8 @@ func (a *MailAgent) SendMail(to []string, subject, body string, attach ...string
 	m.SetHeader("To", to[0])
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
-	if len(attach) > 0 && attach[0] != "" {
-		m.Attach(attach[0])
+	if att := VarString(attach, ""); att != "" {
+		m.Attach(att)
 	}
 
 	d := gomail.NewDialer(a.Host, a.Port, a.Acc, a.Pwd)

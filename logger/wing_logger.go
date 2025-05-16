@@ -118,7 +118,7 @@ func SetOutputLogger() {
 	}
 }
 
-// Remove console and file loggers as slient status, it usefull for unit test.
+// Remove console and file loggers as silent status, it usefull for unit test.
 func SilentLoggers() {
 	beego.BeeLogger.DelLogger(logs.AdapterFile)
 	beego.BeeLogger.DelLogger(logs.AdapterConsole)

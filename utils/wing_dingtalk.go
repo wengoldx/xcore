@@ -226,7 +226,7 @@ func (s *DTalkSender) checkKeyAndURL(content string, isSecure ...bool) (string, 
 
 	// sign post url when using secure token
 	posturl := s.WebHook
-	if len(isSecure) > 0 && isSecure[0] {
+	if VarBool(isSecure, false) {
 		posturl = s.signURL()
 	}
 

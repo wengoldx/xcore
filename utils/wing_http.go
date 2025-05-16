@@ -52,7 +52,7 @@ type httpUtils struct{ silent bool }
 // The global singleton of httpUtils for easy handle http GET or POST request.
 var (
 	HttpUtils  = &httpUtils{silent: false}
-	HttpSlient = &httpUtils{silent: true}
+	HttpSilent = &httpUtils{silent: true}
 )
 
 // Read response body after executed request, it should return invar.ErrInvalidState
@@ -182,7 +182,7 @@ func (u *httpUtils) handlePost(tagurl string, datas any, parse bool, contentType
 	return nil, invar.ErrInvalidParams
 }
 
-// Output debug logs if require not slient.
+// Output debug logs if require not silent.
 func (u *httpUtils) log(msgs ...any) {
 	if !u.silent {
 		logger.D(msgs...)
@@ -457,50 +457,50 @@ func HttpClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, dat
 
 // Deprecated: Call httpUtils.Get() on silent state.
 func SilentGet(tagurl string, params ...any) ([]byte, error) {
-	return HttpSlient.Get(tagurl, params...)
+	return HttpSilent.Get(tagurl, params...)
 }
 
 // Deprecated: all httpUtils.Post() on silent state.
 func SilentPost(tagurl string, datas any, contentType ...string) ([]byte, error) {
-	return HttpSlient.Post(tagurl, datas, contentType...)
+	return HttpSilent.Post(tagurl, datas, contentType...)
 }
 
 // Deprecated: Call httpUtils.GString() on silent state.
 func SilentGetString(tagurl string, params ...any) (string, error) {
-	return HttpSlient.GString(tagurl, params...)
+	return HttpSilent.GString(tagurl, params...)
 }
 
 // Deprecated: Call httpUtils.PString() on silent state.
 func SilentPostString(tagurl string, datas any, contentType ...string) (string, error) {
-	return HttpSlient.PString(tagurl, datas, contentType...)
+	return HttpSilent.PString(tagurl, datas, contentType...)
 }
 
 // Deprecated: Call httpUtils.GStruct() on silent state.
 func SilentGetStruct(tagurl string, out any, params ...any) error {
-	return HttpSlient.GStruct(tagurl, out, params...)
+	return HttpSilent.GStruct(tagurl, out, params...)
 }
 
 // Deprecated: Call httpUtils.PStruct() on silent state.
 func SilentPostStruct(tagurl string, datas, out any, contentType ...string) error {
-	return HttpSlient.PStruct(tagurl, datas, out, contentType...)
+	return HttpSilent.PStruct(tagurl, datas, out, contentType...)
 }
 
 // Deprecated: Call httpUtils.CGet() on silent state.
 func SilentClientGet(tagurl string, setRequestFunc SetRequest, params ...any) ([]byte, error) {
-	return HttpSlient.CGet(tagurl, setRequestFunc, params...)
+	return HttpSilent.CGet(tagurl, setRequestFunc, params...)
 }
 
 // Deprecated: Call httpUtils.CPost() on silent state.
 func SilentClientPost(tagurl string, setRequestFunc SetRequest, datas ...any) ([]byte, error) {
-	return HttpSlient.CPost(tagurl, setRequestFunc, datas...)
+	return HttpSilent.CPost(tagurl, setRequestFunc, datas...)
 }
 
 // Deprecated: Call httpUtils.CGStruct() on silent state.
 func SilentClientGetStruct(tagurl string, setRequestFunc SetRequest, out any, params ...any) error {
-	return HttpSlient.CGStruct(tagurl, setRequestFunc, out, params...)
+	return HttpSilent.CGStruct(tagurl, setRequestFunc, out, params...)
 }
 
 // Deprecated: Call httpUtils.CPStruct() on silent state.
 func SilentClientPostStruct(tagurl string, setRequestFunc SetRequest, out any, datas ...any) error {
-	return HttpSlient.CPStruct(tagurl, setRequestFunc, out, datas...)
+	return HttpSilent.CPStruct(tagurl, setRequestFunc, out, datas...)
 }

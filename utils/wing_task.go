@@ -99,7 +99,7 @@ func NewQTask(callback TaskCallback, configs ...int) *QTask {
 
 	// set task configs from given data
 	if configs != nil {
-		task.interrupt = len(configs) > 0 && configs[0] > 0
+		task.interrupt = VarInt(configs, 0) > 0
 		if len(configs) > 1 && configs[1] > 0 {
 			task.interval = time.Duration(configs[1] * 1000)
 		}
@@ -130,8 +130,8 @@ func (t *QTask) Post(taskdata any, maxlimits ...int) error {
 		return invar.ErrInvalidData
 	}
 
-	if len(maxlimits) > 0 && maxlimits[0] > 0 && t.queue.Len() > maxlimits[0] {
-		logger.E("Task queue too heavy on oversize", maxlimits[0])
+	if ml := VarInt(maxlimits, 0); ml > 0 && t.queue.Len() > ml {
+		logger.E("Task queue too heavy on oversize", ml)
 		return invar.ErrPoolFull
 	}
 

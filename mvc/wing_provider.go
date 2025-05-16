@@ -201,7 +201,7 @@ func (w *WingProvider) Inserts2(query string, values any) error {
 // Update call sql.Prepare() and stmt.Exec() to update record, then check the
 // updated result if return invar.ErrNotChanged error when not changed any one.
 //
-// `@see` Use mvc.Updates() to update mapping values on slient.
+// `@see` Use mvc.Updates() to update mapping values on silent.
 //
 // `@see` Use mvc.Execute() to update record on silent.
 func (w *WingProvider) Update(query string, args ...any) error {

@@ -42,13 +42,9 @@ import (
 //	}
 func HttpServer(allowCredentials ...bool) {
 	ignoreSysSignalPIPE()
-	if len(allowCredentials) > 0 && allowCredentials[0] {
-		accessAllowOriginBy(beego.BeforeRouter, "*", allowCredentials[0])
-		accessAllowOriginBy(beego.BeforeStatic, "*", allowCredentials[0])
-	} else {
-		accessAllowOriginBy(beego.BeforeRouter, "*", false)
-		accessAllowOriginBy(beego.BeforeStatic, "*", false)
-	}
+	allow := VarBool(allowCredentials, false)
+	accessAllowOriginBy(beego.BeforeRouter, "*", allow)
+	accessAllowOriginBy(beego.BeforeStatic, "*", allow)
 
 	// just output log to file on prod mode
 	if beego.BConfig.RunMode != "dev" &&

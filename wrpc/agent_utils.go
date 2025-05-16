@@ -171,7 +171,7 @@ func (stub *GrpcStub) LocalUpload(filepath, res string, delete ...bool) (string,
 		}
 
 		// Delete local file when upload success
-		if len(delete) > 0 && delete[0] {
+		if utils.VarBool(delete, false) {
 			if err := os.Remove(filepath); err != nil {
 				return "", err
 			}
@@ -208,7 +208,7 @@ func (stub *GrpcStub) NamedUpload(filepath string, res string, delete ...bool) (
 		}
 
 		// Delete local file when upload success
-		if len(delete) > 0 && delete[0] {
+		if utils.VarBool(delete, false) {
 			if err := os.Remove(filepath); err != nil {
 				return "", err
 			}
