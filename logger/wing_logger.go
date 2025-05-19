@@ -35,6 +35,9 @@ const (
 	LevelError = "error"
 )
 
+// Skip init file logger when init functions called.
+var SkipInitFileLogger = false
+
 // init initialize app logger
 //
 // `NOTICE` : you must config logger params in /conf/app.config file as:
@@ -75,7 +78,7 @@ func init() {
 // setupFileLogger init and set logger output to file
 func setupFileLogger() {
 	app := beego.BConfig.AppName
-	if app == "" || app == "beego" {
+	if SkipInitFileLogger || app == "" || app == "beego" {
 		return
 	}
 
