@@ -14,20 +14,20 @@ import (
 	"strings"
 )
 
-// WingErr constom error with code
+// WingErr constom error with code, you can use it as standry error object.
+//
+//	// Simple to get standry error object
+//	var err error
+//	err = invar.ErrNotFound
+//
+//	WARNING: DO NOT change the error code and message text anyway!!
 type WingErr struct {
 	error     // Simple use WingErr value as error type
 	Code  int // Extend error code, start 0x1000
 }
 
-// WExErr extend error with code and error message
-type WExErr struct {
-	Code    int    `json:"code"    description:"Extend error code"`
-	Message string `json:"message" description:"Extend error message"`
-}
-
 var (
-	ErrNotFound            = WingErr{errors.New("not fount") /*                                    */, 0x1000}
+	ErrNotFound            = WingErr{errors.New("notfound") /*                                    */, 0x1000}
 	ErrInvalidNum          = WingErr{errors.New("invalid number") /*                               */, 0x1001}
 	ErrInvalidAccount      = WingErr{errors.New("invalid account") /*                              */, 0x1002}
 	ErrInvalidToken        = WingErr{errors.New("invalid token") /*                                */, 0x1003}
@@ -108,52 +108,52 @@ var (
 	ErrBadDBConnect        = WingErr{errors.New("database not connnect") /*                        */, 0x104E}
 )
 
-// Create a WExErr from given code and message
-func ExErr(code int, message string) *WExErr {
-	return &WExErr{Code: code, Message: message}
+// Create a WingErr from given message and code that the code maybe set to 0 when not set.
+func NewError(message string, code ...int) *WingErr {
+	if len(code) > 0 {
+		return &WingErr{errors.New(message), code[0]}
+	}
+	return &WingErr{errors.New(message), 0}
 }
 
-// Create a WExErr from given code and message
-func StErr(code int, message string) (int, *WExErr) {
-	return StatusExError, &WExErr{Code: code, Message: message}
-}
-
-// Create a WingErr from given code and message
-func WErr(code int, message string) *WingErr {
-	return &WingErr{errors.New(message), code}
-}
-
-// Return standry error from WingErr object.
+// Return WingErr object with additions message.
 //
-//	// Simple to get standry error object
-//	var err error
-//	err = invar.ErrNotFoune.Err()
-func (w *WingErr) Err() error {
-	return w
+//	err := invar.ErrNotFound.Copy("column xxx is missing")
+//	// err message is: notfound - column xxx is missing
+func (w *WingErr) Copy(additions ...string) *WingErr {
+	if len(additions) > 0 {
+		return NewError(w.Error()+" - "+strings.Join(additions, " "), w.Code)
+	}
+	return NewError(w.Error(), w.Code)
+}
+
+// Return true if error message and code both matched.
+func (w *WingErr) Equal(o *WingErr) bool {
+	return EqualError(w.error, o.error) && w.Code == o.Code
 }
 
 // Return WExErr extend error from WingErr object.
 //
 //	// Simple to get WExErr extend error
 //	var exerr *invar.WExErr
-//	exerr = invar.ErrNotFoune.ExErr()
+//	exerr = invar.ErrNotFound.ToExErr()
 //
 //	// Directly using WingErr as error value
 //	var err error
-//	err := invar.ErrNotFoune
-func (w *WingErr) ExErr() *WExErr {
-	return &WExErr{Code: w.Code, Message: w.Error()}
+//	err := invar.ErrNotFound
+func (w *WingErr) ToExErr() *WExErr {
+	return NewExErr(w.Code, w.Error())
 }
 
 // Return HTTP response code and WExErr extend error.
 //
 //	// Using for Restful API to response custom status and message.
-//	http_resp_code, err := invar.ErrNotFoune.StErr()
-func (w *WingErr) StErr() (int, *WExErr) {
-	return StatusExError, &WExErr{Code: w.Code, Message: w.Error()}
+//	http_resp_code, err := invar.ErrNotFound.StateError()
+func (w *WingErr) StateError() (int, *WExErr) {
+	return StatusExError, w.ToExErr()
 }
 
-/////////////////////////////////////
+// ----------------------------------------
 
 // Equal tow error if message same on char case
 func EqualError(a, b error) bool {
@@ -192,4 +192,22 @@ func IsDupError(e error) bool {
 		ErrorContain(e, ErrDupData) || ErrorContain(e, ErrDupAccount) ||
 		ErrorContain(e, ErrDupName) || ErrorContain(e, ErrDupKey) ||
 		ErrorContain(e, ErrDupLogin)
+}
+
+// ----------------------------------------
+
+// WExErr extend error with code and error message.
+type WExErr struct {
+	Code    int    `json:"code"    description:"Extend error code"`
+	Message string `json:"message" description:"Extend error message"`
+}
+
+// Create a WExErr from given code and message
+func NewExErr(code int, message string) *WExErr {
+	return &WExErr{Code: code, Message: message}
+}
+
+// Create a WExErr from given code and message
+func StErr(code int, message string) (int, *WExErr) {
+	return StatusExError, NewExErr(code, message)
 }
