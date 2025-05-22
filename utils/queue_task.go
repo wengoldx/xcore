@@ -9,15 +9,13 @@
 // 00002       2022/03/26   yangping       Using toolbox.Task
 // -------------------------------------------------------------------
 
-package task
+package utils
 
 import (
 	"time"
 
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
-	"github.com/wengoldx/xcore/utils"
-	"github.com/wengoldx/xcore/utils/queue"
 )
 
 /* --------------------------- */
@@ -26,10 +24,10 @@ import (
 
 // Task monitor to execute queue tasks in sequence.
 type QueueTask struct {
-	queue     *queue.Queue           // Task object queue.
-	postchan  chan utils.EmptyStruct // Block chan for queue task PIPO.
-	interrupt bool                   // The flag for interrupt task monitor when case error if set true.
-	interval  time.Duration          // The interval between two task to waiting, set 0 for non-waiting.
+	queue     *Queue           // Task object queue.
+	postchan  chan EmptyStruct // Block chan for queue task PIPO.
+	interrupt bool             // The flag for interrupt task monitor when case error if set true.
+	interval  time.Duration    // The interval between two task to waiting, set 0 for non-waiting.
 }
 
 // Typed function to configure a QueueTask.
@@ -68,8 +66,8 @@ type TaskHandler interface {
 //	task.Post(taskdata)
 func NewQueueTask(handler TaskHandler, opts ...Option) *QueueTask {
 	task := &QueueTask{
-		queue:     queue.NewQueue(),
-		postchan:  make(chan utils.EmptyStruct),
+		queue:     NewQueue(),
+		postchan:  make(chan EmptyStruct),
 		interrupt: false, // not interrupt by default.
 		interval:  0,     // non-waiting delay.
 	}
@@ -102,7 +100,7 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 		return invar.ErrInvalidData
 	}
 
-	if ml := utils.VarInt(maxlimits, 0); ml > 0 && t.queue.Len() > ml {
+	if ml := VarInt(maxlimits, 0); ml > 0 && t.queue.Len() > ml {
 		logger.E("Task queue too heavy on oversize", ml)
 		return invar.ErrPoolFull
 	}
@@ -112,7 +110,7 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	//  the 'postchan' to blocking in gorutine, so it no-need
 	//  to check whether the handlers method execute toggether
 	//  when multiple post requst comming.
-	go func() { t.postchan <- utils.E_ }()
+	go func() { t.postchan <- E_ }()
 	return nil
 }
 
