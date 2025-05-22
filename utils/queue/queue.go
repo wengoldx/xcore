@@ -8,7 +8,7 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package utils
+package queue
 
 import (
 	"container/list"

@@ -79,11 +79,9 @@ func ignoreSysSignalPIPE() {
 	signal.Notify(sc, syscall.SIGPIPE)
 	go func() {
 		for {
-			select {
-			case sig := <-sc:
-				if sig == syscall.SIGPIPE {
-					logger.E("!! IGNORE BROKEN PIPE SIGNAL !!")
-				}
+			sig := <-sc
+			if sig == syscall.SIGPIPE {
+				logger.E("!! IGNORE BROKEN PIPE SIGNAL !!")
 			}
 		}
 	}()
