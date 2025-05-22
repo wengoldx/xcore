@@ -27,7 +27,7 @@ type WingErr struct {
 }
 
 var (
-	ErrNotFound            = WingErr{errors.New("notfound") /*                                    */, 0x1000}
+	ErrNotFound            = WingErr{errors.New("notfound") /*                                     */, 0x1000}
 	ErrInvalidNum          = WingErr{errors.New("invalid number") /*                               */, 0x1001}
 	ErrInvalidAccount      = WingErr{errors.New("invalid account") /*                              */, 0x1002}
 	ErrInvalidToken        = WingErr{errors.New("invalid token") /*                                */, 0x1003}
@@ -116,11 +116,11 @@ func NewError(message string, code ...int) *WingErr {
 	return &WingErr{errors.New(message), 0}
 }
 
-// Return WingErr object with additions message.
+// Return WingErr object replica with additions message.
 //
-//	err := invar.ErrNotFound.Copy("column xxx is missing")
+//	err := invar.ErrNotFound.Replic("column xxx is missing")
 //	// err message is: notfound - column xxx is missing
-func (w *WingErr) Copy(additions ...string) *WingErr {
+func (w *WingErr) Replic(additions ...string) *WingErr {
 	if len(additions) > 0 {
 		return NewError(w.Error()+" - "+strings.Join(additions, " "), w.Code)
 	}
