@@ -150,7 +150,7 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 			c.E401Unauthed("Unauthed account!")
 			return nil
 		} else {
-			if len(silent) > 0 && silent[0] {
+			if len(silent) == 0 || !silent[0] {
 				logger.D("Authed account:", s.UID, s.Acc)
 			}
 			return s // account secures
