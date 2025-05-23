@@ -24,11 +24,15 @@ import (
 
 // Task monitor to execute queue tasks in sequence.
 type QueueTask struct {
-	queue     *Queue           // Task object queue.
-	postchan  chan EmptyStruct // Block chan for queue task PIPO.
-	interrupt bool             // The flag for interrupt task monitor when case error if set true.
-	interval  time.Duration    // The interval between two task to waiting, set 0 for non-waiting.
+	queue       *Queue           // Task object queue.
+	postchan    chan EmptyStruct // Block chan for queue task PIPO.
+	interrupt   bool             // The flag for interrupt task monitor when case error if set true.
+	interval    time.Duration    // The interval between two task to waiting, set 0 for non-waiting.
+	findHandler FindHandler      // Handler function for quere data search.
 }
+
+// Typed function to find target item by fetch queue items.
+type FindHandler func(taskdata any) bool
 
 // Typed function to configure a QueueTask.
 type Option func(*QueueTask)
@@ -45,6 +49,11 @@ func WithInterval(interval time.Duration) Option {
 			qt.interval = interval
 		}
 	}
+}
+
+// Set the find handler function for a queue task.
+func WithFindHandler(handler FindHandler) Option {
+	return func(qt *QueueTask) { qt.findHandler = handler }
 }
 
 // A interface for create queue task hanlder to execute task callback.
@@ -123,12 +132,23 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	return nil
 }
 
-// Cancel the waiting task, it will remove task from queue cache.
-func (t *QueueTask) Cancel(findFunc func(taskdata any) bool) {
-	t.queue.Fetch(func(value any) (bool, bool) {
-		find := findFunc(value)
-		return find, find // interupt when found.
-	})
+// Cancels the waiting tasks, the caller maybe cancel one task like:
+//
+//	queuetask.Cancels(func(taskdata any) (bool, bool) {
+//		item, ok := taskdata.(*QueueItem)
+//		found := ok && item.FieldValue == targetvalue
+//		return found , found // interupt when found.
+//	})
+//
+// Or cancel all target waiting tasks like:
+//
+//	queuetask.Cancels(func(taskdata any) (bool, bool) {
+//		item, ok := taskdata.(*QueueItem)
+//		found := ok && item.FieldValue == targetvalue
+//		return found , false // continue to search.
+//	})
+func (t *QueueTask) Cancels(findFunc func(taskdata any) (bool, bool)) {
+	t.queue.Fetch(findFunc)
 }
 
 // Start task monitor to listen tasks pushed into queue, and execute it.
