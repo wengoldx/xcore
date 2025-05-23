@@ -54,6 +54,15 @@ type TaskHandler interface {
 	ExecQueueTask(data any) error
 }
 
+// The adapter to allow the use of ordinary functions as TaskHandler object.
+// If `f` is a function with the appropriate signature, `TaskHandlerFunc(f)`
+// is an `TaskHandler` that calls `f`.
+type TaskHandlerFunc func(data any) error
+
+func (e TaskHandlerFunc) ExecQueueTask(data any) error {
+	return e(data)
+}
+
 // Create a new queue task and start as runtime monitor.
 //
 // Set custom interval duration and interrupt flag by call queue.WithInterrupt(),

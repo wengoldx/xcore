@@ -19,7 +19,7 @@ import (
 )
 
 func TestQueueTask(t *testing.T) {
-	handler := &TaskTestHandler{}
+	handler := TaskHandlerFunc(ExecCallback)
 	qtask := NewQueueTask(handler, WithInterrupt(false), WithInterval(25*time.Millisecond))
 	for i := 0; i < 50; i++ {
 		logger.I("Post task:", i)
@@ -35,9 +35,7 @@ func TestQueueTask(t *testing.T) {
 	time.Sleep(5 * time.Second)
 }
 
-type TaskTestHandler struct{}
-
-func (tth *TaskTestHandler) ExecQueueTask(data any) error {
+func ExecCallback(data any) error {
 	index := data.(int)
 
 	start := time.Now().UnixNano()
