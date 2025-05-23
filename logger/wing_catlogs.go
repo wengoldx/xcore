@@ -87,3 +87,23 @@ func (l *wingLogger) I(v ...any) {
 func (l *wingLogger) D(v ...any) {
 	logs.Debug(logFormatString(len(v), l.cat, l.tag), v...)
 }
+
+// E logs a message at error level.
+func (l *wingLogger) Ef(f string, v ...any) {
+	logs.Error(f+logFormatString(0, l.cat, l.tag), v...)
+}
+
+// W logs a message at warning level.
+func (l *wingLogger) Wf(f string, v ...any) {
+	logs.Warn(f+logFormatString(0, l.cat, l.tag), v...)
+}
+
+// I logs a message at info level.
+func (l *wingLogger) If(f string, v ...any) {
+	logs.Info(f+logFormatString(0, l.cat, l.tag), v...)
+}
+
+// D logs a message at debug level.
+func (l *wingLogger) Df(f string, v ...any) {
+	logs.Debug(f+logFormatString(0, l.cat, l.tag), v...)
+}

@@ -94,7 +94,14 @@ func setupFileLogger() {
 // as front of caller function name, and set target key before logger out messages.
 //
 // By default, the perfix and tag key not set, use CatLogger and TagLogger instead normal.
-func logFormatString(n int, perfix string, tag string) string {
+func logFormatString(n int, opts ...string) string {
+	optlen, perfix, tag := len(opts), "", ""
+	if optlen > 0 {
+		perfix = opts[0]
+	}
+	if optlen > 1 {
+		tag = opts[1]
+	}
 
 	// append runtime calling function name as logger prefix, out logs format like :
 	// ------------------------------------------------------------------------------------
@@ -145,40 +152,67 @@ func GetLevel() string {
 
 // EM logs a message at emergency level.
 func EM(v ...any) {
-	logs.Emergency(logFormatString(len(v), "", ""), v...)
+	logs.Emergency(logFormatString(len(v)), v...)
 }
 
 // AL logs a message at alert level.
 func AL(v ...any) {
-	logs.Alert(logFormatString(len(v), "", ""), v...)
+	logs.Alert(logFormatString(len(v)), v...)
 }
 
 // CR logs a message at critical level.
 func CR(v ...any) {
-	logs.Critical(logFormatString(len(v), "", ""), v...)
+	logs.Critical(logFormatString(len(v)), v...)
 }
 
 // E logs a message at error level.
 func E(v ...any) {
-	logs.Error(logFormatString(len(v), "", ""), v...)
+	logs.Error(logFormatString(len(v)), v...)
 }
 
 // W logs a message at warning level.
 func W(v ...any) {
-	logs.Warn(logFormatString(len(v), "", ""), v...)
+	logs.Warn(logFormatString(len(v)), v...)
 }
 
 // N logs a message at notice level.
 func N(v ...any) {
-	logs.Notice(logFormatString(len(v), "", ""), v...)
+	logs.Notice(logFormatString(len(v)), v...)
 }
 
 // I logs a message at info level.
 func I(v ...any) {
-	logs.Info(logFormatString(len(v), "", ""), v...)
+	logs.Info(logFormatString(len(v)), v...)
 }
 
 // D logs a message at debug level.
 func D(v ...any) {
-	logs.Debug(logFormatString(len(v), "", ""), v...)
+	logs.Debug(logFormatString(len(v)), v...)
+}
+
+// -----------------
+
+// E logs a message at error level.
+func Ef(f string, v ...any) {
+	logs.Error(f+logFormatString(0), v...)
+}
+
+// W logs a message at warning level.
+func Wf(f string, v ...any) {
+	logs.Warn(f+logFormatString(0), v...)
+}
+
+// N logs a message at notice level.
+func Nf(f string, v ...any) {
+	logs.Notice(f+logFormatString(0), v...)
+}
+
+// I logs a message at info level.
+func If(f string, v ...any) {
+	logs.Info(f+logFormatString(0), v...)
+}
+
+// D logs a message at debug level.
+func Df(f string, v ...any) {
+	logs.Debug(f+logFormatString(0), v...)
 }
