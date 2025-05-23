@@ -109,9 +109,6 @@ func LoadRSAKey(filepath string, bits ...int) ([]byte, error) {
 // key, than decrypt by private key.
 // -------------------------------------------------------------------
 
-// Deprecated: use utils.NewRSAKeys instead it.
-func GenRSAKeys(bits int) (string, string, error) { return NewRSAKeys(bits) }
-
 // Create RSA private and public keys in PKCS#1, ASN.1 DER format,
 // and limit bits length of key cert.
 //	@param bits Limit bits length of key cert

@@ -39,9 +39,6 @@ func NewQueue() *Queue {
 	return &Queue{list: list.New()}
 }
 
-// Deprecated: use utils.NewQueue instead it.
-func GenQueue() *Queue { return NewQueue() }
-
 // Push push a data to queue back if the data not nil
 func (q *Queue) Push(data any) {
 	if data == nil {

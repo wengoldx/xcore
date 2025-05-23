@@ -38,9 +38,6 @@ func EncLoginToken(acc, pwd string) string {
 	return EncodeBase64(origin)
 }
 
-// Deprecated: use utils.EncLoginToken instead it.
-func GenLoginToken(acc, pwd string) string { return EncLoginToken(acc, pwd) }
-
 // Verify login token.
 //
 // ---

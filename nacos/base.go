@@ -163,9 +163,6 @@ type MetaConfig struct {
 // Callback to listen server address and port changes
 type MetaConfigCallback func(dataId, data string)
 
-// Deprecated: use utils.NewMetaConfig instead it.
-func GenMetaConfig() *MetaConfig { return NewMetaConfig() }
-
 // Create meta config client to get or listen configs changes
 //	@return - *MetaConfig nacos config client instance
 //

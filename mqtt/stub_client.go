@@ -105,9 +105,6 @@ func Singleton() *MqttStub {
 	return mqttStub
 }
 
-// Deprecated: use utils.NewClient instead it.
-func GenClient(configs any, server ...string) error { return NewClient(configs, server...) }
-
 // Create a new mqtt client and connect with MQTT broker, the client using
 // 'tcp' protocol and fixed id as format 'server@12345678'.
 //

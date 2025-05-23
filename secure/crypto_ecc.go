@@ -67,9 +67,6 @@ func (s *Stringer) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// Deprecated: use utils.NewEccPriKey instead it.
-func GenEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) { return NewEccPriKey(sign...) }
-
 // Create a ECC random private key with curve type one of P224, P256, P384,
 // P521, or use P256 curve as default, then you can get the pair public key
 // from prikey.PublicKey param.
@@ -101,9 +98,6 @@ func NewEccPriKey(sign ...string) (*ecdsa.PrivateKey, error) {
 	}
 	return prikey, nil
 }
-
-// Deprecated: use utils.NewEccKeys instead it.
-func GenEccKeys(sign ...string) (string, string, error) { return NewEccKeys(sign...) }
 
 // Create ECC private key, and format private and public keys as pem strings,
 // by default it create P256 curve to sign data, or you can create other keys

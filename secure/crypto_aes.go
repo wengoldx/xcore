@@ -128,9 +128,6 @@ var (
 	aesKeyLength = len(aesInitVector)
 )
 
-// Deprecated: use utils.NewAESKey instead it.
-func GenAESKey() string { return NewAESKey() }
-
 // Create a new AES key range chars in [0-9a-z]{16}
 func NewAESKey() string {
 	rander.Seed(time.Now().UnixNano())

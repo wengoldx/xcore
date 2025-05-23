@@ -41,9 +41,6 @@ func NewStack() *Stack {
 	return &Stack{list: list.New()}
 }
 
-// Deprecated: use utils.NewQTask instead it.
-func GenStack() *Stack { return NewStack() }
-
 // Push push a data to stack top one if the data not nil
 func (s *Stack) Push(data any) {
 	if data == nil {

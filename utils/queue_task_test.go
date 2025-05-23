@@ -12,6 +12,7 @@
 package utils
 
 import (
+	"math/rand/v2"
 	"testing"
 	"time"
 
@@ -25,6 +26,19 @@ func TestQueueTask(t *testing.T) {
 		logger.I("Post task:", i)
 		qtask.Post(i)
 	}
+
+	for i := 0; i < 10; i++ {
+		cid := rand.IntN(40) + 10
+		logger.I("Request cancel:", cid)
+		qtask.Cancel(func(taskdata any) bool {
+			if cid == taskdata.(int) {
+				logger.I("- Canceled task:", cid)
+				return true
+			}
+			return false
+		})
+	}
+
 	time.Sleep(1 * time.Second)
 
 	qtask.SetInterval(0)

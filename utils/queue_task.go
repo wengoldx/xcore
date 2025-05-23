@@ -123,6 +123,14 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	return nil
 }
 
+// Cancel the waiting task, it will remove task from queue cache.
+func (t *QueueTask) Cancel(findFunc func(taskdata any) bool) {
+	t.queue.Fetch(func(value any) (bool, bool) {
+		find := findFunc(value)
+		return find, find // interupt when found.
+	})
+}
+
 // Start task monitor to listen tasks pushed into queue, and execute it.
 func (t *QueueTask) startTaskMonitor(handler TaskHandler) {
 	if handler == nil {

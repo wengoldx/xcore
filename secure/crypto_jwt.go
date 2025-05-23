@@ -24,9 +24,6 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Deprecated: use utils.NewJwtToken instead it.
-func GenJwtToken(k, s string, d time.Duration) (string, error) { return NewJwtToken(k, s, d) }
-
 // Create a jwt token with keyword and salt string, the token will expired after the given duration.
 func NewJwtToken(keyword, salt string, dur time.Duration) (string, error) {
 	expireAt := time.Now().Add(dur)

@@ -148,9 +148,6 @@ func (stub *GrpcStub) ParseAndStart(data string) error {
 	return nil
 }
 
-// Deprecated: use wrpc.NewClient instead it.
-func (stub *GrpcStub) GenClient(svrkey, addr string, port int) { stub.NewClient(svrkey, addr, port) }
-
 // Create a new grpc client as stub handler.
 func (stub *GrpcStub) NewClient(svrkey, addr string, port int) {
 	if svrkey != SVR_ACC && svrkey != SVR_MEA && svrkey != SVR_WSS &&

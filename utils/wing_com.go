@@ -64,25 +64,6 @@ func Condition(condition bool, trueData any, falseData any) any {
 // Variable
 // ----------------------------------------
 
-// Deprecated: Check the variable params, return the first value if exist any,
-// or return default string, int, int64.
-//
-//	USAGE:
-//
-//	func sample(params ...string) {
-//		a := GetVariable(params, "def-value").(string)
-//		// Do saming here
-//	}
-//
-//	@See utils.VarString() to string type only.
-func GetVariable(params any, defvalue any) any {
-	pv := reflect.ValueOf(params)
-	if pv.Kind() == reflect.Slice && pv.Len() > 0 {
-		return pv.Index(0).Interface()
-	}
-	return defvalue
-}
-
 // Return the first element string, or default if empty.
 func VarString(src []string, def string) string {
 	if len(src) > 0 && src[0] != "" {
