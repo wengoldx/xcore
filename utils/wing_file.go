@@ -215,6 +215,14 @@ func FileAbstract(filepath string) (string, error) {
 	return hex.EncodeToString(cipher), nil
 }
 
+// Return lower chars file suffix without prefix . char, it maybe return
+// empty if the filename param is '', '.', '..'.
+//
+//	Data translate result: `filename.pdf` -> `pdf`
+func LowerFileSuffix(filename string) string {
+	return strings.TrimPrefix(strings.ToLower(path.Ext(filename)), ".")
+}
+
 // -----------------------------------------------------------------
 
 // Deprecated: CopyFile Copy source file to traget file.
