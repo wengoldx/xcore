@@ -51,19 +51,21 @@ func (c *timeCounter) LogUsed(msg string, custom ...bool) {
 	}
 }
 
-// Format used time like: 1.23.345678s, 90.123456ms, 78.901us, 234ns.
+const (
+	_second      = int64(time.Second)      // 1000 x 1000 x 1000 ns
+	_millisecond = int64(time.Millisecond) // 1000 x 1000 ns
+	_microsecond = int64(time.Microsecond) // 1000 ns
+)
+
+// Format used time like: 1.234s, 56.789ms, 123.456us, 234ns.
 func formatDuration(used int64) string {
-	if used > int64(time.Second) {
-		return fmt.Sprintf("%v.%v.%vs", used/int64(time.Second),
-			(used%int64(time.Second))/int64(time.Millisecond),
-			used%int64(time.Millisecond))
-	} else if used > time.Hour.Milliseconds() {
-		return fmt.Sprintf("%v.%vms", used/int64(time.Millisecond),
-			used%int64(time.Millisecond))
-	} else if used > time.Hour.Microseconds() {
-		return fmt.Sprintf("%v.%vus", used/int64(time.Microsecond),
-			used%int64(time.Microsecond))
+	if used > _second {
+		return fmt.Sprintf("%v.%v s", used/_second, (used%_second)/_millisecond)
+	} else if used > _millisecond {
+		return fmt.Sprintf("%v.%v ms", used/_millisecond, (used%_millisecond)/_microsecond)
+	} else if used > _microsecond {
+		return fmt.Sprintf("%v.%v us", used/_microsecond, used%_microsecond)
 	} else {
-		return fmt.Sprintf("%vns", used)
+		return fmt.Sprintf("%v ns", used)
 	}
 }
