@@ -206,7 +206,7 @@ func (c *WRoleController) doAfterValidatedInner(ps any, nextHander NextHander, s
 }
 
 // Return int64 typed account id.
-func (a *WAuths) IDNum() int64 {
+func (a *WAuths) NID() int64 {
 	if a.UID != nil {
 		if id, ok := a.UID.(int64); ok {
 			return id
@@ -217,7 +217,7 @@ func (a *WAuths) IDNum() int64 {
 }
 
 // Return string typed account id.
-func (a *WAuths) IDStr() string {
+func (a *WAuths) SID() string {
 	if a.UID != nil {
 		if id, ok := a.UID.(string); ok {
 			return id
