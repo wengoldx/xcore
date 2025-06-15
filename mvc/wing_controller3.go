@@ -162,28 +162,6 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 	return nil
 }
 
-// Return int64 typed account id.
-func (c *WRoleController) UID(a *WAuths) int64 {
-	if a != nil && a.UID != nil {
-		if id, ok := a.UID.(int64); ok {
-			return id
-		}
-		logger.E("Invalid int64 id:", a.UID)
-	}
-	return -1
-}
-
-// Return string typed account id.
-func (c *WRoleController) UIDString(a *WAuths) string {
-	if a != nil && a.UID != nil {
-		if id, ok := a.UID.(string); ok {
-			return id
-		}
-		logger.E("Invalid string id:", a.UID)
-	}
-	return ""
-}
-
 // Parse and validate input params, then do api action after success validated.
 //
 //	This function only suport 'WENGOLD-V2.0' header with input params.
@@ -225,4 +203,26 @@ func (c *WRoleController) doAfterValidatedInner(ps any, nextHander NextHander, s
 	} else {
 		c.responCheckState(datatype, true, silent, status)
 	}
+}
+
+// Return int64 typed account id.
+func (a *WAuths) IDNum() int64 {
+	if a.UID != nil {
+		if id, ok := a.UID.(int64); ok {
+			return id
+		}
+		logger.E("Invalid int64 id:", a.UID)
+	}
+	return -1
+}
+
+// Return string typed account id.
+func (a *WAuths) IDStr() string {
+	if a.UID != nil {
+		if id, ok := a.UID.(string); ok {
+			return id
+		}
+		logger.E("Invalid string id:", a.UID)
+	}
+	return ""
 }
