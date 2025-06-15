@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/wengoldx/xcore/logger"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // WRoleController the extend controller base on WingController to support
@@ -110,8 +111,7 @@ type WRoleController struct {
 
 // Account secure datas, set after pass validation.
 type WAuths struct {
-	UID  int64  // Account unique id, maybe 0.
-	Acc  string // Account unique name or string unique id, maybe empty.
+	UID  any    // Account unique id of int64 number or string.
 	Pwd  string // Account password plaintext, maybe empty.
 	Role string // Account role, maybe empty.
 }
@@ -150,8 +150,8 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 			c.E401Unauthed("Unauthed account!")
 			return nil
 		} else {
-			if len(silent) == 0 || !silent[0] {
-				logger.D("Authed account:", s.UID, s.Acc)
+			if !utils.VarBool(silent, false) {
+				logger.D("Authed account:", s.UID)
 			}
 			return s // account secures
 		}
@@ -160,6 +160,28 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 	// token is empty or invalid, response unauthed
 	c.E401Unauthed("Unauthed header token!")
 	return nil
+}
+
+// Return int64 typed account id.
+func (c *WRoleController) UID(a *WAuths) int64 {
+	if a != nil && a.UID != nil {
+		if id, ok := a.UID.(int64); ok {
+			return id
+		}
+		logger.E("Invalid int64 id:", a.UID)
+	}
+	return -1
+}
+
+// Return string typed account id.
+func (c *WRoleController) UIDString(a *WAuths) string {
+	if a != nil && a.UID != nil {
+		if id, ok := a.UID.(string); ok {
+			return id
+		}
+		logger.E("Invalid string id:", a.UID)
+	}
+	return ""
 }
 
 // Parse and validate input params, then do api action after success validated.
