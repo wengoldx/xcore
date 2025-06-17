@@ -111,7 +111,8 @@ type WRoleController struct {
 
 // Account secure datas, set after pass validation.
 type WAuths struct {
-	UID  any    // Account unique id of int64 number or string.
+	ID   int64  // Account id of int64,  set when using number id, default -1.
+	UID  string // Account id of string, set when using string id, defalut empty.
 	Pwd  string // Account password plaintext, maybe empty.
 	Role string // Account role, maybe empty.
 }
@@ -151,7 +152,7 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 			return nil
 		} else {
 			if !utils.VarBool(silent, false) {
-				logger.D("Authed account:", s.UID)
+				logger.Df("Authed account: %d:%s", s.ID, s.UID)
 			}
 			return s // account secures
 		}
@@ -203,26 +204,4 @@ func (c *WRoleController) doAfterValidatedInner(ps any, nextHander NextHander, s
 	} else {
 		c.responCheckState(datatype, true, silent, status)
 	}
-}
-
-// Return int64 typed account id.
-func (a *WAuths) NID() int64 {
-	if a.UID != nil {
-		if id, ok := a.UID.(int64); ok {
-			return id
-		}
-		logger.E("Invalid int64 id:", a.UID)
-	}
-	return -1
-}
-
-// Return string typed account id.
-func (a *WAuths) SID() string {
-	if a.UID != nil {
-		if id, ok := a.UID.(string); ok {
-			return id
-		}
-		logger.E("Invalid string id:", a.UID)
-	}
-	return ""
 }
