@@ -8,7 +8,7 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package mvc
+package provider
 
 import (
 	"database/sql"
@@ -21,45 +21,30 @@ import (
 	"github.com/wengoldx/xcore/logger"
 )
 
-// WingProvider content provider to support database utils,
-// you can implement custom helper to access any table with mvc.WingHelper
-// like the follow codes:
-//
-//	types CustomHelper struct {
-//		mvc.WingProvider
-//	}
-//
-//	func HStub() *CustomHelper {
-//		return &CustomHelper{*mvc.WingHelper}
-//	}
-//
-// `WARNING`: The Conn instance maybe not inited when database configs
-// invalid by call mvc.OpenMySQL(), mvc.OpenMySQL2(), or mvc.OpenMSSQL().
-type WingProvider struct {
-	Conn *sql.DB
+// Base provider for simple access database datas.
+type BaseProvider struct {
+	client DBClient
 }
 
-// ScanCallback use for scan query result from rows
-type ScanCallback func(rows *sql.Rows) error
+var _ DataProvider = (*BaseProvider)(nil)
 
-// InsertCallback format query values to string for Inserts().
-type InsertCallback func(index int) string
-
-// TransCallback transaction callback for Trans().
-type TransCallback func(tx *sql.Tx) error
-
-// Stub return content provider connection.
-func (w *WingProvider) Stub() *sql.DB {
-	return w.Conn
+// Create a BaseProvider with given database client.
+func NewProvider(client DBClient) *BaseProvider {
+	return &BaseProvider{client: client}
 }
 
-// IsEmpty call sql.Query() to check target data if empty.
-func (w *WingProvider) IsEmpty(query string, args ...any) (bool, error) {
-	if w.Conn == nil {
+/* ------------------------------------------------------------------- */
+/* Util Methods For Database Access                                    */
+/* ------------------------------------------------------------------- */
+
+// Call sql.Query() to check target data if empty.
+func (p *BaseProvider) IsEmpty(query string, args ...any) (bool, error) {
+	if p.client == nil || p.client.DB() == nil {
 		return false, invar.ErrBadDBConnect
 	}
 
-	rows, err := w.Conn.Query(query, args...)
+	db := p.client.DB()
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -67,19 +52,20 @@ func (w *WingProvider) IsEmpty(query string, args ...any) (bool, error) {
 	return !rows.Next(), nil
 }
 
-// IsExist call sql.Query() to check target data if exist.
-func (w *WingProvider) IsExist(query string, args ...any) (bool, error) {
-	empty, err := w.IsEmpty(query, args...)
+// Call sql.Query() to check target data if exist.
+func (p *BaseProvider) IsExist(query string, args ...any) (bool, error) {
+	empty, err := p.IsEmpty(query, args...)
 	return !empty, err
 }
 
-// Count call sql.Query() to count results.
-func (w *WingProvider) Count(query string, args ...any) (int, error) {
-	if w.Conn == nil {
+// Call sql.Query() to count results.
+func (p *BaseProvider) Count(query string, args ...any) (int, error) {
+	if p.client == nil || p.client.DB() == nil {
 		return 0, invar.ErrBadDBConnect
 	}
 
-	if rows, err := w.Conn.Query(query, args...); err != nil {
+	db := p.client.DB()
+	if rows, err := db.Query(query, args...); err != nil {
 		return 0, err
 	} else {
 		defer rows.Close()
@@ -96,13 +82,14 @@ func (w *WingProvider) Count(query string, args ...any) (int, error) {
 	}
 }
 
-// One call sql.Query() to query the top one record.
-func (w *WingProvider) One(query string, cb ScanCallback, args ...any) error {
-	if w.Conn == nil {
+// Call sql.Query() to query the top one record.
+func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
+	if p.client == nil || p.client.DB() == nil {
 		return invar.ErrBadDBConnect
 	}
 
-	if rows, err := w.Conn.Query(query, args...); err != nil {
+	db := p.client.DB()
+	if rows, err := db.Query(query, args...); err != nil {
 		return err
 	} else {
 		defer rows.Close()
@@ -115,13 +102,14 @@ func (w *WingProvider) One(query string, cb ScanCallback, args ...any) error {
 	}
 }
 
-// Query call sql.Query() to query multiple records.
-func (w *WingProvider) Query(query string, cb ScanCallback, args ...any) error {
-	if w.Conn == nil {
+// Call sql.Query() to query multiple records.
+func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
+	if p.client == nil || p.client.DB() == nil {
 		return invar.ErrBadDBConnect
 	}
 
-	if rows, err := w.Conn.Query(query, args...); err != nil {
+	db := p.client.DB()
+	if rows, err := db.Query(query, args...); err != nil {
 		return err
 	} else {
 		defer rows.Close()
@@ -136,15 +124,16 @@ func (w *WingProvider) Query(query string, cb ScanCallback, args ...any) error {
 	return nil
 }
 
-// Insert call sql.Prepare() and stmt.Exec() to insert a new record.
+// Call sql.Prepare() and stmt.Exec() to insert a new record, and return the inserted id.
 //
-// `@see` Use mvc.Inserts() to insert multiple values in once request.
-func (w *WingProvider) Insert(query string, args ...any) (int64, error) {
-	if w.Conn == nil {
+//	- Use provider.Inserts() to insert multiple values in once request.
+func (p *BaseProvider) Insert(query string, args ...any) (int64, error) {
+	if p.client == nil || p.client.DB() == nil {
 		return -1, invar.ErrBadDBConnect
 	}
 
-	if stmt, err := w.Conn.Prepare(query); err != nil {
+	db := p.client.DB()
+	if stmt, err := db.Prepare(query); err != nil {
 		return -1, err
 	} else {
 		defer stmt.Close()
@@ -157,17 +146,16 @@ func (w *WingProvider) Insert(query string, args ...any) (int64, error) {
 	}
 }
 
-// Inserts format and combine multiple values to insert at once,
-// this method can provide high-performance than call mvc.Insert() one by one.
+// Insert the format and combine multiple values at once.
 //
-// ---
+// This method can provide high-performance than call provider.Insert() one by one.
 //
 //	query := "INSERT sametable (field1, field2) VALUES"
-//	err := mvc.Inserts(query, len(vs), func(index int) string {
+//	err := provider.Inserts(query, len(vs), func(index int) string {
 //		return fmt.Sprintf("(%v, %v)", v1, vs[index])
 //		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
 //	})
-func (w *WingProvider) Inserts(query string, cnt int, cb InsertCallback) error {
+func (p *BaseProvider) Inserts(query string, cnt int, cb InsertCallback) error {
 	values := []string{}
 	for i := 0; i < cnt; i++ {
 		value := strings.TrimSpace(cb(i))
@@ -176,82 +164,79 @@ func (w *WingProvider) Inserts(query string, cnt int, cb InsertCallback) error {
 		}
 	}
 	query = query + " " + strings.Join(values, ",")
-	return w.Execute(query)
+	return p.Execute(query)
 }
 
-// Inserts2 format and combine slice values to insert multiple items at once,
-// this method can provide high-performance same as call mvc.Insert() without callback.
+// Insert the format and combine slice values at once.
 //
-// ---
+// This method can provide high-performance same as call provider.Insert() without callback.
 //
 //	values := []Person{
 //		{Age: 16, Male: true,  Name: "ZhangSan"},
 //		{Age: 22, Male: false, Name: "LiXiang"},
 //	}
 //	query := "INSERT person (age, male, name) VALUES"
-//	err := mvc.Inserts2(query, values)
-func (w *WingProvider) Inserts2(query string, values any) error {
-	items, err := w.FormatInserts(values)
+//	err := provider.Inserts2(query, values)
+func (p *BaseProvider) Inserts2(query string, values any) error {
+	items, err := p.FormatInserts(values)
 	if err != nil {
 		return err
 	}
-	return w.Execute(query + " " + items)
+	return p.Execute(query + " " + items)
 }
 
-// Update call sql.Prepare() and stmt.Exec() to update record, then check the
+// Call sql.Prepare() and stmt.Exec() to update record, then check the
 // updated result if return invar.ErrNotChanged error when not changed any one.
 //
-// `@see` Use mvc.Updates() to update mapping values on silent.
-//
-// `@see` Use mvc.Execute() to update record on silent.
-func (w *WingProvider) Update(query string, args ...any) error {
-	rows, err := w.Execute2(query, args...)
+//	- Use provider.Updates() to update mapping values on silent.
+//	- Use provider.Execute() to update record on silent.
+func (p *BaseProvider) Update(query string, args ...any) error {
+	rows, err := p.Execute2(query, args...)
 	if rows == 0 {
 		return invar.ErrNotChanged
 	}
 	return err /* nil or error */
 }
 
-// Updates update record from mapping values as colmun sets, it not check the
+// Update record from mapping values as colmun sets, it not check the
 // updated result whatever changed or not.
-//
-// ---
 //
 //	values := map[string]any{ "Age": 16, "Name": "ZhangSan" }
 //	query := "UPDATE person SET %s WHERE id=?"
-//	err := mvc.updates(query, values, "id-123456")
+//	err := provider.updates(query, values, "id-123456")
 //
-// `@see` Use mvc.Update() to update record and check result.
-func (w *WingProvider) Update2(query string, values map[string]any, args ...any) error {
-	sets, err := w.FormatSets(values)
+//	- Use provider.Update() to update record and check result.
+func (p *BaseProvider) Update2(query string, values map[string]any, args ...any) error {
+	sets, err := p.FormatSets(values)
 	if err != nil {
 		return err
 	}
-	return w.Execute(fmt.Sprintf(query, sets), args...)
+	return p.Execute(fmt.Sprintf(query, sets), args...)
 }
 
-// Delete call sql.Prepare() and stmt.Exec() to delete record, then check the
+// Call sql.Prepare() and stmt.Exec() to delete record, then check the
 // deleted result if return invar.ErrNotChanged error when none delete.
 //
-// `@see` Use mvc.Execute() to delete record on silent.
-func (w *WingProvider) Delete(query string, args ...any) error {
-	rows, err := w.Execute2(query, args...)
+//	- Use provider.Execute() to delete record on silent.
+func (p *BaseProvider) Delete(query string, args ...any) error {
+	rows, err := p.Execute2(query, args...)
 	if rows == 0 {
 		return invar.ErrNotChanged
 	}
 	return err /* nil or error */
 }
 
-// Execute call sql.Prepare() and stmt.Exec() to insert, update or delete records
+// Call sql.Prepare() and stmt.Exec() to insert, update or delete records
 // without any result datas to return as silent.
 //
-// `@see` Use mvc.Execute2() return results.
-func (w *WingProvider) Execute(query string, args ...any) error {
-	if w.Conn == nil {
+//	- Use provider.Execute2() return results.
+func (p *BaseProvider) Execute(query string, args ...any) error {
+	if p.client == nil || p.client.DB() == nil {
 		return invar.ErrBadDBConnect
 	}
 
-	if stmt, err := w.Conn.Prepare(query); err != nil {
+	db := p.client.DB()
+	if stmt, err := db.Prepare(query); err != nil {
 		return err
 	} else {
 		defer stmt.Close()
@@ -262,16 +247,17 @@ func (w *WingProvider) Execute(query string, args ...any) error {
 	}
 }
 
-// Execute2 call sql.Prepare() and stmt.Exec() to update or delete records (but not
+// Call sql.Prepare() and stmt.Exec() to update or delete records (but not
 // for multiple inserts) with result counts to return.
 //
-// `@see` Use mvc.Execute() on silent, use mvc.Inserts() to multiple insert.
-func (w *WingProvider) Execute2(query string, args ...any) (int64, error) {
-	if w.Conn == nil {
+//	- Use provider.Execute() on silent, use provider.Inserts() to multiple insert.
+func (p *BaseProvider) Execute2(query string, args ...any) (int64, error) {
+	if p.client == nil || p.client.DB() == nil {
 		return 0, invar.ErrBadDBConnect
 	}
 
-	if stmt, err := w.Conn.Prepare(query); err != nil {
+	db := p.client.DB()
+	if stmt, err := db.Prepare(query); err != nil {
 		return 0, err
 	} else {
 		defer stmt.Close()
@@ -280,19 +266,20 @@ func (w *WingProvider) Execute2(query string, args ...any) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		return w.Affected(result)
+		return p.Affected(result)
 	}
 }
 
-// TranRoll execute one sql transaction, it will rollback when operate failed.
+// Execute single sql transaction, it will rollback when operate failed.
 //
-// `@see` Use mvc.Trans() to excute multiple transaction as once.
-func (w *WingProvider) TranRoll(query string, args ...any) error {
-	if w.Conn == nil {
+//	- Use provider.Trans() to excute multiple transaction as once.
+func (p *BaseProvider) TranRoll(query string, args ...any) error {
+	if p.client == nil || p.client.DB() == nil {
 		return invar.ErrBadDBConnect
 	}
 
-	if tx, err := w.Conn.Begin(); err != nil {
+	db := p.client.DB()
+	if tx, err := db.Begin(); err != nil {
 		return err
 	} else {
 		defer tx.Rollback()
@@ -308,23 +295,22 @@ func (w *WingProvider) TranRoll(query string, args ...any) error {
 	return nil
 }
 
-// Trans excute multiple transactions, it will rollback when case any error.
-//
-// ---
+// Excute multiple transactions, it will rollback when case any error.
 //
 //	// Excute 3 transactions in callback with different query1 ~ 3
-//	err := mvc.Trans(
-//		func(tx *sql.Tx) error { return mvc.TxQuery(tx, query1, func(rows *sql.Rows) error {
+//	err := provider.Trans(
+//		func(tx *sql.Tx) error { return provider.TxQuery(tx, query1, func(rows *sql.Rows) error {
 //				// Fetch all rows to get result datas...
 //			}, args...) },
-//		func(tx *sql.Tx) error { return mvc.TxExec(tx, query2, args...) },
-//		func(tx *sql.Tx) error { return mvc.TxExec(tx, query3, args...) })
-func (w *WingProvider) Trans(cbs ...TransCallback) error {
-	if w.Conn == nil {
+//		func(tx *sql.Tx) error { return provider.TxExec(tx, query2, args...) },
+//		func(tx *sql.Tx) error { return provider.TxExec(tx, query3, args...) })
+func (p *BaseProvider) Trans(cbs ...TransCallback) error {
+	if p.client == nil || p.client.DB() == nil {
 		return invar.ErrBadDBConnect
 	}
 
-	if tx, err := w.Conn.Begin(); err != nil {
+	db := p.client.DB()
+	if tx, err := db.Begin(); err != nil {
 		return err
 	} else {
 		defer tx.Rollback()
@@ -343,71 +329,17 @@ func (w *WingProvider) Trans(cbs ...TransCallback) error {
 	return nil
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Util Methods For Simple Query                                       */
+/* ------------------------------------------------------------------- */
 
-// Affected get update or delete record counts.
-func (w *WingProvider) Affected(result sql.Result) (int64, error) {
-	row, err := result.RowsAffected()
-	if err != nil || row == 0 {
-		return 0, invar.ErrNotChanged
-	}
-	return row, nil
-}
-
-// Affects get update or delete record counts without error check.
-func (w *WingProvider) Affects(result sql.Result) int64 {
-	rows, _ := result.RowsAffected()
-	return rows
-}
-
-// LastID get inserted record id without error check.
-func (w *WingProvider) LastID(result sql.Result) int64 {
-	id, _ := result.LastInsertId()
-	return id
-}
-
-// AddLike append like field and keyword into given query or just return like string.
+// Join int64 numbers as string '1,2,3', or append to query strings as formart:
 //
-// - `query` : "SELECT * FROM tablename WHERE status=? %s ORDER BY id DESC",
-//
-// - `field` : "title", `keyword` : "Hello", `appendand` : true
-//
-// The result is "SELECT * FROM tablename WHERE status=? AND title LIKE '%%Hello%%' ORDER BY id DESC".
-func (w *WingProvider) AddLike(query, field, keyword string, appendand ...bool) string {
-	like := field + " LIKE '%%" + keyword + "%%'"
-	if len(appendand) > 0 {
-		like = "AND " + like
-	}
-
-	if query != "" {
-		return fmt.Sprintf(query, like)
-	}
-	return like
-}
-
-// TailLimit tail limit condition into query string, default limit 1 record.
-//
-// - `query`  : "SELECT * FROM tablename WHERE status=?",
-//
-// - `limits` : 2
-//
-// The result is "SELECT * FROM tablename WHERE status=? LIMIT 2".
-func (w *WingProvider) TailLimit(query string, limits ...int) string {
-	num := "1"
-	if len(limits) > 0 && limits[0] > 0 {
-		num = strconv.Itoa(limits[0])
-	}
-	return query + " LIMIT " + num
-}
-
-// JoinInts join int64 numbers as string '1,2,3', or append to query strings as formart:
-//
-// - `query` : "SELECT * FROM tablename WHERE id IN (%s)",
-//
-// - `nums`  : []int64{1, 2, 3}
+//	- `query` : "SELECT * FROM tablename WHERE id IN (%s)"
+//	- `nums`  : []int64{1, 2, 3}
 //
 // The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
-func (w *WingProvider) JoinInts(query string, nums []int64) string {
+func (p *BaseProvider) JoinInts(query string, nums []int64) string {
 	if len(nums) > 0 {
 		vs := []string{}
 		for _, num := range nums {
@@ -427,21 +359,41 @@ func (w *WingProvider) JoinInts(query string, nums []int64) string {
 
 // Join strings with ',', then insert into the given format string;
 //
-// - `query ` : "SELECT * FROM account WHERE uuid IN (%s)"
-//
-// - `values` : []string{"D23", "4R", "A34"}
+//	- `query ` : "SELECT * FROM account WHERE uuid IN (%s)"
+//	- `values` : []string{"D23", "4R", "A34"}
 //
 // The result is "SELECT * FROM account WHERE uuid IN ('D23','4R','A34')"
-func (w *WingProvider) JoinStrings(query string, values []string) string {
+func (p *BaseProvider) JoinStrings(query string, values []string) string {
 	if query != "" {
 		return fmt.Sprintf(query, "'"+strings.Join(values, "','")+"'")
 	}
 	return "'" + strings.Join(values, "','") + "'"
 }
 
-// FormatSets format update sets for sql update.
-//
-// ---
+// Get update or delete record counts.
+func (p *BaseProvider) Affected(result sql.Result) (int64, error) {
+	rows, err := result.RowsAffected()
+	if err != nil || rows == 0 {
+		return 0, invar.ErrNotChanged
+	}
+	return rows, nil
+}
+
+// Get update or delete record counts without error check.
+func (p *BaseProvider) Affects(result sql.Result) int64 {
+	rows, _ := result.RowsAffected()
+	return rows
+}
+
+// Get inserted record id without error check.
+func (p *BaseProvider) LastID(result sql.Result) int64 {
+	id, _ := result.LastInsertId()
+	return id
+}
+
+// -------------------------------------
+
+// Format update sets for sql update.
 //
 //	values := map[string]any{
 //		"":       123456,   // Filter out empty field
@@ -452,7 +404,7 @@ func (w *WingProvider) JoinStrings(query string, values []string) string {
 //		"Secure": nil,      // Filter out nil value
 //	}
 //	// => Age=16, Male=true, Name='ZhangSan', Height=176.8
-func (w *WingProvider) FormatSets(values map[string]any) (string, error) {
+func (p *BaseProvider) FormatSets(values map[string]any) (string, error) {
 	sets := []string{}
 	for key, value := range values {
 		if key == "" && value == nil {
@@ -473,7 +425,7 @@ func (w *WingProvider) FormatSets(values map[string]any) (string, error) {
 	return strings.Join(sets, ","), nil
 }
 
-// FormatInserts Format insert values for sql multiple insert.
+// Format insert values for sql multiple insert.
 //
 // ---
 //
@@ -511,7 +463,7 @@ func (w *WingProvider) FormatSets(values map[string]any) (string, error) {
 //		Male bool
 //		Name string
 //	}
-func (w *WingProvider) FormatInserts(values any) (string, error) {
+func (p *BaseProvider) FormatInserts(values any) (string, error) {
 	pv := reflect.ValueOf(values)
 	if pv.Kind() != reflect.Slice {
 		return "", invar.ErrInvalidData
@@ -564,108 +516,9 @@ func (w *WingProvider) FormatInserts(values any) (string, error) {
 	return strings.Join(items, ","), nil
 }
 
-// ----------------------------------------
-
-// Excute transaction step to update, insert, or delete datas without check result.
-func TxExec(tx *sql.Tx, query string, args ...any) error {
-	_, err := tx.Exec(query, args...)
-	return err
-}
-
-// Excute transaction step to check if data exist, it wil return
-// invar.ErrNotFound if unexist any records, or return nil when exist results.
-func TxExist(tx *sql.Tx, query string, args ...any) error {
-	if rows, err := tx.Query(query, args...); err != nil {
-		return err
-	} else {
-		defer rows.Close()
-		if !rows.Next() {
-			return invar.ErrNotFound
-		}
-	}
-	return nil
-}
-
-// Excute transaction step to query single data and get result in scan callback.
-func TxOne(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
-	if rows, err := tx.Query(query, args...); err != nil {
-		return err
-	} else {
-		defer rows.Close()
-
-		if !rows.Next() {
-			return invar.ErrNotFound
-		}
-		rows.Columns()
-		return cb(rows)
-	}
-}
-
-// Excute transaction step to query datas, and fetch result in scan callback.
-func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
-	if rows, err := tx.Query(query, args...); err != nil {
-		return err
-	} else {
-		defer rows.Close()
-
-		for rows.Next() {
-			rows.Columns()
-			if err := cb(rows); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// Excute transaction step to insert a new record and return inserted id.
-func TxInsert(tx *sql.Tx, query string, out *int64, args ...any) error {
-	if rst, err := tx.Exec(query, args...); err != nil {
-		return err
-	} else if rid, err := rst.LastInsertId(); err != nil {
-		return err
-	} else if out != nil {
-		*out = rid
-		return nil
-	}
-	return invar.ErrNotInserted
-}
-
-// Excute transaction step to insert multiple records.
-//
-// ---
-//
-//	query := "INSERT sametable (field1, field2) VALUES"
-//	err := mvc.TxInserts(tx, query, len(vs), func(index int) string {
-//		return fmt.Sprintf("(%v, %v)", v1, vs[index])
-//		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
-//	})
-func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
-	values := []string{}
-	for i := 0; i < cnt; i++ {
-		value := strings.TrimSpace(cb(i))
-		if value != "" {
-			values = append(values, value)
-		}
-	}
-	query = query + " " + strings.Join(values, ",")
-	_, err := tx.Exec(query)
-	return err
-}
-
-// Excute transaction step to delete record and check result.
-func TxDelete(tx *sql.Tx, query string, args ...any) error {
-	if rst, err := tx.Exec(query, args...); err != nil {
-		return err
-	} else if cnt, err := rst.RowsAffected(); err != nil {
-		return err
-	} else if cnt == 0 {
-		return invar.ErrNotChanged
-	}
-	return nil
-}
-
-// -------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Util Methods For Access Table                                       */
+/* ------------------------------------------------------------------- */
 
 // Table datas for describe table structures.
 type Table struct {
@@ -684,12 +537,13 @@ type Column struct {
 }
 
 // Get target table structs by name from mysql databse.
-func (w *WingProvider) MysqlTable(table string, print ...bool) *Table {
-	if w.Conn == nil {
+func (p *BaseProvider) MysqlTable(table string, print ...bool) *Table {
+	if p.client == nil || p.client.DB() == nil {
 		return nil
 	}
 
-	rows, err := w.Conn.Query("DESCRIBE " + table + ";")
+	db := p.client.DB()
+	rows, err := db.Query("DESCRIBE " + table + ";")
 	if err != nil {
 		logger.E("Describe table:", table, "err:", err)
 		return nil
@@ -719,13 +573,14 @@ func (w *WingProvider) MysqlTable(table string, print ...bool) *Table {
 }
 
 // Get target table structs by name from mssql database.
-func (w *WingProvider) MssqlTable(table string, print ...bool) *Table {
-	if w.Conn == nil {
+func (p *BaseProvider) MssqlTable(table string, print ...bool) *Table {
+	if p.client == nil || p.client.DB() == nil {
 		return nil
 	}
 
+	db := p.client.DB()
 	query := "SELECT column_name, data_type, is_nullable, column_default FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" + table + "';"
-	rows, err := w.Conn.Query(query)
+	rows, err := db.Query(query)
 	if err != nil {
 		logger.E("Describe table:", table, "err:", err)
 		return nil
@@ -756,11 +611,9 @@ func (w *WingProvider) MssqlTable(table string, print ...bool) *Table {
 
 // Print target table structs.
 //
-// `USAGE`
-//
-//	table := mvc.MysqlTable("config", true)
-//	mvc.PrintTable(table)
-func (w *WingProvider) PrintTable(table *Table) {
+//	table := provider.MysqlTable("config", true)
+//	provider.PrintTable(table)
+func (p *BaseProvider) PrintTable(table *Table) {
 	ps, cnt := table.Spans, len(table.Columns)
 	for i, c := range table.Columns {
 		if i == 0 {

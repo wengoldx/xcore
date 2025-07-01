@@ -8,13 +8,14 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package mvc
+package tester
 
 import (
 	"testing"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // mysql
+	"github.com/wengoldx/xcore/mvc/provider/mysqlc"
 )
 
 // -------------------------------------------------------------------
@@ -38,9 +39,9 @@ func TestRecordOne(t *testing.T) {
 	if err := setupTestDatabase(); err != nil {
 		t.Fatal("Connect test database, err:", err)
 	}
-	defer CloseMySQL("mysql")
+	defer mysqlc.Close("mysql")
 
-	ut, text := UTest(), ""
+	ut, text := NewHelper(), ""
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
 			if last, err := insertTestValues(ut, c.Case, c.Creates, c.Number); err != nil {
@@ -151,16 +152,20 @@ const _ut_table = "UnitTest"
 //	) COMMENT='UnitTest table';
 //	`
 func setupTestDatabase() error {
-	/* instead the database valid configs before excute unit test! */
-	confs := &MyConfs{Host: "192.168.1.100:3306", User: "user", Pwd: "123456", Name: "testdb"}
-	if err := OpenMySQL2("utf8mb4", confs); err != nil {
+	opts := mysqlc.DefaultOptions("mysql")
+	opts.Host = "192.168.1.100:3306"
+	opts.User = "user"
+	opts.Password = "123456"
+	opts.Database = "testdb"
+
+	if err := mysqlc.OpenWithOptions("utf8mb4", opts); err != nil {
 		return err
 	}
 	return nil
 }
 
 // Insert test record data to test database, and return inserted id.
-func insertTestValues(t *utestHelper, text, creates string, number int64) (int64, error) {
+func insertTestValues(t *helper, text, creates string, number int64) (int64, error) {
 	return t.AddWithID(_ut_table, map[string]any{
 		"text": text, "number": number, "creates": creates,
 	})
