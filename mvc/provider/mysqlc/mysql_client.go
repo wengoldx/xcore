@@ -22,7 +22,7 @@ import (
 // ----------------------------------------
 // NOTIC :
 //
-// import the follow database driver when using WingProvider.
+// import the follow driver for MySQL database access.
 //
 // _ "github.com/go-sql-driver/mysql"   // use for mysql
 //
@@ -50,7 +50,19 @@ const (
 	_mysqlDsnTcp = "%s:%s@tcp(%s)/%s?charset=%s"
 )
 
-// Create a MySQL instance, set the options by using mysqlc.WithXxxx(x) functions.
+// Create a MySQL client, set the options by mysqlc.WithXxxx(x) setters.
+//
+//	client := mysqlc.NewMySQL(
+//		mysqlc.WithSession("mysql"),
+//		mysqlc.WithHost("127.0.0.1:3306"), // maybe empty for localhost.
+//		mysqlc.WithUser("user"),
+//		mysqlc.WithPassword("123456"),
+//		mysqlc.WithDatabase("testdb"),
+//		mysqlc.WithCharset("utf8mb4"),
+//		mysqlc.WithMaxIdles(100),
+//		mysqlc.WithMaxOpens(100),
+//		mysqlc.WithMaxLifetime(28740),
+//	)
 func NewMySQL(opts ...Option) *MySQL {
 	client := &MySQL{options: DefaultOptions(_mysqlDriver)}
 	for _, optFunc := range opts {
@@ -59,31 +71,20 @@ func NewMySQL(opts ...Option) *MySQL {
 	return client
 }
 
-// Create and open a MySQL client by load options from app.conf file.
+// Create a MySQL client and connect with options which loaded from app.conf file.
 //
-// The function useful for beego backend project to connect mysql database.
+// This method useful for beego project easy to connect a mysql database.
 func OpenMySQL(charset string, session ...string) error {
-	opts := LoadOptions(session...)
-	return OpenWithOptions(charset, opts)
+	return OpenWithOptions(charset, LoadOptions(session...))
 }
 
-// Create and open a MySQL client by exist options.
+// Create a MySQL client by given options, and connect with database.
 func OpenWithOptions(charset string, opts Options) error {
 	if opts.Database == "" || opts.User == "" || opts.Password == "" {
 		return invar.ErrInvalidConfigs
 	}
 
-	client := NewMySQL(
-		WithSession(opts.Session),
-		WithHost(opts.Host), // maybe empty for localhost.
-		WithUser(opts.User),
-		WithPassword(opts.Password),
-		WithDatabase(opts.Database),
-		WithCharset(charset),
-		WithMaxIdles(opts.MaxIdles),
-		WithMaxOpens(opts.MaxOpens),
-		WithMaxLifetime(opts.MaxLifetime),
-	)
+	client := &MySQL{options: opts}
 	_mysqlClients[opts.Session] = client
 	return client.Connect()
 }
@@ -103,8 +104,8 @@ func Close(session string) error {
 }
 
 // Create and return BaseProvider instance with MySQL client.
-func GetProvider() pd.BaseProvider {
-	return *pd.NewProvider(Select(_mysqlDriver))
+func GetProvider(name string) pd.BaseProvider {
+	return *pd.NewProvider(name, Select(_mysqlDriver))
 }
 
 // Return MySQL database client, maybe nil when not call Connect() before.
@@ -114,17 +115,15 @@ func (m *MySQL) DB() *sql.DB {
 
 // Connect mysql database and cache the client to MySQL clients pool.
 func (m *MySQL) Connect() error {
-	dsn := ""
-	if len(m.options.Host) > 0 {
+	dsn, o := "", m.options
+	if len(o.Host) > 0 {
 		// conntect with remote host database server.
-		dsn = fmt.Sprintf(_mysqlDsnTcp, m.options.User, m.options.Password,
-			m.options.Host, m.options.Database, m.options.Charset)
+		dsn = fmt.Sprintf(_mysqlDsnTcp, o.User, o.Password, o.Host, o.Database, o.Charset)
 	} else {
 		// just connect local database server.
-		dsn = fmt.Sprintf(_mysqlDsnLocal, m.options.User, m.options.Password,
-			m.options.Database, m.options.Charset)
+		dsn = fmt.Sprintf(_mysqlDsnLocal, o.User, o.Password, o.Database, o.Charset)
 	}
-	logger.I("Connect MySQL from", m.options.Session)
+	logger.I("Connect MySQL from session:", o.Session)
 
 	// open and connect database.
 	con, err := sql.Open(_mysqlDriver, dsn)
@@ -137,9 +136,9 @@ func (m *MySQL) Connect() error {
 		return err
 	}
 
-	con.SetMaxIdleConns(m.options.MaxIdles)
-	con.SetMaxOpenConns(m.options.MaxOpens)
-	con.SetConnMaxLifetime(m.options.MaxLifetime)
+	con.SetMaxIdleConns(o.MaxIdles)
+	con.SetMaxOpenConns(o.MaxOpens)
+	con.SetConnMaxLifetime(o.MaxLifetime)
 	m.client = con
 	return nil
 }
@@ -154,8 +153,8 @@ func (m *MySQL) Close() error {
 	}
 
 	// remove the cached MySQL instance.
-	if m.options.Session != "" {
-		delete(_mysqlClients, m.options.Session)
+	if o := m.options; o.Session != "" {
+		delete(_mysqlClients, o.Session)
 	}
 	return nil
 }

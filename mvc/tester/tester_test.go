@@ -15,6 +15,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // mysql
+	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/mvc/provider/mysqlc"
 )
 
@@ -50,13 +51,13 @@ func TestRecordOne(t *testing.T) {
 				t.Fatal("Query last id, err:", err)
 			} else if last != id {
 				t.Fatal("Verify last id failed!")
-			} else if err := ut.Target(_ut_table, "text", KValues{c.Tag: c.Number}, &text); err != nil {
+			} else if err := ut.Target(_ut_table, "text", pd.Wheres{c.Tag: c.Number}, &text); err != nil {
 				t.Fatal("Query last field, err:", err)
 			} else if text != c.Case {
 				t.Fatal("Verify last field failed!")
 			} else {
 				t.Log("Inserted id:", id, "- Query by", c.Tag+",", "text:", text)
-				ut.DeleteBy(_ut_table, KValues{"id": last})
+				ut.DeleteBy(_ut_table, pd.Wheres{"id": last})
 			}
 		})
 	}

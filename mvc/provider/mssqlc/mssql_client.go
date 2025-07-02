@@ -22,7 +22,7 @@ import (
 // ----------------------------------------
 // NOTIC :
 //
-// import the follow database driver when using WingProvider.
+// import the follow driver for MSSQL database access.
 //
 // _ "github.com/denisenkom/go-mssqldb" // use for sql server 2017 ~ 2019
 //
@@ -41,48 +41,49 @@ var _mssqlClients = make(map[string]pd.DBClient)
 
 const (
 	// Microsoft SQL Server driver name.
-	_mssqlDriver = "mssql"
+	_mssqlDriver = "mssql" // 'mssql' for processQueryText=true, 'sqlserver' for false
 
 	// Microsoft SQL Server database source name.
 	_mssqlDsn = "server=%s;port=%d;database=%s;user id=%s;password=%s;connection timeout=%d;dial timeout=%d;"
 )
 
-// Create a MSSQL instance, set the options by using mssqlc.WithXxxx(x) functions.
-func NewMSSQL(options ...Option) *MSSQL {
+// Create a MSSQL client, set the options by mssqlc.WithXxxx(x) setters.
+//
+//	client := mssqlc.NewMSSQL(
+//		mssqlc.WithSession("mssql"),
+//		mssqlc.WithHost("127.0.0.1"),
+//		mssqlc.WithPort(1433),
+//		mssqlc.WithUser("sa"),
+//		mssqlc.WithPassword("123456"),
+//		mssqlc.WithDatabase("TestDB"),
+//		mssqlc.WithTimeout(30),
+//		mssqlc.WithMaxIdles(100),
+//		mssqlc.WithMaxOpens(100),
+//	)
+func NewMSSQL(opts ...Option) *MSSQL {
 	client := &MSSQL{options: DefaultOptions(_mssqlDriver)}
-	for _, optFunc := range options {
+	for _, optFunc := range opts {
 		optFunc(client)
 	}
 	return client
 }
 
-// Create and open a MSSQL client by load options from app.conf file.
+// Create a MSSQL client and connect with options which loaded from app.conf file.
 //
-// The function useful for beego backend project to connect mmsql database.
-func OpenMSSQL(charset string, session ...string) error {
-	opts := LoadOptions(session...)
-	return OpenWithOptions(charset, opts)
+// This method useful for beego project easy to connect a mssql database.
+func OpenMSSQL(session ...string) error {
+	return OpenWithOptions(LoadOptions(session...))
 }
 
-// Create and open a MSSQL client by exist options.
-func OpenWithOptions(charset string, opts Options) error {
+// Create a MSSQL client by given options, and connect with database.
+func OpenWithOptions(opts Options) error {
 	if opts.Database == "" || opts.User == "" || opts.Password == "" {
 		return invar.ErrInvalidConfigs
 	} else if opts.Timeout <= 0 {
 		opts.Timeout = 30 // fix the dial timeout over 30s
 	}
 
-	client := NewMSSQL(
-		WithSession(opts.Session),
-		WithHost(opts.Host),
-		WithPort(opts.Port),
-		WithUser(opts.User),
-		WithPassword(opts.Password),
-		WithDatabase(opts.Database),
-		WithTimeout(opts.Timeout),
-		WithMaxIdles(opts.MaxIdles),
-		WithMaxOpens(opts.MaxOpens),
-	)
+	client := &MSSQL{options: opts}
 	_mssqlClients[opts.Session] = client
 	return client.Connect()
 }
@@ -102,8 +103,8 @@ func Close(session string) error {
 }
 
 // Create and return BaseProvider instance with MSSQL client.
-func GetProvider() pd.BaseProvider {
-	return *pd.NewProvider(Select(_mssqlDriver))
+func GetProvider(name string) pd.BaseProvider {
+	return *pd.NewProvider(name, Select(_mssqlDriver))
 }
 
 // Return MSSQL database client, maybe nil when not call Connect() before.
@@ -113,10 +114,9 @@ func (m *MSSQL) DB() *sql.DB {
 
 // Connect mssql database and cache the client to MSSQL clients pool.
 func (m *MSSQL) Connect() error {
-	// driver := "mssql" // mssql for processQueryText=true, sqlserver for false
-	dsn := fmt.Sprintf(_mssqlDsn, m.options.Host, m.options.Port, m.options.Database,
-		m.options.User, m.options.Password, m.options.Timeout, m.options.Timeout+5)
-	logger.I("Connect MSSQL from", m.options.Session)
+	o := m.options
+	dsn := fmt.Sprintf(_mssqlDsn, o.Host, o.Port, o.Database, o.User, o.Password, o.Timeout, o.Timeout+5)
+	logger.I("Connect MSSQL from session:", o.Session)
 
 	// open and connect database.
 	con, err := sql.Open(_mssqlDriver, dsn)
@@ -129,8 +129,8 @@ func (m *MSSQL) Connect() error {
 		return err
 	}
 
-	con.SetMaxIdleConns(m.options.MaxIdles)
-	con.SetMaxOpenConns(m.options.MaxOpens)
+	con.SetMaxIdleConns(o.MaxIdles)
+	con.SetMaxOpenConns(o.MaxOpens)
 	m.client = con
 	return nil
 }
@@ -145,8 +145,8 @@ func (m *MSSQL) Close() error {
 	}
 
 	// remove the cached MSSQL instance.
-	if m.options.Session != "" {
-		delete(_mssqlClients, m.options.Session)
+	if o := m.options; o.Session != "" {
+		delete(_mssqlClients, o.Session)
 	}
 	return nil
 }
