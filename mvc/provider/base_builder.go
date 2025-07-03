@@ -12,6 +12,7 @@ package provider
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/wengoldx/xcore/utils"
@@ -20,14 +21,13 @@ import (
 type BaseBuilder struct {
 }
 
-// Format where conditions to string with args, by default join conditions
-// with AND connector, but can change to OR or empty connector by set 'ornnoe'
-// param.
+// Format where conditions to string with args, by default join conditions with
+// AND connector, but can change to OR or empty connector by set 'connector' param.
 //
-//	- ornone not set  : use AND connector.
-//	- ornone set true : use OR  connector.
-//	- ornone set false: not use any connector, by inset with condition as 'condition AND', 'condition OR'.
-func (b *BaseBuilder) FormatWheres(wheres Wheres, ornone ...bool) (string, []any) {
+//	- not set or set AND : use AND connector.
+//	- set OR             : use OR  connector.
+//	- set empty string   : tail connector inside where condition like 'condition AND', 'condition OR'.
+func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any) {
 	where, args := "", []any{}
 	if len(wheres) > 0 {
 		conditions := []string{}
@@ -38,19 +38,40 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, ornone ...bool) (string, []any
 
 		// join conditions as:
 		//
-		// - WHERE  condition1 AND   condition2 AND condition3.
-		// - WHERE  condition1 OR    condition2 OR  condition3.
-		// - WHERE 'condition1 AND' 'condition2 OR' condition3.
-		sep := " AND "
-		if len(ornone) > 0 {
-			sep = utils.Condition(ornone[0], " OR ", " ").(string)
+		// - WHERE condition1 AND condition2 AND condition3
+		// - WHERE condition1 OR  condition2 OR  condition3
+		// - WHERE condition1 AND condition2 OR  condition3
+		connector := " AND "
+		if len(sep) > 0 {
+			switch c := strings.ToUpper(sep[0]); c {
+			case "AND", "OR":
+				connector = " " + c + " "
+			case "":
+				connector = " "
+			}
 		}
-		where = "WHERE " + strings.Join(conditions, sep)
+		where = "WHERE " + strings.Join(conditions, connector)
 	}
 	return where, args
 }
 
+// Format where in condition to string without perfix 'WHERE' keyword.
+//
+//	- int number args  : field IN (1,2,3)
+//	- float number args: field IN (1.2,2.3,3.45)
+//	- string args      : field IN ('1','2','3')
+func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
+	if len(args) > 0 {
+		values := strings.Join(b.ToStrings(args), ",")
+		return fmt.Sprintf("%s IN (%s)", field, values)
+	}
+	return ""
+}
+
 // Format order by condition to string.
+//
+//	- desc = true : ORDER BY field DESC
+//	- desc = false: ORDER BY field ASC
 func (b *BaseBuilder) FormatOrder(field string, desc bool) string {
 	if field != "" {
 		order := utils.Condition(desc, "DESC", "ASC").(string)
@@ -60,9 +81,85 @@ func (b *BaseBuilder) FormatOrder(field string, desc bool) string {
 }
 
 // Format limit condition to string.
-func (b *BaseBuilder) FormatLimit(limit int) string {
-	if limit > 0 {
-		return fmt.Sprintf("LIMIT %d", limit)
+//
+//	- output string: LIMIT n
+func (b *BaseBuilder) FormatLimit(n int) string {
+	if n > 0 {
+		return fmt.Sprintf("LIMIT %d", n)
 	}
 	return ""
+}
+
+// Format like condition to string.
+//
+//	- output string: field LIKE '%%filter%%'
+func (b *BaseBuilder) FormatLike(field, filter string) string {
+	if field != "" && filter != "" {
+		return field + " LIKE '%%" + filter + "%%'"
+	}
+	return ""
+}
+
+// Translate build-in types values to strings, it only support the types as follow,
+// or return empty string array when contain any unsupport types value.
+//
+//	- int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64
+//	- float32, float64
+//	- bool
+//	- string
+func (b *BaseBuilder) ToStrings(values []any) []string {
+	vs := []string{}
+	for _, value := range values {
+		switch v := value.(type) {
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			vs = append(vs, fmt.Sprintf("%d", v))
+		case float32:
+			vs = append(vs, strconv.FormatFloat(float64(v), 'f', -1, 64))
+		case float64:
+			vs = append(vs, strconv.FormatFloat(v, 'f', -1, 64))
+		case bool:
+			vs = append(vs, utils.Condition(v, "true", "false").(string))
+		case string:
+			vs = append(vs, "'"+v+"'") // 'value'
+		default:
+			return []string{}
+		}
+	}
+	return vs
+}
+
+// Translate string number array to any type array.
+func (b *BaseBuilder) ToAnys(values []string) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
+}
+
+// Translate int number array to any type array.
+func (b *BaseBuilder) IntAnys(values []int) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
+}
+
+// Translate int64 number array to any type array.
+func (b *BaseBuilder) Int64Anys(values []int64) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
+}
+
+// Translate float64 number array to any type array.
+func (b *BaseBuilder) FloatAnys(values []float64) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
 }
