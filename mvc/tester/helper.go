@@ -56,7 +56,7 @@ func (t *helper) formatLimit() string {
 // Format multiple value as IN condition in where.
 func (t *helper) formatWhereIns(tag string, ins []string) string {
 	if tag != "" && len(ins) > 0 {
-		return tag + " " + t.JoinStrings(ins, "IN (%s)")
+		return tag + " " + t.Builder.JoinStrings(ins, "IN (%s)")
 	}
 	return ""
 }
@@ -139,7 +139,7 @@ func (t *helper) LastUID(table string, options ...Option) (uid string, e error) 
 //	@param table Target table name.
 //	@param ins   Target fields name and insert values.
 func (t *helper) Add(table string, ins pd.KValues) error {
-	fields, args, values := t.ParseInserts(ins)
+	fields, args, values := t.Builder.FormatInserts(ins)
 	return t.Execute(fmt.Sprintf(_sql_ut_add, table, fields, args), values...)
 }
 
@@ -147,7 +147,7 @@ func (t *helper) Add(table string, ins pd.KValues) error {
 //
 //	See Add() for insert without record id.
 func (t *helper) AddWithID(table string, ins pd.KValues) (int64, error) {
-	fields, args, values := t.ParseInserts(ins)
+	fields, args, values := t.Builder.FormatInserts(ins)
 	return t.Insert(fmt.Sprintf(_sql_ut_add, table, fields, args), values...)
 }
 

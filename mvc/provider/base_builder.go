@@ -21,19 +21,39 @@ import (
 type BaseBuilder struct {
 }
 
+// Fetch the KValues items and return the joined fields, ? holders, and args.
+func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
+	fields, holders, args := "", "", []any{}
+	if cnt := len(values); cnt > 0 {
+		outs := []string{}
+		for key, arg := range values {
+			outs = append(outs, key)
+			args = append(args, arg)
+		}
+
+		fields = strings.Join(outs, ", ")
+		holders = strings.TrimSuffix(strings.Repeat("?,", cnt), ",")
+	}
+	return fields, holders, args
+}
+
 // Format where conditions to string with args, by default join conditions with
 // AND connector, but can change to OR or empty connector by set 'connector' param.
 //
 //	- not set or set AND : use AND connector.
 //	- set OR             : use OR  connector.
 //	- set empty string   : tail connector inside where condition like 'condition AND', 'condition OR'.
+//
+// WARNING: Here will filter out the nil values in wheres.
 func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any) {
 	where, args := "", []any{}
 	if len(wheres) > 0 {
 		conditions := []string{}
 		for condition, arg := range wheres {
-			conditions = append(conditions, condition)
-			args = append(args, arg)
+			if arg != nil {
+				conditions = append(conditions, condition)
+				args = append(args, arg)
+			}
 		}
 
 		// join conditions as:
@@ -60,6 +80,8 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any)
 //	- int number args  : field IN (1,2,3)
 //	- float number args: field IN (1.2,2.3,3.45)
 //	- string args      : field IN ('1','2','3')
+//
+// WARNING: Here will filter out the nil values in args.
 func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 	if len(args) > 0 {
 		values := strings.Join(b.ToStrings(args), ",")
@@ -100,6 +122,15 @@ func (b *BaseBuilder) FormatLike(field, filter string) string {
 	return ""
 }
 
+// Ensure where condition prefixed 'WHERE' keyword when not empty.
+func (b *BaseBuilder) CheckWhere(wheres string) string {
+	wheres = strings.TrimSpace(wheres)
+	if wheres != "" && !strings.HasPrefix(wheres, "WHERE") {
+		wheres = "WHERE " + wheres
+	}
+	return wheres
+}
+
 // Translate build-in types values to strings, it only support the types as follow,
 // or return empty string array when contain any unsupport types value.
 //
@@ -107,9 +138,15 @@ func (b *BaseBuilder) FormatLike(field, filter string) string {
 //	- float32, float64
 //	- bool
 //	- string
+//
+// WARNING: Here will filter out the nil values in wheres.
 func (b *BaseBuilder) ToStrings(values []any) []string {
 	vs := []string{}
 	for _, value := range values {
+		if value == nil {
+			continue
+		}
+
 		switch v := value.(type) {
 		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 			vs = append(vs, fmt.Sprintf("%d", v))
@@ -162,4 +199,56 @@ func (b *BaseBuilder) FloatAnys(values []float64) []any {
 		args = append(args, value)
 	}
 	return args
+}
+
+// Join values as string like "1,2.3,'456',true", or append the values
+// string into query strings, the input params as formart:
+//
+//	- values: []any{1, 2.3, "456", true}
+//	- query : "SELECT * FROM tablename WHERE id IN (%s)"
+//
+// The result is "SELECT * FROM tablename WHERE id IN (1,2.3,'456',true)".
+//
+//	WARNING: The values only support int, int64, float64, bool, string types!
+func (b *BaseBuilder) Joins(values []any, query ...string) string {
+	vs := b.ToStrings(values)
+	if len(vs) > 0 {
+		// Append values into none-empty query string
+		if q := utils.VarString(query, ""); q != "" {
+			return fmt.Sprintf(q, strings.Join(vs, ","))
+		}
+		return strings.Join(vs, ",")
+	}
+	return ""
+}
+
+// Join int64 values as string like "1,2,3".
+//
+// See Joins() method for link different types values.
+func (b *BaseBuilder) JoinInts(values []int64, query ...string) string {
+	return b.Joins(b.Int64Anys(values), query...)
+}
+
+// Join string values as string like "'1','2','3'".
+//
+// See Joins() method for link different types values.
+func (b *BaseBuilder) JoinStrings(values []string, query ...string) string {
+	return b.Joins(b.ToAnys(values), query...)
+}
+
+// Join the given where conditions without input AND and OR connectors.
+//
+// Set FormatWheres() method to known more where connectors.
+func (b *BaseBuilder) JoinWheres(wheres ...string) string {
+	return strings.Join(wheres, " ")
+}
+
+// Join the given where conditions with input AND connectors.
+func (b *BaseBuilder) JoinAndWheres(wheres ...string) string {
+	return strings.Join(wheres, " AND ")
+}
+
+// Join the given where conditions with input OR connectors.
+func (b *BaseBuilder) JoinOrWheres(wheres ...string) string {
+	return strings.Join(wheres, " OR ")
 }

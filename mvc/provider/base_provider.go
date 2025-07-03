@@ -14,7 +14,6 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/wengoldx/xcore/invar"
@@ -24,14 +23,15 @@ import (
 
 // Base provider for simple access database datas.
 type BaseProvider struct {
-	client DBClient
+	client  DBClient     // Database conncet client.
+	Builder *BaseBuilder // Base builder as utils tools.
 }
 
 var _ DataProvider = (*BaseProvider)(nil)
 
 // Create a BaseProvider with given database client.
 func NewProvider(client DBClient) *BaseProvider {
-	return &BaseProvider{client: client}
+	return &BaseProvider{client: client, Builder: &BaseBuilder{}}
 }
 
 /* ------------------------------------------------------------------- */
@@ -339,101 +339,6 @@ func (p *BaseProvider) prepared() bool {
 	return p.client != nil && p.client.DB() != nil
 }
 
-// Ensure where conditions string prefixed 'WHERE' keyword when not empty.
-func checkWheres(wheres string) string {
-	if wheres != "" && !strings.HasPrefix(wheres, "WHERE") {
-		wheres = "WHERE " + wheres
-	}
-	return wheres
-}
-
-// Translate int64 number array to any typed array.
-func int64ToAnyArray(values []int64) []any {
-	args := []any{}
-	for _, value := range values {
-		args = append(args, value)
-	}
-	return args
-}
-
-// Translate string values array to any typed array.
-func stringToAnyArray(values []string) []any {
-	args := []any{}
-	for _, value := range values {
-		args = append(args, value)
-	}
-	return args
-}
-
-// Join values as string like "1,2.3,'456',true", or append the values
-// string into query strings, the input params as formart:
-//
-//	- values: []any{1, 2.3, "456", true}
-//	- query : "SELECT * FROM tablename WHERE id IN (%s)"
-//
-// The result is "SELECT * FROM tablename WHERE id IN (1,2.3,'456',true)".
-//
-//	WARNING: The values only support int, int64, float64, bool, string types!
-func (p *BaseProvider) Joins(values []any, query ...string) string {
-	vs := []string{}
-	for _, value := range values {
-		switch v := value.(type) {
-		case int:
-			vs = append(vs, strconv.Itoa(v))
-		case int64:
-			vs = append(vs, strconv.FormatInt(v, 10))
-		case float64:
-			vs = append(vs, strconv.FormatFloat(v, 'f', -1, 64))
-		case bool:
-			vs = append(vs, utils.Condition(v, "true", "false").(string))
-		case string:
-			vs = append(vs, "'"+v+"'") // 'value'
-		default:
-			return "" // Only support int, int64, float64, bool and string values.
-		}
-	}
-
-	if len(vs) > 0 {
-		// Append ids into none-empty query string
-		if len(query) > 0 && query[0] != "" {
-			return fmt.Sprintf(query[0], strings.Join(vs, ","))
-		}
-		return strings.Join(vs, ",")
-	}
-	return ""
-}
-
-// Join int64 values as string like "1,2,3".
-//
-// See Joins() method for link different types values.
-func (p *BaseProvider) JoinInts(values []int64, query ...string) string {
-	return p.Joins(int64ToAnyArray(values), query...)
-}
-
-// Join string values as string like "'1','2','3'".
-//
-// See Joins() method for link different types values.
-func (p *BaseProvider) JoinStrings(values []string, query ...string) string {
-	return p.Joins(stringToAnyArray(values), query...)
-}
-
-// Join the given where conditions without input AND and OR connectors.
-//
-// Set FormatWheres() method to known more where connectors.
-func (p *BaseProvider) JoinWheres(wheres ...string) string {
-	return strings.Join(wheres, " ")
-}
-
-// Join the given where conditions with input AND connectors.
-func (p *BaseProvider) JoinAndWheres(wheres ...string) string {
-	return strings.Join(wheres, " AND ")
-}
-
-// Join the given where conditions with input OR connectors.
-func (p *BaseProvider) JoinOrWheres(wheres ...string) string {
-	return strings.Join(wheres, " OR ")
-}
-
 // Format where conditions to string with args, by default join conditions
 // with AND connector, but can change to OR or empty connector by set 'ornnoe'
 // param.
@@ -462,23 +367,6 @@ func (p *BaseProvider) FormatWheres(wheres Wheres, ornone ...bool) (string, []an
 		where = "WHERE " + strings.Join(conditions, sep)
 	}
 	return where, args
-}
-
-// Fetch the KValues items and return the joined keys, params holders, and args.
-func (p *BaseProvider) ParseInserts(values KValues) (string, string, []any) {
-	fields, holders, args := "", "", []any{}
-	if cnt := len(values); cnt > 0 {
-		keys := []string{}
-		for key, arg := range values {
-			keys = append(keys, key)
-			args = append(args, arg)
-		}
-
-		fields = strings.Join(keys, ", ")
-		holders = strings.Repeat("?,", cnt)
-		holders = strings.TrimSuffix(holders, ",")
-	}
-	return fields, holders, args
 }
 
 // Get update or delete record counts.
