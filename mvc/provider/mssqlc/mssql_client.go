@@ -103,8 +103,8 @@ func Close(session string) error {
 }
 
 // Create and return BaseProvider instance with MSSQL client.
-func GetProvider(name string) pd.BaseProvider {
-	return *pd.NewProvider(name, Select(_mssqlDriver))
+func GetProvider() pd.BaseProvider {
+	return *pd.NewProvider(Select(_mssqlDriver))
 }
 
 // Return MSSQL database client, maybe nil when not call Connect() before.

@@ -104,8 +104,8 @@ func Close(session string) error {
 }
 
 // Create and return BaseProvider instance with MySQL client.
-func GetProvider(name string) pd.BaseProvider {
-	return *pd.NewProvider(name, Select(_mysqlDriver))
+func GetProvider() pd.BaseProvider {
+	return *pd.NewProvider(Select(_mysqlDriver))
 }
 
 // Return MySQL database client, maybe nil when not call Connect() before.

@@ -11,7 +11,6 @@
 package tester
 
 import (
-	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -32,7 +31,7 @@ func WithTag(tag string) Option {
 }
 
 // Special where condition fields and values.
-func WithWhere(where pd.Wheres) Option {
+func WithWhere(where KValues) Option {
 	return func(u *helper) { u.where = where }
 }
 

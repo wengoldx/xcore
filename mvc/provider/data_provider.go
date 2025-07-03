@@ -12,6 +12,13 @@ package provider
 
 import "database/sql"
 
+// A interface for database client implement.
+type DBClient interface {
+	DB() *sql.DB    // Return database connected client.
+	Connect() error // Connect database client with server.
+	Close() error   // Disconect and close database client
+}
+
 // ScanCallback use for scan query result from rows
 type ScanCallback func(rows *sql.Rows) error
 
@@ -23,32 +30,24 @@ type TransCallback func(tx *sql.Tx) error
 
 // A interface for data provider export util methods.
 type DataProvider interface {
-	Has(tag, wheres string, args ...any) (bool, error)
-	None(tag, wheres string, args ...any) (bool, error)
-	Counts(tag, wheres string, args ...any) (int, error)
-	Insert(values KValues) (int64, error)
-	Delete(wheres string, args ...any) error
-	Clear() error
-
+	IsEmpty(query string, args ...any) (bool, error)
+	IsExist(query string, args ...any) (bool, error)
+	Count(query string, args ...any) (int, error)
 	One(query string, cb ScanCallback, args ...any) error
 	Query(query string, cb ScanCallback, args ...any) error
+	Insert(query string, args ...any) (int64, error)
 	Inserts(query string, cnt int, cb InsertCallback) error
 	Inserts2(query string, values any) error
 	Update(query string, args ...any) error
 	Update2(query string, values map[string]any, args ...any) error
+	Delete(query string, args ...any) error
 	Execute(query string, args ...any) error
 	Execute2(query string, args ...any) (int64, error)
 	TranRoll(query string, args ...any) error
 	Trans(cbs ...TransCallback) error
 
-	Joins(values []any, query ...string) string 
-	JoinInts(values []int64, query ...string) string
-	JoinStrings(values []string, query ...string) string
-	JoinWheres(wheres ...string) string
-	JoinAndWheres(wheres ...string) string
-	JoinOrWheres(wheres ...string) string
-	FormatWheres(wheres Wheres, ornone ...bool) (string, []any)
-	ParseInserts(values KValues) (string, string, []any)
+	JoinInts(query string, nums []int64) string
+	JoinStrings(query string, values []string) string
 	Affected(result sql.Result) (int64, error)
 	Affects(result sql.Result) int64
 	LastID(result sql.Result) int64
