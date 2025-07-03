@@ -19,6 +19,7 @@ import (
 
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Base provider for simple access database datas.
@@ -39,7 +40,7 @@ func NewProvider(client DBClient) *BaseProvider {
 
 // Call sql.Query() to check target data if empty.
 func (p *BaseProvider) IsEmpty(query string, args ...any) (bool, error) {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return false, invar.ErrBadDBConnect
 	}
 
@@ -60,7 +61,7 @@ func (p *BaseProvider) IsExist(query string, args ...any) (bool, error) {
 
 // Call sql.Query() to count results.
 func (p *BaseProvider) Count(query string, args ...any) (int, error) {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return 0, invar.ErrBadDBConnect
 	}
 
@@ -84,7 +85,7 @@ func (p *BaseProvider) Count(query string, args ...any) (int, error) {
 
 // Call sql.Query() to query the top one record.
 func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() || cb == nil {
 		return invar.ErrBadDBConnect
 	}
 
@@ -104,7 +105,7 @@ func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
 
 // Call sql.Query() to query multiple records.
 func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() || cb == nil {
 		return invar.ErrBadDBConnect
 	}
 
@@ -128,7 +129,7 @@ func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
 //
 //	- Use provider.Inserts() to insert multiple values in once request.
 func (p *BaseProvider) Insert(query string, args ...any) (int64, error) {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return -1, invar.ErrBadDBConnect
 	}
 
@@ -231,7 +232,7 @@ func (p *BaseProvider) Delete(query string, args ...any) error {
 //
 //	- Use provider.Execute2() return results.
 func (p *BaseProvider) Execute(query string, args ...any) error {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return invar.ErrBadDBConnect
 	}
 
@@ -252,7 +253,7 @@ func (p *BaseProvider) Execute(query string, args ...any) error {
 //
 //	- Use provider.Execute() on silent, use provider.Inserts() to multiple insert.
 func (p *BaseProvider) Execute2(query string, args ...any) (int64, error) {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return 0, invar.ErrBadDBConnect
 	}
 
@@ -274,7 +275,7 @@ func (p *BaseProvider) Execute2(query string, args ...any) (int64, error) {
 //
 //	- Use provider.Trans() to excute multiple transaction as once.
 func (p *BaseProvider) TranRoll(query string, args ...any) error {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return invar.ErrBadDBConnect
 	}
 
@@ -305,7 +306,7 @@ func (p *BaseProvider) TranRoll(query string, args ...any) error {
 //		func(tx *sql.Tx) error { return provider.TxExec(tx, query2, args...) },
 //		func(tx *sql.Tx) error { return provider.TxExec(tx, query3, args...) })
 func (p *BaseProvider) Trans(cbs ...TransCallback) error {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return invar.ErrBadDBConnect
 	}
 
@@ -330,44 +331,154 @@ func (p *BaseProvider) Trans(cbs ...TransCallback) error {
 }
 
 /* ------------------------------------------------------------------- */
-/* Util Methods For Simple Query                                       */
+/* Helper Methods For Construct Query or Parse Results                 */
 /* ------------------------------------------------------------------- */
 
-// Join int64 numbers as string '1,2,3', or append to query strings as formart:
-//
-//	- `query` : "SELECT * FROM tablename WHERE id IN (%s)"
-//	- `nums`  : []int64{1, 2, 3}
-//
-// The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
-func (p *BaseProvider) JoinInts(query string, nums []int64) string {
-	if len(nums) > 0 {
-		vs := []string{}
-		for _, num := range nums {
-			if v := strconv.FormatInt(num, 10); v != "" {
-				vs = append(vs, v)
-			}
-		}
+// Check the database client whther prepared and connected.
+func (p *BaseProvider) prepared() bool {
+	return p.client != nil && p.client.DB() != nil
+}
 
+// Ensure where conditions string prefixed 'WHERE' keyword when not empty.
+func checkWheres(wheres string) string {
+	if wheres != "" && !strings.HasPrefix(wheres, "WHERE") {
+		wheres = "WHERE " + wheres
+	}
+	return wheres
+}
+
+// Translate int64 number array to any typed array.
+func int64ToAnyArray(values []int64) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
+}
+
+// Translate string values array to any typed array.
+func stringToAnyArray(values []string) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
+}
+
+// Join values as string like "1,2.3,'456',true", or append the values
+// string into query strings, the input params as formart:
+//
+//	- values: []any{1, 2.3, "456", true}
+//	- query : "SELECT * FROM tablename WHERE id IN (%s)"
+//
+// The result is "SELECT * FROM tablename WHERE id IN (1,2.3,'456',true)".
+//
+//	WARNING: The values only support int, int64, float64, bool, string types!
+func (p *BaseProvider) Joins(values []any, query ...string) string {
+	vs := []string{}
+	for _, value := range values {
+		switch v := value.(type) {
+		case int:
+			vs = append(vs, strconv.Itoa(v))
+		case int64:
+			vs = append(vs, strconv.FormatInt(v, 10))
+		case float64:
+			vs = append(vs, strconv.FormatFloat(v, 'f', -1, 64))
+		case bool:
+			vs = append(vs, utils.Condition(v, "true", "false").(string))
+		case string:
+			vs = append(vs, "'"+v+"'") // 'value'
+		default:
+			return "" // Only support int, int64, float64, bool and string values.
+		}
+	}
+
+	if len(vs) > 0 {
 		// Append ids into none-empty query string
-		if query != "" {
-			return fmt.Sprintf(query, strings.Join(vs, ","))
+		if len(query) > 0 && query[0] != "" {
+			return fmt.Sprintf(query[0], strings.Join(vs, ","))
 		}
 		return strings.Join(vs, ",")
 	}
-	return query
+	return ""
 }
 
-// Join strings with ',', then insert into the given format string;
+// Join int64 values as string like "1,2,3".
 //
-//	- `query ` : "SELECT * FROM account WHERE uuid IN (%s)"
-//	- `values` : []string{"D23", "4R", "A34"}
+// See Joins() method for link different types values.
+func (p *BaseProvider) JoinInts(values []int64, query ...string) string {
+	return p.Joins(int64ToAnyArray(values), query...)
+}
+
+// Join string values as string like "'1','2','3'".
 //
-// The result is "SELECT * FROM account WHERE uuid IN ('D23','4R','A34')"
-func (p *BaseProvider) JoinStrings(query string, values []string) string {
-	if query != "" {
-		return fmt.Sprintf(query, "'"+strings.Join(values, "','")+"'")
+// See Joins() method for link different types values.
+func (p *BaseProvider) JoinStrings(values []string, query ...string) string {
+	return p.Joins(stringToAnyArray(values), query...)
+}
+
+// Join the given where conditions without input AND and OR connectors.
+//
+// Set FormatWheres() method to known more where connectors.
+func (p *BaseProvider) JoinWheres(wheres ...string) string {
+	return strings.Join(wheres, " ")
+}
+
+// Join the given where conditions with input AND connectors.
+func (p *BaseProvider) JoinAndWheres(wheres ...string) string {
+	return strings.Join(wheres, " AND ")
+}
+
+// Join the given where conditions with input OR connectors.
+func (p *BaseProvider) JoinOrWheres(wheres ...string) string {
+	return strings.Join(wheres, " OR ")
+}
+
+// Format where conditions to string with args, by default join conditions
+// with AND connector, but can change to OR or empty connector by set 'ornnoe'
+// param.
+//
+//	- ornone not set  : use AND connector.
+//	- ornone set true : use OR  connector.
+//	- ornone set false: not use any connector, by inset with condition as 'condition AND', 'condition OR'.
+func (p *BaseProvider) FormatWheres(wheres Wheres, ornone ...bool) (string, []any) {
+	where, args := "", []any{}
+	if len(wheres) > 0 {
+		conditions := []string{}
+		for condition, arg := range wheres {
+			conditions = append(conditions, condition)
+			args = append(args, arg)
+		}
+
+		// join conditions as:
+		//
+		// - WHERE  condition1 AND   condition2 AND condition3.
+		// - WHERE  condition1 OR    condition2 OR  condition3.
+		// - WHERE 'condition1 AND' 'condition2 OR' condition3.
+		sep := " AND "
+		if len(ornone) > 0 {
+			sep = utils.Condition(ornone[0], " OR ", " ").(string)
+		}
+		where = "WHERE " + strings.Join(conditions, sep)
 	}
-	return "'" + strings.Join(values, "','") + "'"
+	return where, args
+}
+
+// Fetch the KValues items and return the joined keys, params holders, and args.
+func (p *BaseProvider) ParseInserts(values KValues) (string, string, []any) {
+	fields, holders, args := "", "", []any{}
+	if cnt := len(values); cnt > 0 {
+		keys := []string{}
+		for key, arg := range values {
+			keys = append(keys, key)
+			args = append(args, arg)
+		}
+
+		fields = strings.Join(keys, ", ")
+		holders = strings.Repeat("?,", cnt)
+		holders = strings.TrimSuffix(holders, ",")
+	}
+	return fields, holders, args
 }
 
 // Get update or delete record counts.
@@ -502,7 +613,7 @@ func (p *BaseProvider) FormatInserts(values any) (string, error) {
 				}
 			}
 
-			// join fields as '(1, "2", 3.4, -5, true, ...)'
+			// join fields as "(1, '2', 3.4, -5, true, ...)"
 			if its := strings.Join(fields, ","); its != "" {
 				items = append(items, "("+its+")")
 			}
@@ -538,7 +649,7 @@ type Column struct {
 
 // Get target table structs by name from mysql databse.
 func (p *BaseProvider) MysqlTable(table string, print ...bool) *Table {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return nil
 	}
 
@@ -574,7 +685,7 @@ func (p *BaseProvider) MysqlTable(table string, print ...bool) *Table {
 
 // Get target table structs by name from mssql database.
 func (p *BaseProvider) MssqlTable(table string, print ...bool) *Table {
-	if p.client == nil || p.client.DB() == nil {
+	if !p.prepared() {
 		return nil
 	}
 

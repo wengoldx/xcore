@@ -13,46 +13,28 @@ package tester
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 
 	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/mvc/provider/mysqlc"
 )
 
-// Typed key-value map.
-type KValues map[string]any
-
 // Database helper for unit test.
 type helper struct {
 	pd.BaseProvider
 
-	tag   string  // target output field name, such as id, uid...
-	where KValues // where conditions field-value pairs, default empty.
-	order string  // order by field name, auto append 'ORDER BY' perfix.
-	desc  string  // order type, default DESC, one of 'DESC', 'ASC'.
-	limit int     // limit number, auto append 'LIMIT' perfix.
+	tag   string    // target output field name, such as id, uid...
+	where pd.Wheres // where conditions field-value pairs, default empty.
+	order string    // order by field name, auto append 'ORDER BY' perfix.
+	desc  string    // order type, default DESC, one of 'DESC', 'ASC'.
+	limit int       // limit number, auto append 'LIMIT' perfix.
 }
 
 // Create a data helper to query table datas.
 func NewHelper() *helper {
 	return &helper{
-		BaseProvider: *pd.NewProvider(mysqlc.Select("mysql")),
+		BaseProvider: mysqlc.GetProvider(),
 		desc:         "DESC", limit: 0,
 	}
-}
-
-// Format wheres condition to string, and with values.
-func (t *helper) formatWheres() (string, []any) {
-	wheres, wvals := "", []any{}
-	if len(t.where) > 0 {
-		wkeys := []string{}
-		for wkey, wval := range t.where {
-			wkeys = append(wkeys, wkey)
-			wvals = append(wvals, wval)
-		}
-		wheres = "WHERE " + strings.Join(wkeys, " AND ")
-	}
-	return wheres, wvals
 }
 
 // Format order by condition to string.
@@ -74,25 +56,9 @@ func (t *helper) formatLimit() string {
 // Format multiple value as IN condition in where.
 func (t *helper) formatWhereIns(tag string, ins []string) string {
 	if tag != "" && len(ins) > 0 {
-		return tag + " " + t.JoinStrings("IN (%s)", ins)
+		return tag + " " + t.JoinStrings(ins, "IN (%s)")
 	}
 	return ""
-}
-
-// Format multiple value as insert sql string and values.
-func (t *helper) formatInsertValus(ins KValues) (string, string, []any) {
-	fields, params, vals := "", "", []any{}
-	if len(ins) > 0 {
-		keys, args := []string{}, []string{}
-		for key, val := range ins {
-			keys = append(keys, key)
-			vals = append(vals, val)
-			args = append(args, "?")
-		}
-		fields = strings.Join(keys, ", ")
-		params = strings.Join(args, ", ")
-	}
-	return fields, params, vals
 }
 
 const (
@@ -112,13 +78,13 @@ const (
 //	@param where   Where conditions, the map key must like 'created>=?'.
 //	@param options Setter for set order by field name, limit number.
 //	@return out - any Output result value, like &int, &int64, &float64, &string...
-func (t *helper) Target(table, tag string, where KValues, out any, options ...Option) error {
+func (t *helper) Target(table, tag string, where pd.Wheres, out any, options ...Option) error {
 	t.tag, t.where = tag, where
 	applyOptions(t, options...)
 
-	wheres, values := t.formatWheres() // format wheres sting and input values.
-	order := t.formatOrder()           // format order by string.
-	limit := t.formatLimit()           // format limit string.
+	wheres, values := t.FormatWheres(t.where) // format wheres sting and input values.
+	order := t.formatOrder()                  // format order by string.
+	limit := t.formatLimit()                  // format limit string.
 
 	// SELECT tag FROM table wheres order limit
 	query := fmt.Sprintf(_sql_ut_get, t.tag, table, wheres, order, limit)
@@ -172,16 +138,16 @@ func (t *helper) LastUID(table string, options ...Option) (uid string, e error) 
 //
 //	@param table Target table name.
 //	@param ins   Target fields name and insert values.
-func (t *helper) Add(table string, ins KValues) error {
-	fields, args, values := t.formatInsertValus(ins)
+func (t *helper) Add(table string, ins pd.KValues) error {
+	fields, args, values := t.ParseInserts(ins)
 	return t.Execute(fmt.Sprintf(_sql_ut_add, table, fields, args), values...)
 }
 
 // Insert a record into target table and return the inserted id.
 //
 //	See Add() for insert without record id.
-func (t *helper) AddWithID(table string, ins KValues) (int64, error) {
-	fields, args, values := t.formatInsertValus(ins)
+func (t *helper) AddWithID(table string, ins pd.KValues) (int64, error) {
+	fields, args, values := t.ParseInserts(ins)
 	return t.Insert(fmt.Sprintf(_sql_ut_add, table, fields, args), values...)
 }
 
@@ -193,9 +159,9 @@ func (t *helper) AddWithID(table string, ins KValues) (int64, error) {
 //
 //	@param table Target table name.
 //	@param where Field name as where condition like: field = value.
-func (t *helper) DeleteBy(table string, where KValues) error {
+func (t *helper) DeleteBy(table string, where pd.Wheres) error {
 	t.where = where
-	wheres, values := t.formatWheres()
+	wheres, values := t.FormatWheres(t.where)
 	return t.Execute(fmt.Sprintf(_sql_ut_del, table, wheres, ""), values...)
 }
 
@@ -210,8 +176,8 @@ func (t *helper) DeleteBy(table string, where KValues) error {
 //	@param value Where condition values to query.
 func (t *helper) DeleteIns(table, tag string, ins []string, options ...Option) error {
 	applyOptions(t, options...)
-	wheres, values := t.formatWheres()     // format wheres sting and input values.
-	instring := t.formatWhereIns(tag, ins) // format in values.
+	wheres, values := t.FormatWheres(t.where) // format wheres sting and input values.
+	instring := t.formatWhereIns(tag, ins)    // format in values.
 	if wheres != "" && instring != "" {
 		wheres += " AND "
 	}

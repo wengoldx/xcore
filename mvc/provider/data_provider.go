@@ -12,13 +12,6 @@ package provider
 
 import "database/sql"
 
-// A interface for database client implement.
-type DBClient interface {
-	DB() *sql.DB    // Return database connected client.
-	Connect() error // Connect database client with server.
-	Close() error   // Disconect and close database client
-}
-
 // ScanCallback use for scan query result from rows
 type ScanCallback func(rows *sql.Rows) error
 
@@ -46,8 +39,14 @@ type DataProvider interface {
 	TranRoll(query string, args ...any) error
 	Trans(cbs ...TransCallback) error
 
-	JoinInts(query string, nums []int64) string
-	JoinStrings(query string, values []string) string
+	Joins(values []any, query ...string) string 
+	JoinInts(values []int64, query ...string) string
+	JoinStrings(values []string, query ...string) string
+	JoinWheres(wheres ...string) string
+	JoinAndWheres(wheres ...string) string
+	JoinOrWheres(wheres ...string) string
+	FormatWheres(wheres Wheres, ornone ...bool) (string, []any)
+	ParseInserts(values KValues) (string, string, []any)
 	Affected(result sql.Result) (int64, error)
 	Affects(result sql.Result) int64
 	LastID(result sql.Result) int64
