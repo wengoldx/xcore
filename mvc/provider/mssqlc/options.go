@@ -96,47 +96,47 @@ func LoadOptions(session ...string) Options {
 // The setter for set Options fields.
 type Option func(*MSSQL)
 
-// Special the session name.
+// Specify the session name.
 func WithSession(session string) Option {
 	return func(m *MSSQL) { m.options.Session = session }
 }
 
-// Special the MSSQL server host.
+// Specify the MSSQL server host.
 func WithHost(host string) Option {
 	return func(m *MSSQL) { m.options.Host = host }
 }
 
-// Special the MSSQL server port.
+// Specify the MSSQL server port.
 func WithPort(port int) Option {
 	return func(m *MSSQL) { m.options.Port = port }
 }
 
-// Special the MSSQL connect user.
+// Specify the MSSQL connect user.
 func WithUser(user string) Option {
 	return func(m *MSSQL) { m.options.User = user }
 }
 
-// Special the MSSQL connect password.
+// Specify the MSSQL connect password.
 func WithPassword(password string) Option {
 	return func(m *MSSQL) { m.options.Password = password }
 }
 
-// Special the MSSQL database to assess.
+// Specify the MSSQL database to assess.
 func WithDatabase(database string) Option {
 	return func(m *MSSQL) { m.options.Database = database }
 }
 
-// Special the connect timeout duration seconds.
+// Specify the connect timeout duration seconds.
 func WithTimeout(timeout int) Option {
 	return func(m *MSSQL) { m.options.Timeout = timeout }
 }
 
-// Special the maximums idle connect chains.
+// Specify the maximums idle connect chains.
 func WithMaxIdles(idles int) Option {
 	return func(m *MSSQL) { m.options.MaxIdles = idles }
 }
 
-// Special the maximums opening connections.
+// Specify the maximums opening connections.
 func WithMaxOpens(opens int) Option {
 	return func(m *MSSQL) { m.options.MaxOpens = opens }
 }

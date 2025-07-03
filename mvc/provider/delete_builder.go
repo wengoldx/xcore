@@ -15,76 +15,60 @@ import (
 	"strings"
 )
 
-// Build a query string for sql query.
+// Build a query string for sql delete.
 //
-//	SELECT outs FROM table
+//	DELETE FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-//		ORDER BY order DESC
 //		LIMIT limit.
 //
 // WARNING: This builder only for single table access.
-type QueryBuilder struct {
+type DeleteBuilder struct {
 	BaseBuilder
 
-	table  string   // Table name for query
-	outs   []string // Fields for output values.
-	wheres Wheres   // Where conditions and values.
-	ins    string   // Where in conditions.
-	like   string   // Like conditions string.
-	order  string   // Keyword for order by condition.
-	limit  int      // Limit number.
+	table  string // Table name for query
+	wheres Wheres // Where conditions and values.
+	ins    string // Where in conditions.
+	like   string // Like conditions string.
+	limit  int    // Limit number.
 }
 
-// Create a QueryBuilder instance to build a query string.
-func NewQuery(table string) *QueryBuilder {
-	return &QueryBuilder{table: table}
+// Create a DeleteBuilder instance to build a query string.
+func NewDelete(table string) *DeleteBuilder {
+	return &DeleteBuilder{table: table}
 }
 
 // Specify the target table for query.
-func (q *QueryBuilder) Table(table string) *QueryBuilder {
+func (q *DeleteBuilder) Table(table string) *DeleteBuilder {
 	q.table = table
 	return q
 }
 
-// Specify the output fields for query.
-func (q *QueryBuilder) Outs(field ...string) *QueryBuilder {
-	q.outs = field
-	return q
-}
-
 // Specify the where conditions and args for query.
-func (q *QueryBuilder) Wheres(where Wheres) *QueryBuilder {
+func (q *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
 	q.wheres = where
 	return q
 }
 
 // Specify the where in condition with field and args for query.
-func (q *QueryBuilder) WhereIn(field string, args []any) *QueryBuilder {
+func (q *DeleteBuilder) WhereIn(field string, args []any) *DeleteBuilder {
 	q.ins = q.FormatWhereIn(field, args)
 	return q
 }
 
-// Specify the order by condition for query.
-func (q *QueryBuilder) OrderBy(field string, desc bool) *QueryBuilder {
-	q.order = q.FormatOrder(field, desc)
-	return q
-}
-
 // Specify the like condition for query.
-func (q *QueryBuilder) Like(field, filter string) *QueryBuilder {
+func (q *DeleteBuilder) Like(field, filter string) *DeleteBuilder {
 	q.like = q.FormatLike(field, filter)
 	return q
 }
 
 // Specify the limit result for query.
-func (q *QueryBuilder) Limit(limit int) *QueryBuilder {
+func (q *DeleteBuilder) Limit(limit int) *DeleteBuilder {
 	q.limit = limit
 	return q
 }
 
-// Build and output query string and args for DataProvider execute query action.
-func (q *QueryBuilder) Build() (string, []any) {
-	outs := strings.Join(q.outs, ",")       // out1,out2,out3...
+// Build and output query string and args for DataProvider execute delete action.
+func (q *DeleteBuilder) Build() (string, []any) {
 	where, args := q.FormatWheres(q.wheres) // WHERE wheres
 	if where != "" {
 		// WHERE wheres AND field IN (v1,v2...)
@@ -110,16 +94,15 @@ func (q *QueryBuilder) Build() (string, []any) {
 	}
 	limit := q.FormatLimit(q.limit) // LIMIT n
 
-	query := "SELECT %s FROM %s %s %s %s"
-	query = fmt.Sprintf(query, outs, q.table, where, q.order, limit)
+	query := "DELETE FROM %s %s %s"
+	query = fmt.Sprintf(query, q.table, where, limit)
 	query = strings.TrimSuffix(query, " ")
 	return query, args
 }
 
 // Reset builder datas for next prepare and build.
-func (b *QueryBuilder) Reset() {
-	clear(b.outs)
+func (b *DeleteBuilder) Reset() {
 	clear(b.wheres)
-	b.ins, b.like, b.order = "", "", ""
+	b.ins, b.like = "", ""
 	b.limit = 0
 }

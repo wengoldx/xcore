@@ -140,7 +140,7 @@ func (t *helper) LastUID(table string, options ...Option) (uid string, e error) 
 //	@param ins   Target fields name and insert values.
 func (t *helper) Add(table string, ins pd.KValues) error {
 	fields, args, values := t.Builder.FormatInserts(ins)
-	return t.Execute(fmt.Sprintf(_sql_ut_add, table, fields, args), values...)
+	return t.Exec(fmt.Sprintf(_sql_ut_add, table, fields, args), values...)
 }
 
 // Insert a record into target table and return the inserted id.
@@ -162,7 +162,7 @@ func (t *helper) AddWithID(table string, ins pd.KValues) (int64, error) {
 func (t *helper) DeleteBy(table string, where pd.Wheres) error {
 	t.where = where
 	wheres, values := t.FormatWheres(t.where)
-	return t.Execute(fmt.Sprintf(_sql_ut_del, table, wheres, ""), values...)
+	return t.Exec(fmt.Sprintf(_sql_ut_del, table, wheres, ""), values...)
 }
 
 // Deleta records by given where condition and target fields vlaues.
@@ -181,5 +181,5 @@ func (t *helper) DeleteIns(table, tag string, ins []string, options ...Option) e
 	if wheres != "" && instring != "" {
 		wheres += " AND "
 	}
-	return t.Execute(fmt.Sprintf(_sql_ut_del, table, wheres, instring), values...)
+	return t.Exec(fmt.Sprintf(_sql_ut_del, table, wheres, instring), values...)
 }

@@ -88,47 +88,47 @@ func LoadOptions(session ...string) Options {
 // The setter for set Options fields.
 type Option func(*MySQL)
 
-// Special the session name.
+// Specify the session name.
 func WithSession(session string) Option {
 	return func(m *MySQL) { m.options.Session = session }
 }
 
-// Special the MySQL server host and port.
+// Specify the MySQL server host and port.
 func WithHost(host string) Option {
 	return func(m *MySQL) { m.options.Host = host }
 }
 
-// Special the MySQL connect user.
+// Specify the MySQL connect user.
 func WithUser(user string) Option {
 	return func(m *MySQL) { m.options.User = user }
 }
 
-// Special the MySQL connect password.
+// Specify the MySQL connect password.
 func WithPassword(password string) Option {
 	return func(m *MySQL) { m.options.Password = password }
 }
 
-// Special the MySQL database to assess.
+// Specify the MySQL database to assess.
 func WithDatabase(database string) Option {
 	return func(m *MySQL) { m.options.Database = database }
 }
 
-// Special the MySQL database charset.
+// Specify the MySQL database charset.
 func WithCharset(charset string) Option {
 	return func(m *MySQL) { m.options.Charset = charset }
 }
 
-// Special the maximums idle connect chains.
+// Specify the maximums idle connect chains.
 func WithMaxIdles(idles int) Option {
 	return func(m *MySQL) { m.options.MaxIdles = idles }
 }
 
-// Special the maximums opening connections.
+// Specify the maximums opening connections.
 func WithMaxOpens(opens int) Option {
 	return func(m *MySQL) { m.options.MaxOpens = opens }
 }
 
-// Special the maximums lifetime of connection.
+// Specify the maximums lifetime of connection.
 func WithMaxLifetime(lifetime time.Duration) Option {
 	return func(m *MySQL) { m.options.MaxLifetime = lifetime }
 }

@@ -35,53 +35,136 @@ func NewProvider(client DBClient) *BaseProvider {
 }
 
 /* ------------------------------------------------------------------- */
-/* Util Methods For Database Access                                    */
+/* Direct Use Query String To Access Database                          */
 /* ------------------------------------------------------------------- */
 
-// Call sql.Query() to check target data if empty.
-func (p *BaseProvider) IsEmpty(query string, args ...any) (bool, error) {
-	if !p.prepared() {
+// Execute query string to check target record whether exist, it will
+// auto append 'LIMIT 1' at query tail if not specified.
+//
+// Use the QueryBuilder to build a query string and args.
+func (p *BaseProvider) Has(query string, args ...any) (bool, error) {
+	if !p.prepared() || query == "" {
 		return false, invar.ErrBadDBConnect
+	} else if !strings.Contains(query, "LIMIT") {
+		query += " " + p.Builder.FormatLimit(1)
 	}
 
-	db := p.client.DB()
-	rows, err := db.Query(query, args...)
+	rows, err := p.client.DB().Query(query, args...)
 	if err != nil {
 		return false, err
 	}
 	defer rows.Close()
-	return !rows.Next(), nil
+	return rows.Next(), nil
 }
 
-// Call sql.Query() to check target data if exist.
-func (p *BaseProvider) IsExist(query string, args ...any) (bool, error) {
-	empty, err := p.IsEmpty(query, args...)
-	return !empty, err
-}
-
-// Call sql.Query() to count results.
+// Execute query string to count records on given conditions, it will
+// return 0 when notfound anyone.
+//
+//	Use the QueryBuilder to build a query string and args.
 func (p *BaseProvider) Count(query string, args ...any) (int, error) {
-	if !p.prepared() {
+	if !p.prepared() || query == "" {
 		return 0, invar.ErrBadDBConnect
 	}
 
-	db := p.client.DB()
-	if rows, err := db.Query(query, args...); err != nil {
+	rows, err := p.client.DB().Query(query, args...)
+	if err != nil {
 		return 0, err
-	} else {
-		defer rows.Close()
-		if !rows.Next() {
-			return 0, invar.ErrNotFound
-		}
-		rows.Columns()
+	}
+	defer rows.Close()
 
-		counts := 0
+	counts := 0
+	if rows.Next() {
+		rows.Columns()
 		if err := rows.Scan(&counts); err != nil {
 			return 0, err
 		}
-		return counts, nil
 	}
+	return counts, nil
 }
+
+// Execute query string without any results to get, it useful for
+// update or delete same records.
+//
+//	Use UpdateBuilder or DeleteBuilder to build a query string and args.
+func (p *BaseProvider) Exec(query string, args ...any) error {
+	if !p.prepared() || query == "" {
+		return invar.ErrBadDBConnect
+	}
+
+	stmt, err := p.client.DB().Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+	if _, err := stmt.Exec(args...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Execute query string to delete records on given conditions, it will
+// return not found when none deleted.
+//
+//	Use the DeleteBuilder to build a query string and args.
+func (p *BaseProvider) Delete(query string, args ...any) error {
+	rows, err := p.Execute2(query, args...)
+	if rows == 0 {
+		return invar.ErrNotChanged
+	}
+	return err /* nil or error */
+}
+
+/* ------------------------------------------------------------------- */
+/* Using Builder To Construct Query String For Database Access         */
+/* ------------------------------------------------------------------- */
+
+// Check the target record whether unexist by the given QueryBuilder to
+// build query string.
+//
+// Use Has() method to check has result.
+func (p *BaseProvider) None(builder *QueryBuilder) (bool, error) {
+	query, args := builder.Build()
+	has, err := p.Has(query, args...)
+	return !has, err
+}
+
+// Count records by the given builder to build a query string, it will
+// return 0 when notfound anyone.
+//
+// Use Count() method to direct execute query string.
+func (p *BaseProvider) Counts(builder *QueryBuilder) (int, error) {
+	if !p.prepared() || builder == nil {
+		return -1, invar.ErrBadDBConnect
+	}
+
+	query, args := builder.Build()
+	return p.Count(query, args...)
+}
+
+// Delete records by the given builder to build a query string, it will
+// return not found error when none deleted.
+//
+// Use Delete() method to direct execute query string.
+func (p *BaseProvider) Deletes(builder *DeleteBuilder) error {
+	if !p.prepared() || builder == nil {
+		return invar.ErrBadDBConnect
+	}
+
+	query, args := builder.Build()
+	return p.Delete(query, args...)
+}
+
+// Clear all records for the given table.
+func (p *BaseProvider) Clear(table string) error {
+	if !p.prepared() || table == "" {
+		return invar.ErrBadDBConnect
+	}
+	query := fmt.Sprintf("DELETE FROM %s", table)
+	return p.Exec(query)
+}
+
+// ---------------------------------------------------------------------
 
 // Call sql.Query() to query the top one record.
 func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
@@ -165,7 +248,7 @@ func (p *BaseProvider) Inserts(query string, cnt int, cb InsertCallback) error {
 		}
 	}
 	query = query + " " + strings.Join(values, ",")
-	return p.Execute(query)
+	return p.Exec(query)
 }
 
 // Insert the format and combine slice values at once.
@@ -183,7 +266,7 @@ func (p *BaseProvider) Inserts2(query string, values any) error {
 	if err != nil {
 		return err
 	}
-	return p.Execute(query + " " + items)
+	return p.Exec(query + " " + items)
 }
 
 // Call sql.Prepare() and stmt.Exec() to update record, then check the
@@ -212,40 +295,7 @@ func (p *BaseProvider) Update2(query string, values map[string]any, args ...any)
 	if err != nil {
 		return err
 	}
-	return p.Execute(fmt.Sprintf(query, sets), args...)
-}
-
-// Call sql.Prepare() and stmt.Exec() to delete record, then check the
-// deleted result if return invar.ErrNotChanged error when none delete.
-//
-//	- Use provider.Execute() to delete record on silent.
-func (p *BaseProvider) Delete(query string, args ...any) error {
-	rows, err := p.Execute2(query, args...)
-	if rows == 0 {
-		return invar.ErrNotChanged
-	}
-	return err /* nil or error */
-}
-
-// Call sql.Prepare() and stmt.Exec() to insert, update or delete records
-// without any result datas to return as silent.
-//
-//	- Use provider.Execute2() return results.
-func (p *BaseProvider) Execute(query string, args ...any) error {
-	if !p.prepared() {
-		return invar.ErrBadDBConnect
-	}
-
-	db := p.client.DB()
-	if stmt, err := db.Prepare(query); err != nil {
-		return err
-	} else {
-		defer stmt.Close()
-		if _, err := stmt.Exec(args...); err != nil {
-			return err
-		}
-		return nil
-	}
+	return p.Exec(fmt.Sprintf(query, sets), args...)
 }
 
 // Call sql.Prepare() and stmt.Exec() to update or delete records (but not
