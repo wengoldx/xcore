@@ -95,7 +95,7 @@ type MallAcc struct {
 // Nacos config for OTA upgrade by using DID_OTA_BUILDS data id
 type OTAInfo struct {
 	BuildVersion string       `json:"BuildVersion"        description:"Build version string"`
-	BuildNumber  int          `json:"BuildNumber"         description:"Build number, pase form BuildVersion string as version = major*10000 + middle*100 + minor"`
+	BuildNumber  int          `json:"BuildNumber"         description:"Build number, pase form BuildVersion string as version = major*1000000 + middle*10000 + minor"`
 	DownloadUrl  string       `json:"DownloadUrl"         description:"Bin file download url"`
 	UpdateDate   string       `json:"UpdateDate"          description:"Bin file update date"`
 	HashSums     string       `json:"HashSums"            description:"Bin file hash sums"`
@@ -105,7 +105,7 @@ type OTAInfo struct {
 
 // Milestone version for upgrade as the important node in sequence.
 type Milestone struct {
-	BuildNumber int     `json:"BuildNumber" description:"Build number, pase form BuildVersion string as version = major*10000 + middle*100 + minor"`
+	BuildNumber int     `json:"BuildNumber" description:"Build number, pase form BuildVersion string as version = major*1000000 + middle*10000 + minor"`
 	DownloadUrl string  `json:"DownloadUrl" description:"Bin file download url"`
 	HashSums    string  `json:"HashSums"    description:"Bin file hash sums"`
 	BinSizes    float64 `json:"BinSizes"    description:"Bin file sizes in MB"`
