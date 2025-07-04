@@ -45,10 +45,9 @@ func NewProvider(client DBClient) *BaseProvider {
 func (p *BaseProvider) Has(query string, args ...any) (bool, error) {
 	if !p.prepared() || query == "" {
 		return false, invar.ErrBadDBConnect
-	} else if !strings.Contains(query, "LIMIT") {
-		query += " " + p.Builder.FormatLimit(1)
 	}
 
+	query = p.Builder.CheckLimit(query)
 	rows, err := p.client.DB().Query(query, args...)
 	if err != nil {
 		return false, err
