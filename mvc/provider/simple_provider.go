@@ -58,7 +58,7 @@ func (p *SimpleProvider) Count(builder *QueryBuilder) (int, error) {
 // return 0 when notfound anyone.
 //
 // Use Count() method to direct execute query string.
-func (p *SimpleProvider) Eexc(builder *QueryBuilder) (int, error) {
+func (p *SimpleProvider) Exec(builder SQLBuilder) (int, error) {
 	query, args := builder.Build()
 	return p.BaseProvider.Count(query, args...)
 }
