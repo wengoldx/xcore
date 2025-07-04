@@ -40,7 +40,8 @@ func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
 		}
 
 		fields = strings.Join(outs, ", ")
-		holders = strings.TrimSuffix(strings.Repeat("?,", cnt), ",")
+		holders = strings.Repeat("?,", cnt)
+		holders = strings.TrimSuffix(holders, ",")
 	}
 	return fields, holders, args
 }

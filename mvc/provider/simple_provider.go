@@ -48,25 +48,34 @@ func (p *SimpleProvider) None(builder *QueryBuilder) (bool, error) {
 // Count records by the given builder to build a query string, it will
 // return 0 when notfound anyone.
 //
-// Use Count() method to direct execute query string.
+// Use BaseProvider.Count() method to direct execute query string.
 func (p *SimpleProvider) Count(builder *QueryBuilder) (int, error) {
 	query, args := builder.Build()
 	return p.BaseProvider.Count(query, args...)
 }
 
-// Count records by the given builder to build a query string, it will
-// return 0 when notfound anyone.
+// Execute the query string builded from given QueryBuilder, InsertBuilder,
+// UpdateBuilder or DeleteBuilder, it not check the affected row counts.
 //
-// Use Count() method to direct execute query string.
-func (p *SimpleProvider) Exec(builder SQLBuilder) (int, error) {
+// Use BaseProvider.Exec() method to direct execute query string.
+func (p *SimpleProvider) Exec(builder SQLBuilder) error {
 	query, args := builder.Build()
-	return p.BaseProvider.Count(query, args...)
+	return p.BaseProvider.Exec(query, args...)
+}
+
+// Insert the given values as a record into target table, and return
+// the inserted id of the 'auto increment' primary key field.
+//
+// Use BaseProvider.Insert() method to direct execute query string.
+func (p *SimpleProvider) Insert(builder InsertBuilder) (int64, error) {
+	query, args := builder.Build()
+	return p.BaseProvider.Insert(query, args...)
 }
 
 // Delete records by the given builder to build a query string, it will
 // return invar.ErrNotChanged error when none deleted.
 //
-// Use Delete() method to direct execute query string.
+// Use BaseProvider.Delete() method to direct execute query string.
 func (p *SimpleProvider) Delete(builder *DeleteBuilder) error {
 	query, args := builder.Build()
 	return p.BaseProvider.Delete(query, args...)
