@@ -12,13 +12,14 @@ package provider
 
 import "database/sql"
 
-// ScanCallback use for scan query result from rows
+// A callback for scan query result records, it will interrupt
+// scanning when callback return error.
 type ScanCallback func(rows *sql.Rows) error
 
-// InsertCallback format query values to string for Inserts().
+// A callback for format insert values as string to insert record.
 type InsertCallback func(index int) string
 
-// TransCallback transaction callback for Trans().
+// A callback for handle transaction by call provider.Trans().
 type TransCallback func(tx *sql.Tx) error
 
 // A interface for data provider export util methods.
@@ -26,22 +27,19 @@ type DataProvider interface {
 	Has(query string, args ...any) (bool, error)
 	Count(query string, args ...any) (int, error)
 	Exec(query string, args ...any) error
-	Delete(query string, args ...any) error
-
-	None(builder *QueryBuilder) (bool, error)
-	Counts(builder *QueryBuilder) (int, error)
-	Deletes(builder *DeleteBuilder) error
-
+	ExecResult(query string, args ...any) (int64, error)
 	One(query string, cb ScanCallback, args ...any) error
 	Query(query string, cb ScanCallback, args ...any) error
 	Insert(query string, args ...any) (int64, error)
+	Update(query string, args ...any) error
+	Delete(query string, args ...any) error
+	Clear(table string) error
+	Tran(query string, args ...any) error
+	Trans(cbs ...TransCallback) error
+
 	Inserts(query string, cnt int, cb InsertCallback) error
 	Inserts2(query string, values any) error
-	Update(query string, args ...any) error
 	Update2(query string, values map[string]any, args ...any) error
-	Execute2(query string, args ...any) (int64, error)
-	TranRoll(query string, args ...any) error
-	Trans(cbs ...TransCallback) error
 
 	Affected(result sql.Result) (int64, error)
 	Affects(result sql.Result) int64

@@ -261,7 +261,7 @@ func parseNacosRouters(data string) (map[string]*Routers, *Routers) {
 
 // Fetch the given routers and groups from src param and set chinese description to dest fileds.
 func fetchChineseFields(src *Routers, dest *Routers) {
-	dest.CnName = Condition(src.CnName != "", src.CnName, dest.CnName).(string)
+	dest.CnName = Condition(src.CnName != "", src.CnName, dest.CnName)
 
 	/* -------------------------------- */
 	/* cache router chinese description */

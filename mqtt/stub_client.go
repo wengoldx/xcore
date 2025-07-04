@@ -111,7 +111,7 @@ func Singleton() *MqttStub {
 //	* The configs input param maybe set as json string from Nacos Configs Server
 //	* Or input Options object refrence created at local
 func NewClient(configs any, server ...string) error {
-	svr := utils.VarString(server, beego.BConfig.AppName)
+	svr := utils.Variable(server, beego.BConfig.AppName)
 	stub := Singleton()
 
 	// parse MQTT connect configs from json string or Options object refrence

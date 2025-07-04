@@ -118,7 +118,7 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 		return invar.ErrInvalidData
 	}
 
-	if ml := VarInt(maxlimits, 0); ml > 0 && t.queue.Len() > ml {
+	if ml := Variable(maxlimits, 0); ml > 0 && t.queue.Len() > ml {
 		logger.E("Task queue too heavy on oversize", ml)
 		return invar.ErrPoolFull
 	}

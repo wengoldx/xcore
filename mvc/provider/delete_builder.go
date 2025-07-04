@@ -32,70 +32,50 @@ type DeleteBuilder struct {
 	limit  int    // Limit number.
 }
 
+var _ SQLBuilder = (*DeleteBuilder)(nil)
+
 // Create a DeleteBuilder instance to build a query string.
 func NewDelete(table string) *DeleteBuilder {
 	return &DeleteBuilder{table: table}
 }
 
 // Specify the target table for query.
-func (q *DeleteBuilder) Table(table string) *DeleteBuilder {
-	q.table = table
-	return q
+func (b *DeleteBuilder) Table(table string) *DeleteBuilder {
+	b.table = table
+	return b
 }
 
 // Specify the where conditions and args for query.
-func (q *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
-	q.wheres = where
-	return q
+func (b *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
+	b.wheres = where
+	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (q *DeleteBuilder) WhereIn(field string, args []any) *DeleteBuilder {
-	q.ins = q.FormatWhereIn(field, args)
-	return q
+func (b *DeleteBuilder) WhereIn(field string, args []any) *DeleteBuilder {
+	b.ins = b.FormatWhereIn(field, args)
+	return b
 }
 
 // Specify the like condition for query.
-func (q *DeleteBuilder) Like(field, filter string) *DeleteBuilder {
-	q.like = q.FormatLike(field, filter)
-	return q
+func (b *DeleteBuilder) Like(field, filter string) *DeleteBuilder {
+	b.like = b.FormatLike(field, filter)
+	return b
 }
 
 // Specify the limit result for query.
-func (q *DeleteBuilder) Limit(limit int) *DeleteBuilder {
-	q.limit = limit
-	return q
+func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
+	b.limit = limit
+	return b
 }
 
 // Build and output query string and args for DataProvider execute delete action.
-func (q *DeleteBuilder) Build() (string, []any) {
-	where, args := q.FormatWheres(q.wheres) // WHERE wheres
-	if where != "" {
-		// WHERE wheres AND field IN (v1,v2...)
-		if q.ins != "" {
-			where += " AND " + q.ins
-		}
-
-		// WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-		if q.like != "" {
-			where += " AND " + q.like
-		}
-	} else {
-		if q.ins != "" {
-			// WHERE field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-			where = "WHERE " + q.ins
-			if q.like != "" {
-				where += " AND " + q.like
-			}
-		} else if q.like != "" {
-			// WHERE field LIKE '%%filter%%'
-			where = "WHERE " + q.like
-		}
-	}
-	limit := q.FormatLimit(q.limit) // LIMIT n
+func (b *DeleteBuilder) Build() (string, []any) {
+	where, args := b.BuildWheres(b.wheres, b.ins, b.like) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+	limit := b.FormatLimit(b.limit)                       // LIMIT n
 
 	query := "DELETE FROM %s %s %s"
-	query = fmt.Sprintf(query, q.table, where, limit)
+	query = fmt.Sprintf(query, b.table, where, limit)
 	query = strings.TrimSuffix(query, " ")
 	return query, args
 }

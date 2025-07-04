@@ -70,7 +70,7 @@ func DefaultOptions(session string) Options {
 //	user = "root"
 //	pwd  = "123456"
 func LoadOptions(session ...string) Options {
-	s := utils.VarString(session, _mysqlDriver)
+	s := utils.Variable(session, _mysqlDriver)
 	opts := DefaultOptions(s)
 
 	// auto append suffix for dev mode.

@@ -13,6 +13,8 @@ package provider
 import (
 	"fmt"
 	"testing"
+
+	"github.com/wengoldx/xcore/utils"
 )
 
 func TestQueryBuilder(t *testing.T) {
@@ -24,7 +26,13 @@ func TestQueryBuilder(t *testing.T) {
 	query, arg = q.Wheres(Wheres{"w1=?": 1, "w2<>?": 2}).Build()
 	fmt.Println(query, "-", arg)
 
-	query, arg = q.WhereIn("in3", q.Int64Anys([]int64{3, 4, 5})).Build()
+	query, arg = q.WhereIn("in3", utils.ToAnys([]int64{3, 4, 5})).Build()
+	fmt.Println(query, "-", arg)
+
+	query, arg = q.WhereIn("in3", utils.ToAnys([]float64{1.2, 0.34, 5.6789})).Build()
+	fmt.Println(query, "-", arg)
+
+	query, arg = q.WhereIn("in3", utils.ToAnys([]bool{true, false})).Build()
 	fmt.Println(query, "-", arg)
 
 	query, arg = q.OrderBy("order4", true).Build()

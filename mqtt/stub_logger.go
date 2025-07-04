@@ -90,7 +90,7 @@ func GetOptions(data string, svr ...string) *Options {
 		return nil
 	}
 
-	userkey := utils.VarString(svr, beego.BConfig.AppName)
+	userkey := utils.Variable(svr, beego.BConfig.AppName)
 	if user, ok := cfgs.Users[userkey]; ok {
 		mqxlog.I("Got mqtt options of user:", userkey)
 		return &Options{

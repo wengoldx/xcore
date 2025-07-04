@@ -64,7 +64,7 @@ func (a *MailAgent) SendMail(to []string, subject, body string, attach ...string
 	m.SetHeader("To", to[0])
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
-	if att := VarString(attach, ""); att != "" {
+	if att := Variable(attach, ""); att != "" {
 		m.Attach(att)
 	}
 

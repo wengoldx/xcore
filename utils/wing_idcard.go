@@ -105,7 +105,7 @@ func validateCardNumbers(num, last string) bool {
 
 // All nations informations on ISO 3166-1
 //	@See more visit https://baike.baidu.com/item/ISO%203166-1/5269555?fr=ge_ala
-var _nations = NewSets().AddStrings([]string{
+var _nations = NewSets[string]().Add([]string{
 	"AFG", "ALA", "ALB", "DZA", "ASM", "AND", "AGO", "AIA", "ATA", "ATG", "ARG", "ARM", "ABW", "AUS", "AUT",
 	"AZE", "BHS", "BHR", "BGD", "BRB", "BLR", "BEL", "BLZ", "BEN", "BMU", "BTN", "BOL", "BIH", "BWA", "BVT",
 	"BRA", "IOT", "BRN", "BGR", "BFA", "BDI", "KHM", "CMR", "CAN", "CPV", "CYM", "CAF", "TCD", "CHL", "CHN",
@@ -123,7 +123,7 @@ var _nations = NewSets().AddStrings([]string{
 	"CHE", "SYR", "TWN", "TJK", "TZA", "THA", "TLS", "TGO", "TKL", "TON", "TTO", "TUN", "TUR", "TKM", "TCA",
 	"TUV", "UGA", "UKR", "ARE", "GBR", "USA", "UMI", "URY", "UZB", "VUT", "VEN", "VNM", "VGB", "VIR", "WLF",
 	"ESH", "YEM", "YUG", "ZMB", "ZWE",
-})
+}...)
 
 // Verify Nation abbreviation if validate on 3 chars
 func IsVaildNation(abbr string) bool {

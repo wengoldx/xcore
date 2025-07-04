@@ -17,6 +17,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	pd "github.com/wengoldx/xcore/mvc/provider"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // ----------------------------------------
@@ -90,22 +91,28 @@ func OpenWithOptions(charset string, opts Options) error {
 }
 
 // Find and return the exist MySQL instance by given session.
-func Select(session string) pd.DBClient {
-	return _mysqlClients[session]
+func Select(session ...string) pd.DBClient {
+	return _mysqlClients[utils.Variable(session, _mysqlDriver)]
 }
 
 // Close and remove the target MySQL client.
-func Close(session string) error {
-	if client := Select(session); client != nil {
-		defer delete(_mysqlClients, session)
+func Close(session ...string) error {
+	s := utils.Variable(session, _mysqlDriver)
+	if client := Select(s); client != nil {
+		defer delete(_mysqlClients, s)
 		return client.Close()
 	}
 	return nil
 }
 
 // Create and return BaseProvider instance with MySQL client.
-func GetProvider() pd.BaseProvider {
-	return *pd.NewProvider(Select(_mysqlDriver))
+func GetProvider() *pd.BaseProvider {
+	return pd.NewProvider(Select())
+}
+
+// Create and return BaseProvider instance with MySQL client.
+func GetSimpler() *pd.SimpleProvider {
+	return pd.NewSimpler(Select())
 }
 
 // Return MySQL database client, maybe nil when not call Connect() before.

@@ -170,7 +170,7 @@ func (u *httpUtils) handleGet(tagurl string, parse bool, params ...any) ([]byte,
 
 // Handle http POST method request and parse response data if required.
 func (u *httpUtils) handlePost(tagurl string, datas any, parse bool, contentType ...string) ([]byte, error) {
-	ct := VarString(contentType, ContentTypeJson)
+	ct := Variable(contentType, ContentTypeJson)
 	u.log("Http Post:", tagurl, "ContentType:", ct)
 
 	switch ct {

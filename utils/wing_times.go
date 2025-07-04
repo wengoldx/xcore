@@ -274,14 +274,14 @@ func DayDiff(start, end time.Time) (int, int, int, int) {
 // you can see the format string, but it must contain 3 %0xd to parse numbers
 func DurHours(start, end time.Time, format ...string) string {
 	h, m, s := HourDiff(start, end)
-	return fmt.Sprintf(VarString(format, "%02d:%02d:%02d"), h, m, s)
+	return fmt.Sprintf(Variable(format, "%02d:%02d:%02d"), h, m, s)
 }
 
 // DurDays return readable time during start to end like 2d 6h 25m 48s,
 // you can set the format string, but it must contain 4 %0xd to parse numbers
 func DurDays(start, end time.Time, format ...string) string {
 	d, h, m, s := DayDiff(start, end)
-	return fmt.Sprintf(VarString(format, "%dd %dh %dm %ds"), d, h, m, s)
+	return fmt.Sprintf(Variable(format, "%dd %dh %dm %ds"), d, h, m, s)
 }
 
 // DurNowNs return formated second string from given start in unix nanoseconds
@@ -296,7 +296,7 @@ func DurNowNs(start int64) string {
 
 // FormatTime format unix time to TimeLayout or MSLayout layout
 func FormatTime(sec int64, nsec ...int64) string {
-	return time.Unix(sec, VarInt64(nsec, 0)).Format(TimeLayout)
+	return time.Unix(sec, Variable(nsec, 0)).Format(TimeLayout)
 }
 
 // FormatUnix format unix time to given time layout with location timezoom
@@ -306,7 +306,7 @@ func FormatUnix(layout string, sec int64, nsec ...int64) string {
 		return time.Unix(sec, 0).Format(layout)
 
 	case MSLayout, MSNoneHyphen:
-		return time.Unix(sec, VarInt64(nsec, 0)).Format(layout)
+		return time.Unix(sec, Variable(nsec, 0)).Format(layout)
 	}
 
 	// TimeLayout as the default time layout
@@ -317,7 +317,7 @@ func FormatUnix(layout string, sec int64, nsec ...int64) string {
 // when input param not set, and the formated time contain location timezoom.
 func FormatNow(layout ...string) string {
 	nowns := time.Now().UnixNano()
-	if l := VarString(layout, ""); l != "" {
+	if l := Variable(layout, ""); l != "" {
 		return FormatUnix(l, nowns/1e9, (nowns%1e9)/1e6)
 	}
 	return FormatUnix(TimeLayout, nowns/1e9)
@@ -326,13 +326,13 @@ func FormatNow(layout ...string) string {
 // FormatToday format now to today string as '2006-01-02', or custom
 // format set by layout like '2006/01/02', '2006.01.02' and so on.
 func FormatToday(layout ...string) string {
-	return time.Now().Format(VarString(layout, DateLayout))
+	return time.Now().Format(Variable(layout, DateLayout))
 }
 
 // FormatDay format day string from given unix seconds as '2006-01-02',
 // or custom format like '2006/01/02', '2006.01.02' and so on.
 func FormatDay(sec int64, layout ...string) string {
-	return time.Unix(sec, 0).Format(VarString(layout, DateLayout))
+	return time.Unix(sec, 0).Format(Variable(layout, DateLayout))
 }
 
 // FormatDur format the time before or after now by add given duration, it
@@ -340,7 +340,7 @@ func FormatDay(sec int64, layout ...string) string {
 // time contain location timezoom.
 func FormatDur(d time.Duration, layout ...string) string {
 	nowns := time.Now().Add(d).UnixNano()
-	if l := VarString(layout, ""); l != "" {
+	if l := Variable(layout, ""); l != "" {
 		return FormatUnix(l, nowns/1e9, (nowns%1e9)/1e6)
 	}
 	return FormatUnix(TimeLayout, nowns/1e9)

@@ -35,83 +35,63 @@ type QueryBuilder struct {
 	limit  int      // Limit number.
 }
 
+var _ SQLBuilder = (*QueryBuilder)(nil)
+
 // Create a QueryBuilder instance to build a query string.
 func NewQuery(table string) *QueryBuilder {
 	return &QueryBuilder{table: table}
 }
 
 // Specify the target table for query.
-func (q *QueryBuilder) Table(table string) *QueryBuilder {
-	q.table = table
-	return q
+func (b *QueryBuilder) Table(table string) *QueryBuilder {
+	b.table = table
+	return b
 }
 
 // Specify the output fields for query.
-func (q *QueryBuilder) Outs(field ...string) *QueryBuilder {
-	q.outs = field
-	return q
+func (b *QueryBuilder) Outs(field ...string) *QueryBuilder {
+	b.outs = field
+	return b
 }
 
 // Specify the where conditions and args for query.
-func (q *QueryBuilder) Wheres(where Wheres) *QueryBuilder {
-	q.wheres = where
-	return q
+func (b *QueryBuilder) Wheres(where Wheres) *QueryBuilder {
+	b.wheres = where
+	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (q *QueryBuilder) WhereIn(field string, args []any) *QueryBuilder {
-	q.ins = q.FormatWhereIn(field, args)
-	return q
+func (b *QueryBuilder) WhereIn(field string, args []any) *QueryBuilder {
+	b.ins = b.FormatWhereIn(field, args)
+	return b
 }
 
 // Specify the order by condition for query.
-func (q *QueryBuilder) OrderBy(field string, desc bool) *QueryBuilder {
-	q.order = q.FormatOrder(field, desc)
-	return q
+func (b *QueryBuilder) OrderBy(field string, desc bool) *QueryBuilder {
+	b.order = b.FormatOrder(field, desc)
+	return b
 }
 
 // Specify the like condition for query.
-func (q *QueryBuilder) Like(field, filter string) *QueryBuilder {
-	q.like = q.FormatLike(field, filter)
-	return q
+func (b *QueryBuilder) Like(field, filter string) *QueryBuilder {
+	b.like = b.FormatLike(field, filter)
+	return b
 }
 
 // Specify the limit result for query.
-func (q *QueryBuilder) Limit(limit int) *QueryBuilder {
-	q.limit = limit
-	return q
+func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
+	b.limit = limit
+	return b
 }
 
 // Build and output query string and args for DataProvider execute query action.
-func (q *QueryBuilder) Build() (string, []any) {
-	outs := strings.Join(q.outs, ",")       // out1,out2,out3...
-	where, args := q.FormatWheres(q.wheres) // WHERE wheres
-	if where != "" {
-		// WHERE wheres AND field IN (v1,v2...)
-		if q.ins != "" {
-			where += " AND " + q.ins
-		}
-
-		// WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-		if q.like != "" {
-			where += " AND " + q.like
-		}
-	} else {
-		if q.ins != "" {
-			// WHERE field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-			where = "WHERE " + q.ins
-			if q.like != "" {
-				where += " AND " + q.like
-			}
-		} else if q.like != "" {
-			// WHERE field LIKE '%%filter%%'
-			where = "WHERE " + q.like
-		}
-	}
-	limit := q.FormatLimit(q.limit) // LIMIT n
+func (b *QueryBuilder) Build() (string, []any) {
+	outs := strings.Join(b.outs, ",")                     // out1,out2,out3...
+	where, args := b.BuildWheres(b.wheres, b.ins, b.like) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+	limit := b.FormatLimit(b.limit)                       // LIMIT n
 
 	query := "SELECT %s FROM %s %s %s %s"
-	query = fmt.Sprintf(query, outs, q.table, where, q.order, limit)
+	query = fmt.Sprintf(query, outs, b.table, where, b.order, limit)
 	query = strings.TrimSuffix(query, " ")
 	return query, args
 }

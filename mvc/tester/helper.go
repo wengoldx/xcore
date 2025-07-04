@@ -16,6 +16,7 @@ import (
 
 	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/mvc/provider/mysqlc"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Database helper for unit test.
@@ -32,7 +33,7 @@ type helper struct {
 // Create a data helper to query table datas.
 func NewHelper() *helper {
 	return &helper{
-		BaseProvider: mysqlc.GetProvider(),
+		BaseProvider: *mysqlc.GetProvider(), //.GetProvider[pd.BaseBuilder](),
 		desc:         "DESC", limit: 0,
 	}
 }
@@ -56,7 +57,7 @@ func (t *helper) formatLimit() string {
 // Format multiple value as IN condition in where.
 func (t *helper) formatWhereIns(tag string, ins []string) string {
 	if tag != "" && len(ins) > 0 {
-		return tag + " " + t.Builder.JoinStrings(ins, "IN (%s)")
+		return tag + " " + utils.Joins(ins, "IN (%s)")
 	}
 	return ""
 }

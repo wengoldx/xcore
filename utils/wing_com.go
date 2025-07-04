@@ -41,178 +41,143 @@ func Try(do func(), catcher func(error), finaly ...func()) {
 	do()
 }
 
-// Condition return the trueData when pass the condition, or return falseData
+// Standardy build-in types of golang.
+type BuildIn interface {
+	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 |
+	float32 | float64 | bool | string | any
+}
+
+// Return the postive value when condition is true, or return negative value.
 //
-// `USAGE` :
-//
-//	// use as follow to return diffrent type value, but the input
-//	// true and false params MUST BE no-nil datas.
-//	a := Condition(condition, trueString, falseString)	// return any
-//	b := Condition(condition, trueInt, falseInt).(int)
-//	c := Condition(condition, trueInt64, falseInt64).(int64)
-//	d := Condition(condition, trueFloat, falseFloat).(float64)
-//	e := Condition(condition, trueDur, falseDur).(time.Duration)
-//	f := Condition(condition, trueString, falseString).(string)
-func Condition(condition bool, trueData any, falseData any) any {
+//	See utils.BuildIn for more types defined informations.
+func Condition[T BuildIn](condition bool, postive T, negative T) T {
 	if condition {
-		return trueData
+		return postive
 	}
-	return falseData
+	return negative
 }
 
-// ----------------------------------------
-// Variable
-// ----------------------------------------
-
-// Return the first element string, or default if empty.
-func VarString(src []string, def string) string {
-	if len(src) > 0 && src[0] != "" {
-		return src[0]
-	}
-	return def
-}
-
-// Return the first element int (> 0), or default if empty.
-func VarInt(src []int, def int) int {
-	if len(src) > 0 && src[0] > 0 {
-		return src[0]
-	}
-	return def
-}
-
-// Return the first element int64 (> 0), or default if empty.
-func VarInt64(src []int64, def int64) int64 {
-	if len(src) > 0 && src[0] > 0 {
-		return src[0]
-	}
-	return def
-}
-
-// Return the first element bool, or default if empty.
-func VarBool(src []bool, def bool) bool {
-	if len(src) > 0 && src[0] {
-		return src[0]
-	}
-	return def
-}
-
-// ----------------------------------------
-// Contain
-// ----------------------------------------
-
-// Contain check the given string list if contains item.
+// Return the first element value is exist, or return default, it not check
+// the got value whether valid.
 //
-// You should call Distinct() to filter out the repeat items.
-func Contain(list []string, item string) bool {
-	for _, v := range list {
-		if v == item {
-			return true
-		}
+//	See utils.BuildIn for more types defined informations.
+func Variable[T BuildIn](src []T, def T) T {
+	if len(src) > 0 {
+		return src[0]
 	}
-	return false
+	return def
 }
 
-// Contain check the given int list if contains item.
-func ContainInt(list []int, item int) bool {
-	for _, v := range list {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
-
-// Contain check the given int64 list if contains item.
-func ContainInt64(list []int64, item int64) bool {
-	for _, v := range list {
-		if v == item {
-			return true
-		}
-	}
-	return false
-}
-
-// Contains check the given strings items if contains in totals.
-func Contains(totals []string, items []string) bool {
-	return NewSets().AddStrings(totals).ContainStrings(items)
-}
-
-// ContainInts check the given int items if contains in totals.
-func ContainInts(totals []int, items []int) bool {
-	return NewSets().AddInts(totals).ContainInts(items)
-}
-
-// ContainInt64s check the given int64 items if contains in totals.
-func ContainInt64s(totals []int64, items []int64) bool {
-	return NewSets().AddInt64s(totals).ContainInt64s(items)
-}
-
-// ----------------------------------------
-// Fileter
-// ----------------------------------------
-
-// Filters remove the strings from items which not exist in totals.
-func Filters(totals []string, items []string) []string {
-	if len(totals) == 0 || len(items) == 0 {
-		return []string{}
-	}
-	return NewSets().AddStrings(totals).FilterStrings(items)
-}
-
-// FilterInts remove the int values from items which not exist in totals.
-func FilterInts(totals []int, items []int) []int {
-	if len(totals) == 0 || len(items) == 0 {
-		return []int{}
-	}
-	return NewSets().AddInts(totals).FilterInts(items)
-}
-
-// FilterInt64s remove the int64 values from items which not exist in totals.
-func FilterInt64s(totals []int64, items []int64) []int64 {
-	if len(totals) == 0 || len(items) == 0 {
-		return []int64{}
-	}
-	return NewSets().AddInt64s(totals).FilterInt64s(items)
-}
-
-// ----------------------------------------
-// Exist
-// ----------------------------------------
-
-// ExistInts check the given int items if any exist in totals.
-func ExistInts(totals []int, items []int) bool {
-	return NewSets().AddInts(totals).ExistInts(items)
-}
-
-// ExistInt64s check the given int64 items if any exist in totals.
-func ExistInt64s(totals []int64, items []int64) bool {
-	return NewSets().AddInt64s(totals).ExistInt64s(items)
-}
-
-// ExistStrings check the given string items if any exist in totals.
-func ExistStrings(totals []string, items []string) bool {
-	return NewSets().AddStrings(totals).ExistStrings(items)
-}
-
-// ----------------------------------------
-// Distinct
-// ----------------------------------------
-
-// Distinct remove duplicate string from given array.
+// Translate strict build-in types values to any type array.
 //
-// You should call Contain() only for check if exist sub string.
-func Distinct(src []string) []string {
-	return NewSets().AddStrings(src).ArrayString()
+//	See utils.BuildIn for more types defined informations.
+func ToAnys[T BuildIn](values []T) []any {
+	args := []any{}
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
 }
 
-// Distinct remove duplicate int from given array.
-func DistInts(src []int) []int {
-	return NewSets().AddInts(src).ArrayInt()
+// Translate strict build-in types values to strings array, it will
+// auto append '' when values is string type like '12345'.
+//
+//	See utils.BuildIn for more types defined informations.
+func ToStrings[T BuildIn](values []T) []string {
+	vs := []string{}
+	for _, value := range values {
+		vt := reflect.TypeOf(value)
+		switch vt.Kind() {
+		case reflect.String:
+			vs = append(vs, fmt.Sprintf("'%v'", value))
+		default:
+			vs = append(vs, fmt.Sprintf("%v", value))
+		}
+	}
+	return vs
 }
 
-// Distinct remove duplicate int64 from given array.
-func DistInt64s(src []int64) []int64 {
-	return NewSets().AddInt64s(src).ArrayInt64()
+// Join the strict build-in types values as string like "1,2,3",
+// "true,false", "4.5,6.78", "'abc','bce'" and so on, then append 
+// the joined string into the query which set by caller.
+//
+// 1. Usage for number values as:
+//
+//	- values: []int64{1, 2, 3}
+//	- query : "SELECT * FROM tablename WHERE id IN (%s)"
+//	- -> The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
+//
+// 2. Usage for string values as:
+//
+//	- values: []string{"123", "abc", "hello"}
+//	- query : "SELECT * FROM tablename WHERE tag IN (%s)"
+//	- -> The result is "SELECT * FROM tablename WHERE tag IN ('123','abc','hello')".
+//
+// 3. Usage for none query as:
+//
+//	- values: []string{"123", "abc", "hello"}
+//	- -> The result is "'123','abc','hello'".
+//
+// Other more usages support by change the values type to defferent one.
+//
+//	See utils.BuildIn for more types defined informations.
+func Joins[T BuildIn] (values []T, query ...string) string {
+	vs := ToStrings(values)
+	if len(vs) > 0 {
+		// Append values into none-empty query string
+		if q := Variable(query, ""); q != "" {
+			return fmt.Sprintf(q, strings.Join(vs, ","))
+		}
+		return strings.Join(vs, ",")
+	}
+	return ""
+}
+
+// Join the strict build-in types vlues with sep char to string.
+func JoinsSep[T BuildIn](values []T, sep string) string {
+	return strings.Join(ToStrings(values), sep)
+}
+
+// Join the input string as multiple lines.
+func JoinLines(values ...string) string {
+	packet := ""
+	for _, line := range values {
+		packet += line + "\n"
+	}
+	return packet
+}
+
+// Check the given list whether contain the item value.
+func Contain[T comparable](list []T, item T) bool {
+	for _, v := range list {
+		if v == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Check the given items whether all contains in totals.
+func Contains[T any](totals []T, items []T) bool {
+	return NewSets[T]().Add(totals...).Contain(items...)
+}
+
+// Remove the invalid values from items which not exist in totals.
+func Filters[T any](totals []T, items []T) []T {
+	if len(totals) == 0 || len(items) == 0 {
+		return []T{}
+	}
+	return NewSets[T]().Add(totals...).Filters(items...)
+}
+
+// Check the given items whether exist anyone in totals.
+func Exists[T any](totals []T, items []T) bool {
+	return NewSets[T]().Add(totals...).Exist(items...)
+}
+
+// Remove duplicate items from the given array.
+func Distinct[T any](src []T) []T {
+	return NewSets[T]().Add(src...).Array()
 }
 
 // TrimEmpty remove empty string, it maybe return empty result array.
@@ -273,7 +238,6 @@ func ToMap(input any) (map[string]any, error) {
 		logger.E("Decode json data to map err:", err)
 		return nil, err
 	}
-
 	return out, nil
 }
 
@@ -305,67 +269,12 @@ func ToXMLReplace(input any, from, to string) (string, error) {
 }
 
 // ----------------------------------------
-// Join
-// ----------------------------------------
-
-// JoinInts join int numbers as string '1,2,3' with ',' default separator,
-// or custom separator '-' like '1-2-3'.
-func JoinInts(nums []int, sep ...string) string {
-	vs := []string{}
-	if len(nums) > 0 {
-		for _, num := range nums {
-			if v := strconv.Itoa(num); v != "" {
-				vs = append(vs, v)
-			}
-		}
-	}
-	return strings.Join(vs, VarString(sep, ","))
-}
-
-// JoinInt64s join int64 numbers as string '1,2,3' with ',' default separator,
-// or custom separator '-' like '1-2-3'.
-func JoinInt64s(nums []int64, sep ...string) string {
-	vs := []string{}
-	if len(nums) > 0 {
-		for _, num := range nums {
-			if v := strconv.FormatInt(num, 10); v != "" {
-				vs = append(vs, v)
-			}
-		}
-	}
-	return strings.Join(vs, VarString(sep, ","))
-}
-
-// JoinFloats join float64 numbers as string '0.1,2,3.45' with ',' default separator,
-// or custom separator '-' like '0.1-2-3.45'.
-func JoinFloats(nums []float64, sep ...string) string {
-	vs := []string{}
-	if len(nums) > 0 {
-		for _, num := range nums {
-			if v := strconv.FormatFloat(num, 'f', 2, 64); v != "" {
-				vs = append(vs, v)
-			}
-		}
-	}
-	return strings.Join(vs, VarString(sep, ","))
-}
-
-// JoinLines combine strings into multiple lines
-func JoinLines(inputs ...string) string {
-	packet := ""
-	for _, line := range inputs {
-		packet += line + "\n"
-	}
-	return packet
-}
-
-// ----------------------------------------
 // Reversal
 // ----------------------------------------
 
 // Reversal ints string to int array with default separator , char or custom separator.
 func ReverInts(src string, sep ...string) []int {
-	vs := strings.Split(src, VarString(sep, ","))
+	vs := strings.Split(src, Variable(sep, ","))
 
 	out := []int{}
 	for _, v := range vs {
@@ -378,7 +287,7 @@ func ReverInts(src string, sep ...string) []int {
 
 // Reversal int64s string to int64 array with default separator , char or custom separator.
 func ReverInt64s(src string, sep ...string) []int64 {
-	vs := strings.Split(src, VarString(sep, ","))
+	vs := strings.Split(src, Variable(sep, ","))
 
 	out := []int64{}
 	for _, v := range vs {

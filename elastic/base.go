@@ -104,7 +104,7 @@ func (e *ESClient) CreateIndexDoc(index string, doc any, docid ...string) error 
 		return invar.ErrInvalidClient
 	}
 
-	id := utils.VarString(docid, "")
+	id := utils.Variable(docid, "")
 	body, err := json.Marshal(doc)
 	if err != nil {
 		esclog.E("Marshal index doc, err:", err)
@@ -185,7 +185,7 @@ func (e *ESClient) SearchIndex(index, query string, page int, limit ...int) (*Re
 		return nil, invar.ErrInvalidClient
 	}
 
-	size := utils.VarInt(limit, 10)
+	size := utils.Variable(limit, 10)
 	res, err := e.Conn.Search(
 		e.Conn.Search.WithIndex(index),
 		e.Conn.Search.WithSize(size),

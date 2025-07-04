@@ -226,7 +226,7 @@ func (s *DTalkSender) checkKeyAndURL(content string, isSecure ...bool) (string, 
 
 	// sign post url when using secure token
 	posturl := s.WebHook
-	if VarBool(isSecure, false) {
+	if Variable(isSecure, false) {
 		posturl = s.signURL()
 	}
 
@@ -464,7 +464,7 @@ func (s *DTalkSender) SendActionCard2(title, text string, btns []DTButton, isVer
 		return err
 	}
 
-	vertical := Condition(isVertical, "0", "1").(string)
+	vertical := Condition(isVertical, "0", "1")
 	return s.send(posturl, &DTMsgSplitAction{
 		Text:    DTSplitAction{Title: title, Text: text, BtnLayer: vertical, Btns: btns},
 		MsgType: DTalkMsgActionCard,

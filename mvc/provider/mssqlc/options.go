@@ -76,7 +76,7 @@ func DefaultOptions(session string) Options {
 //	pwd     = "123456"
 //	timeout = 30
 func LoadOptions(session ...string) Options {
-	s := utils.VarString(session, _mssqlDriver)
+	s := utils.Variable(session, _mssqlDriver)
 	opts := DefaultOptions(s)
 
 	// auto append suffix for dev mode.

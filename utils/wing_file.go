@@ -145,7 +145,7 @@ func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 	var err error
 	var tagfile *os.File
 	filepath := fmt.Sprintf("%s/%s", dirpath, filename)
-	if VarBool(append, false) {
+	if Variable(append, false) {
 		tagfile, err = OpenTruncFile(filepath)
 	} else {
 		tagfile, err = OpenWriteFile(filepath)
@@ -401,7 +401,7 @@ func HumanReadable(len int64, during int64) string {
 // VerifyFile verify upload file and size, it support jpg/jpeg/JPG/JPEG/png/PNG/mp3/mp4 suffix.
 func VerifyFile(fh *multipart.FileHeader, maxBytes ...int64) (string, error) {
 	suffix := path.Ext(fh.Filename)
-	maxSizeInByte := VarInt64(maxBytes, 0)
+	maxSizeInByte := Variable(maxBytes, 0)
 
 	switch suffix {
 	case ".jpg", ".jpeg", ".JPG", ".JPEG", ".png", ".PNG", ".mp3":

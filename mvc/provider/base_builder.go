@@ -12,13 +12,21 @@ package provider
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/wengoldx/xcore/utils"
 )
 
-type BaseBuilder struct {
+type SQLBuilder interface {
+	Build() (string, []any)
+}
+
+type BaseBuilder struct{}
+
+var _ SQLBuilder = (*BaseBuilder)(nil)
+
+func (b *BaseBuilder) Build() (string, []any) {
+	return "", []any{} // not implement Build method.
 }
 
 // Fetch the KValues items and return the joined fields, ? holders, and args.
@@ -84,7 +92,7 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any)
 // WARNING: Here will filter out the nil values in args.
 func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 	if len(args) > 0 {
-		values := strings.Join(b.ToStrings(args), ",")
+		values := strings.Join(utils.ToStrings(args), ",")
 		return fmt.Sprintf("%s IN (%s)", field, values)
 	}
 	return ""
@@ -96,7 +104,7 @@ func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 //	- desc = false: ORDER BY field ASC
 func (b *BaseBuilder) FormatOrder(field string, desc bool) string {
 	if field != "" {
-		order := utils.Condition(desc, "DESC", "ASC").(string)
+		order := utils.Condition(desc, "DESC", "ASC")
 		return fmt.Sprintf("ORDER BY %s %s", field, order)
 	}
 	return ""
@@ -125,115 +133,48 @@ func (b *BaseBuilder) FormatLike(field, filter string) string {
 // Ensure where condition prefixed 'WHERE' keyword when not empty.
 func (b *BaseBuilder) CheckWhere(wheres string) string {
 	wheres = strings.TrimSpace(wheres)
-	if wheres != "" && !strings.HasPrefix(wheres, "WHERE") {
+	if wheres != "" && !strings.HasPrefix(wheres, "WHERE ") {
 		wheres = "WHERE " + wheres
 	}
 	return wheres
 }
 
-// Translate build-in types values to strings, it only support the types as follow,
-// or return empty string array when contain any unsupport types value.
-//
-//	- int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64
-//	- float32, float64
-//	- bool
-//	- string
-//
-// WARNING: Here will filter out the nil values in wheres.
-func (b *BaseBuilder) ToStrings(values []any) []string {
-	vs := []string{}
-	for _, value := range values {
-		if value == nil {
-			continue
+// Ensure query string must tail 'LIMIT 1' for query the top one record.
+func (b *BaseBuilder) CheckLimit(query string) string {
+	query = strings.TrimSpace(query)
+	if query != "" && !strings.HasSuffix(query, "LIMIT 1") &&
+		!strings.HasSuffix(query, "limit 1") {
+		query += " LIMIT 1"
+	}
+	return query
+}
+
+// Build where conditions, append where ins, like conditions if exist.
+func (b *BaseBuilder) BuildWheres(wheres Wheres, ins, like string) (string, []any) {
+	where, args := b.FormatWheres(wheres) // WHERE wheres
+	if where != "" {
+		// WHERE wheres AND field IN (v1,v2...)
+		if ins != "" {
+			where += " AND " + ins
 		}
 
-		switch v := value.(type) {
-		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-			vs = append(vs, fmt.Sprintf("%d", v))
-		case float32:
-			vs = append(vs, strconv.FormatFloat(float64(v), 'f', -1, 64))
-		case float64:
-			vs = append(vs, strconv.FormatFloat(v, 'f', -1, 64))
-		case bool:
-			vs = append(vs, utils.Condition(v, "true", "false").(string))
-		case string:
-			vs = append(vs, "'"+v+"'") // 'value'
-		default:
-			return []string{}
+		// WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+		if like != "" {
+			where += " AND " + like
+		}
+	} else {
+		if ins != "" {
+			// WHERE field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+			where = "WHERE " + ins
+			if like != "" {
+				where += " AND " + like
+			}
+		} else if like != "" {
+			// WHERE field LIKE '%%filter%%'
+			where = "WHERE " + like
 		}
 	}
-	return vs
-}
-
-// Translate string number array to any type array.
-func (b *BaseBuilder) ToAnys(values []string) []any {
-	args := []any{}
-	for _, value := range values {
-		args = append(args, value)
-	}
-	return args
-}
-
-// Translate int number array to any type array.
-func (b *BaseBuilder) IntAnys(values []int) []any {
-	args := []any{}
-	for _, value := range values {
-		args = append(args, value)
-	}
-	return args
-}
-
-// Translate int64 number array to any type array.
-func (b *BaseBuilder) Int64Anys(values []int64) []any {
-	args := []any{}
-	for _, value := range values {
-		args = append(args, value)
-	}
-	return args
-}
-
-// Translate float64 number array to any type array.
-func (b *BaseBuilder) FloatAnys(values []float64) []any {
-	args := []any{}
-	for _, value := range values {
-		args = append(args, value)
-	}
-	return args
-}
-
-// Join values as string like "1,2.3,'456',true", or append the values
-// string into query strings, the input params as formart:
-//
-//	- values: []any{1, 2.3, "456", true}
-//	- query : "SELECT * FROM tablename WHERE id IN (%s)"
-//
-// The result is "SELECT * FROM tablename WHERE id IN (1,2.3,'456',true)".
-//
-//	WARNING: The values only support int, int64, float64, bool, string types!
-func (b *BaseBuilder) Joins(values []any, query ...string) string {
-	vs := b.ToStrings(values)
-	if len(vs) > 0 {
-		// Append values into none-empty query string
-		if q := utils.VarString(query, ""); q != "" {
-			return fmt.Sprintf(q, strings.Join(vs, ","))
-		}
-		return strings.Join(vs, ",")
-	}
-	return ""
-}
-
-// Join int64 values as string like "1,2,3".
-//
-// See Joins() method for link different types values.
-func (b *BaseBuilder) JoinInts(values []int64, query ...string) string {
-	return b.Joins(b.Int64Anys(values), query...)
-}
-
-// Join string values as string like "'1','2','3'".
-//
-// See Joins() method for link different types values.
-func (b *BaseBuilder) JoinStrings(values []string, query ...string) string {
-	return b.Joins(b.ToAnys(values), query...)
+	return where, args
 }
 
 // Join the given where conditions without input AND and OR connectors.

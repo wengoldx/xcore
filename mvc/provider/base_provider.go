@@ -31,7 +31,7 @@ var _ DataProvider = (*BaseProvider)(nil)
 
 // Create a BaseProvider with given database client.
 func NewProvider(client DBClient) *BaseProvider {
-	return &BaseProvider{client: client, Builder: &BaseBuilder{}}
+	return &BaseProvider{client, &BaseBuilder{}}
 }
 
 /* ------------------------------------------------------------------- */
@@ -103,56 +103,118 @@ func (p *BaseProvider) Exec(query string, args ...any) error {
 	return nil
 }
 
-// Execute query string to delete records on given conditions, it will
-// return not found when none deleted.
+// Execute query string and return the affected rows count, it maybe
+// return 0 when none updated or deleted.
 //
-//	Use the DeleteBuilder to build a query string and args.
-func (p *BaseProvider) Delete(query string, args ...any) error {
-	rows, err := p.Execute2(query, args...)
-	if rows == 0 {
+//	Use UpdateBuilder or DeleteBuilder to build a query string and args.
+func (p *BaseProvider) ExecResult(query string, args ...any) (int64, error) {
+	if !p.prepared() || query == "" {
+		return 0, invar.ErrBadDBConnect
+	}
+
+	stmt, err := p.client.DB().Prepare(query)
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(args...)
+	if err != nil {
+		return 0, err
+	}
+	return p.Affected(result)
+}
+
+// Execute query string to get the top one record, it will auto append
+// 'LIMIT 1' as tail in query string for high-performance.
+//
+//	Use QueryBuilder to build a query string and agrs.
+func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
+	if !p.prepared() || query == "" || cb == nil {
+		return invar.ErrBadDBConnect
+	}
+
+	query = p.Builder.CheckLimit(query)
+	rows, err := p.client.DB().Query(query, args...)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	if !rows.Next() {
+		return invar.ErrNotFound
+	}
+	rows.Columns()
+	return cb(rows)
+}
+
+// Execute query string with scan callback to read result records.
+//
+//	Use QueryBuilder to build a query string and agrs.
+func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
+	if !p.prepared() || query == "" || cb == nil {
+		return invar.ErrBadDBConnect
+	}
+
+	rows, err := p.client.DB().Query(query, args...)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		rows.Columns()
+		if err := cb(rows); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Execute query string to insert a record into target table which contain
+// the 'auto increment' field of id as primary key.
+//
+//	Use InsertBuilder to build a query string and args.
+func (p *BaseProvider) Insert(query string, args ...any) (int64, error) {
+	if !p.prepared() || query == "" {
+		return -1, invar.ErrBadDBConnect
+	}
+
+	stmt, err := p.client.DB().Prepare(query)
+	if err != nil {
+		return -1, err
+	}
+
+	defer stmt.Close()
+	result, err := stmt.Exec(args...)
+	if err != nil {
+		return -1, err
+	}
+	return result.LastInsertId()
+}
+
+// Execute query string to update target records by where condition, it will
+// return invar.ErrNotChanged error when none updated.
+//
+//	Use UpdateBuilder to build a query string and args.
+func (p *BaseProvider) Update(query string, args ...any) error {
+	rows, err := p.ExecResult(query, args...)
+	if err == nil && rows == 0 {
 		return invar.ErrNotChanged
 	}
 	return err /* nil or error */
 }
 
-/* ------------------------------------------------------------------- */
-/* Using Builder To Construct Query String For Database Access         */
-/* ------------------------------------------------------------------- */
-
-// Check the target record whether unexist by the given QueryBuilder to
-// build query string.
+// Execute query string to delete records on given conditions, it will
+// return invar.ErrNotChanged error when none deleted.
 //
-// Use Has() method to check has result.
-func (p *BaseProvider) None(builder *QueryBuilder) (bool, error) {
-	query, args := builder.Build()
-	has, err := p.Has(query, args...)
-	return !has, err
-}
-
-// Count records by the given builder to build a query string, it will
-// return 0 when notfound anyone.
-//
-// Use Count() method to direct execute query string.
-func (p *BaseProvider) Counts(builder *QueryBuilder) (int, error) {
-	if !p.prepared() || builder == nil {
-		return -1, invar.ErrBadDBConnect
+//	Use the DeleteBuilder to build a query string and args.
+func (p *BaseProvider) Delete(query string, args ...any) error {
+	rows, err := p.ExecResult(query, args...)
+	if err == nil && rows == 0 {
+		return invar.ErrNotChanged
 	}
-
-	query, args := builder.Build()
-	return p.Count(query, args...)
-}
-
-// Delete records by the given builder to build a query string, it will
-// return not found error when none deleted.
-//
-// Use Delete() method to direct execute query string.
-func (p *BaseProvider) Deletes(builder *DeleteBuilder) error {
-	if !p.prepared() || builder == nil {
-		return invar.ErrBadDBConnect
-	}
-
-	query, args := builder.Build()
-	return p.Delete(query, args...)
+	return err /* nil or error */
 }
 
 // Clear all records for the given table.
@@ -164,71 +226,63 @@ func (p *BaseProvider) Clear(table string) error {
 	return p.Exec(query)
 }
 
-// ---------------------------------------------------------------------
-
-// Call sql.Query() to query the top one record.
-func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
-	if !p.prepared() || cb == nil {
+// Execute query string for single transaction, it will rollback when handle failed.
+//
+//	Use the anyone builder to build a query string and args.
+func (p *BaseProvider) Tran(query string, args ...any) error {
+	if !p.prepared() || query == "" {
 		return invar.ErrBadDBConnect
 	}
 
-	db := p.client.DB()
-	if rows, err := db.Query(query, args...); err != nil {
+	tx, err := p.client.DB().Begin()
+	if err != nil {
 		return err
-	} else {
-		defer rows.Close()
-
-		if !rows.Next() {
-			return invar.ErrNotFound
-		}
-		rows.Columns()
-		return cb(rows)
-	}
-}
-
-// Call sql.Query() to query multiple records.
-func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
-	if !p.prepared() || cb == nil {
-		return invar.ErrBadDBConnect
 	}
 
-	db := p.client.DB()
-	if rows, err := db.Query(query, args...); err != nil {
+	defer tx.Rollback()
+	if _, err := tx.Exec(query, args...); err != nil {
 		return err
-	} else {
-		defer rows.Close()
+	}
 
-		for rows.Next() {
-			rows.Columns()
-			if err := cb(rows); err != nil {
-				return err
-			}
-		}
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 	return nil
 }
 
-// Call sql.Prepare() and stmt.Exec() to insert a new record, and return the inserted id.
+// Excute multiple transactions, it will rollback when cased one error.
 //
-//	- Use provider.Inserts() to insert multiple values in once request.
-func (p *BaseProvider) Insert(query string, args ...any) (int64, error) {
-	if !p.prepared() {
-		return -1, invar.ErrBadDBConnect
+//	// Excute 3 transactions in callback with different query1 ~ 3
+//	err := provider.Trans(
+//		func(tx *sql.Tx) error { return provider.TxQuery(tx, query1, func(rows *sql.Rows) error {
+//				// Fetch all rows to get result datas...
+//			}, args...) },
+//		func(tx *sql.Tx) error { return provider.TxExec(tx, query2, args...) },
+//		func(tx *sql.Tx) error { return provider.TxExec(tx, query3, args...) })
+func (p *BaseProvider) Trans(cbs ...TransCallback) error {
+	if !p.prepared() || len(cbs) == 0 {
+		return invar.ErrBadDBConnect
 	}
 
-	db := p.client.DB()
-	if stmt, err := db.Prepare(query); err != nil {
-		return -1, err
-	} else {
-		defer stmt.Close()
+	tx, err := p.client.DB().Begin()
+	if err != nil {
+		return err
+	}
 
-		result, err := stmt.Exec(args...)
-		if err != nil {
-			return -1, err
+	defer tx.Rollback()
+	for _, cb := range cbs {
+		if err := cb(tx); err != nil {
+			return err
 		}
-		return result.LastInsertId()
 	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
+
+// ---------------------------------------------------------------------
 
 // Insert the format and combine multiple values at once.
 //
@@ -269,19 +323,6 @@ func (p *BaseProvider) Inserts2(query string, values any) error {
 	return p.Exec(query + " " + items)
 }
 
-// Call sql.Prepare() and stmt.Exec() to update record, then check the
-// updated result if return invar.ErrNotChanged error when not changed any one.
-//
-//	- Use provider.Updates() to update mapping values on silent.
-//	- Use provider.Execute() to update record on silent.
-func (p *BaseProvider) Update(query string, args ...any) error {
-	rows, err := p.Execute2(query, args...)
-	if rows == 0 {
-		return invar.ErrNotChanged
-	}
-	return err /* nil or error */
-}
-
 // Update record from mapping values as colmun sets, it not check the
 // updated result whatever changed or not.
 //
@@ -296,88 +337,6 @@ func (p *BaseProvider) Update2(query string, values map[string]any, args ...any)
 		return err
 	}
 	return p.Exec(fmt.Sprintf(query, sets), args...)
-}
-
-// Call sql.Prepare() and stmt.Exec() to update or delete records (but not
-// for multiple inserts) with result counts to return.
-//
-//	- Use provider.Execute() on silent, use provider.Inserts() to multiple insert.
-func (p *BaseProvider) Execute2(query string, args ...any) (int64, error) {
-	if !p.prepared() {
-		return 0, invar.ErrBadDBConnect
-	}
-
-	db := p.client.DB()
-	if stmt, err := db.Prepare(query); err != nil {
-		return 0, err
-	} else {
-		defer stmt.Close()
-
-		result, err := stmt.Exec(args...)
-		if err != nil {
-			return 0, err
-		}
-		return p.Affected(result)
-	}
-}
-
-// Execute single sql transaction, it will rollback when operate failed.
-//
-//	- Use provider.Trans() to excute multiple transaction as once.
-func (p *BaseProvider) TranRoll(query string, args ...any) error {
-	if !p.prepared() {
-		return invar.ErrBadDBConnect
-	}
-
-	db := p.client.DB()
-	if tx, err := db.Begin(); err != nil {
-		return err
-	} else {
-		defer tx.Rollback()
-
-		if _, err := tx.Exec(query, args...); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Excute multiple transactions, it will rollback when case any error.
-//
-//	// Excute 3 transactions in callback with different query1 ~ 3
-//	err := provider.Trans(
-//		func(tx *sql.Tx) error { return provider.TxQuery(tx, query1, func(rows *sql.Rows) error {
-//				// Fetch all rows to get result datas...
-//			}, args...) },
-//		func(tx *sql.Tx) error { return provider.TxExec(tx, query2, args...) },
-//		func(tx *sql.Tx) error { return provider.TxExec(tx, query3, args...) })
-func (p *BaseProvider) Trans(cbs ...TransCallback) error {
-	if !p.prepared() {
-		return invar.ErrBadDBConnect
-	}
-
-	db := p.client.DB()
-	if tx, err := db.Begin(); err != nil {
-		return err
-	} else {
-		defer tx.Rollback()
-
-		// start excute multiple transactions in callback
-		for _, cb := range cbs {
-			if err := cb(tx); err != nil {
-				return err
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 /* ------------------------------------------------------------------- */
@@ -412,7 +371,7 @@ func (p *BaseProvider) FormatWheres(wheres Wheres, ornone ...bool) (string, []an
 		// - WHERE 'condition1 AND' 'condition2 OR' condition3.
 		sep := " AND "
 		if len(ornone) > 0 {
-			sep = utils.Condition(ornone[0], " OR ", " ").(string)
+			sep = utils.Condition(ornone[0], " OR ", " ")
 		}
 		where = "WHERE " + strings.Join(conditions, sep)
 	}

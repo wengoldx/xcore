@@ -44,7 +44,7 @@ func WithLimit(limit int) Option {
 // Specify order by conditions.
 func WithOrder(order string, desc ...string) Option {
 	return func(u *helper) {
-		u.desc = utils.VarString(desc, "DESC")
+		u.desc = utils.Variable(desc, "DESC")
 		u.order = order
 	}
 }

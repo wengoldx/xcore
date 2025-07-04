@@ -42,7 +42,7 @@ import (
 //	}
 func HttpServer(allowCredentials ...bool) {
 	ignoreSysSignalPIPE()
-	allow := VarBool(allowCredentials, false)
+	allow := Variable(allowCredentials, false)
 	accessAllowOriginBy(beego.BeforeRouter, "*", allow)
 	accessAllowOriginBy(beego.BeforeStatic, "*", allow)
 

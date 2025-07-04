@@ -87,7 +87,7 @@ func RegisterServer() *ServerStub {
 	}
 
 	// Namespace id of local server, and parse local ip
-	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV).(string)
+	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV)
 	addr, err := matchProxyIP(idealip)
 	if err != nil {
 		panic("Find proxy local ip, err:" + err.Error())
@@ -179,7 +179,7 @@ func NewMetaConfig() *MetaConfig {
 	}
 
 	// Namespace id of meta configs
-	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV).(string)
+	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV)
 
 	// Create nacos config stub and setup it
 	stub := NewConfigStub(ns, svr)
