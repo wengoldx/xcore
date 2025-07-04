@@ -67,7 +67,7 @@ func (p *SimpleProvider) Exec(builder SQLBuilder) error {
 // the inserted id of the 'auto increment' primary key field.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *SimpleProvider) Insert(builder InsertBuilder) (int64, error) {
+func (p *SimpleProvider) Insert(builder *InsertBuilder) (int64, error) {
 	query, args := builder.Build()
 	return p.BaseProvider.Insert(query, args...)
 }
