@@ -22,13 +22,13 @@ import (
 //		ORDER BY order DESC
 //		LIMIT limit.
 //
-// WARNING: This builder only for single table access.
+// See InsertBuilder, UpdateBuilder, DeleteBuilder.
 type QueryBuilder struct {
 	BaseBuilder
 
 	table  string   // Table name for query
-	outs   []string // Fields for output values.
-	wheres Wheres   // Where conditions and values.
+	tags   []string // Target fields for output values.
+	wheres Wheres   // Where conditions and args values.
 	ins    string   // Where in conditions.
 	like   string   // Like conditions string.
 	order  string   // Keyword for order by condition.
@@ -48,9 +48,9 @@ func (b *QueryBuilder) Table(table string) *QueryBuilder {
 	return b
 }
 
-// Specify the output fields for query.
-func (b *QueryBuilder) Outs(field ...string) *QueryBuilder {
-	b.outs = field
+// Specify the target output fields for query.
+func (b *QueryBuilder) Tags(tag ...string) *QueryBuilder {
+	b.tags = tag
 	return b
 }
 
@@ -86,19 +86,19 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 
 // Build and output query string and args for DataProvider execute query action.
 func (b *QueryBuilder) Build() (string, []any) {
-	outs := strings.Join(b.outs, ",")                     // out1,out2,out3...
+	tags := strings.Join(b.tags, ",")                     // out1,out2,out3...
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	limit := b.FormatLimit(b.limit)                       // LIMIT n
 
 	query := "SELECT %s FROM %s %s %s %s"
-	query = fmt.Sprintf(query, outs, b.table, where, b.order, limit)
+	query = fmt.Sprintf(query, tags, b.table, where, b.order, limit)
 	query = strings.TrimSuffix(query, " ")
 	return query, args
 }
 
 // Reset builder datas for next prepare and build.
 func (b *QueryBuilder) Reset() {
-	clear(b.outs)
+	clear(b.tags)
 	clear(b.wheres)
 	b.ins, b.like, b.order = "", "", ""
 	b.limit = 0

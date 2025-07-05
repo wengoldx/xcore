@@ -19,12 +19,12 @@ import (
 //
 //	INSERT table (tags) VALUES (?, ?, ?)
 //
-// WARNING: This builder only for single table access.
+// See QueryBuilder, UpdateBuilder, DeleteBuilder.
 type InsertBuilder struct {
 	BaseBuilder
 
-	table  string  // Table name for query
-	values KValues // Target fields to insert values.
+	table  string  // Table name for insert
+	values KValues // Target fields and value to insert.
 }
 
 var _ SQLBuilder = (*InsertBuilder)(nil)
@@ -40,13 +40,13 @@ func (b *InsertBuilder) Table(table string) *InsertBuilder {
 	return b
 }
 
-// Specify the where conditions and args for query.
+// Specify the values of row to insert.
 func (b *InsertBuilder) Values(row KValues) *InsertBuilder {
 	b.values = row
 	return b
 }
 
-// Build and output query string and args for DataProvider execute query action.
+// Build and output query string and args for DataProvider execute insert action.
 func (b *InsertBuilder) Build() (string, []any) {
 	fields, holders, args := b.FormatInserts(b.values) // INSERT table (v1, v2...) VALUES (?,?...)'
 

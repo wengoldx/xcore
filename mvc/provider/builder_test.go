@@ -20,7 +20,7 @@ import (
 func TestQueryBuilder(t *testing.T) {
 	q := NewQuery("test_table")
 
-	query, arg := q.Outs("f1", "f2", "f3").Build()
+	query, arg := q.Tags("f1", "f2", "f3").Build()
 	fmt.Println(query, "-", arg)
 
 	query, arg = q.Wheres(Wheres{"w1=?": 1, "w2<>?": 2}).Build()

@@ -14,13 +14,21 @@ package provider
 // and args for database datas access.
 type SimpleProvider struct {
 	BaseProvider
+
+	Table    string         // Table name
+	Querier  *QueryBuilder  //
+	Inserter *InsertBuilder //
+	Updater  *UpdateBuilder //
+	Deleter  *DeleteBuilder //
 }
 
 // var _ DataProvider = (*SimpleProvider)(nil)
 
 // Create a SimpleProvider with given database client.
 func NewSimpler(client DBClient) *SimpleProvider {
-	return &SimpleProvider{BaseProvider{client, &BaseBuilder{}}}
+	return &SimpleProvider{
+		BaseProvider: BaseProvider{client, &BaseBuilder{}},
+	}
 }
 
 /* ------------------------------------------------------------------- */

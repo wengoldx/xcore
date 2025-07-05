@@ -21,12 +21,12 @@ import (
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
 //
-// WARNING: This builder only for single table access.
+// See QueryBuilder, InsertBuilder, UpdateBuilder.
 type DeleteBuilder struct {
 	BaseBuilder
 
-	table  string // Table name for query
-	wheres Wheres // Where conditions and values.
+	table  string // Table name for delete
+	wheres Wheres // Where conditions and args values.
 	ins    string // Where in conditions.
 	like   string // Like conditions string.
 	limit  int    // Limit number.

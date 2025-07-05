@@ -29,23 +29,6 @@ func (b *BaseBuilder) Build() (string, []any) {
 	return "", []any{} // not implement Build method.
 }
 
-// Fetch the KValues items and return the joined fields, ? holders, and args.
-func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
-	fields, holders, args := "", "", []any{}
-	if cnt := len(values); cnt > 0 {
-		outs := []string{}
-		for key, arg := range values {
-			outs = append(outs, key)
-			args = append(args, arg)
-		}
-
-		fields = strings.Join(outs, ", ")
-		holders = strings.Repeat("?,", cnt)
-		holders = strings.TrimSuffix(holders, ",")
-	}
-	return fields, holders, args
-}
-
 // Format where conditions to string with args, by default join conditions with
 // AND connector, but can change to OR or empty connector by set 'connector' param.
 //
@@ -129,6 +112,38 @@ func (b *BaseBuilder) FormatLike(field, filter string) string {
 		return field + " LIKE '%%" + filter + "%%'"
 	}
 	return ""
+}
+
+// Fetch the KValues items and return the joined fields, ? holders, and args.
+func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
+	fields, holders, args := "", "", []any{}
+	if cnt := len(values); cnt > 0 {
+		outs := []string{}
+		for key, arg := range values {
+			outs = append(outs, key)
+			args = append(args, arg)
+		}
+
+		fields = strings.Join(outs, ", ")
+		holders = strings.Repeat("?,", cnt)
+		holders = strings.TrimSuffix(holders, ",")
+	}
+	return fields, holders, args
+}
+
+// Fetch the KValues items and return the joined fields, and args.
+func (b *BaseBuilder) FormatSets(values KValues) (string, []any) {
+	fields, args := "", []any{}
+	if cnt := len(values); cnt > 0 {
+		sets := []string{}
+		for key, arg := range values {
+			sets = append(sets, key+"=?")
+			args = append(args, arg)
+		}
+
+		fields = strings.Join(sets, ", ")
+	}
+	return fields, args
 }
 
 // Ensure where condition prefixed 'WHERE' keyword when not empty.
