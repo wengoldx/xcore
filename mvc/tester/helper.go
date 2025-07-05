@@ -83,9 +83,9 @@ func (t *helper) Target(table, tag string, where pd.Wheres, out any, options ...
 	t.tag, t.where = tag, where
 	applyOptions(t, options...)
 
-	wheres, values := t.FormatWheres(t.where) // format wheres sting and input values.
-	order := t.formatOrder()                  // format order by string.
-	limit := t.formatLimit()                  // format limit string.
+	wheres, values := t.Builder.FormatWheres(t.where) // format wheres sting and input values.
+	order := t.formatOrder()                          // format order by string.
+	limit := t.formatLimit()                          // format limit string.
 
 	// SELECT tag FROM table wheres order limit
 	query := fmt.Sprintf(_sql_ut_get, t.tag, table, wheres, order, limit)
@@ -162,7 +162,7 @@ func (t *helper) AddWithID(table string, ins pd.KValues) (int64, error) {
 //	@param where Field name as where condition like: field = value.
 func (t *helper) DeleteBy(table string, where pd.Wheres) error {
 	t.where = where
-	wheres, values := t.FormatWheres(t.where)
+	wheres, values := t.Builder.FormatWheres(t.where)
 	return t.Exec(fmt.Sprintf(_sql_ut_del, table, wheres, ""), values...)
 }
 
@@ -177,8 +177,8 @@ func (t *helper) DeleteBy(table string, where pd.Wheres) error {
 //	@param value Where condition values to query.
 func (t *helper) DeleteIns(table, tag string, ins []string, options ...Option) error {
 	applyOptions(t, options...)
-	wheres, values := t.FormatWheres(t.where) // format wheres sting and input values.
-	instring := t.formatWhereIns(tag, ins)    // format in values.
+	wheres, values := t.Builder.FormatWheres(t.where) // format wheres sting and input values.
+	instring := t.formatWhereIns(tag, ins)            // format in values.
 	if wheres != "" && instring != "" {
 		wheres += " AND "
 	}

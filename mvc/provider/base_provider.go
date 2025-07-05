@@ -13,12 +13,10 @@ package provider
 import (
 	"database/sql"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
-	"github.com/wengoldx/xcore/utils"
 )
 
 // Base provider for simple access database datas.
@@ -82,7 +80,7 @@ func (p *BaseProvider) Count(query string, args ...any) (int, error) {
 }
 
 // Execute query string without any results to get, it useful for
-// update or delete same records.
+// update or delete record datas.
 //
 //	Use UpdateBuilder or DeleteBuilder to build a query string and args.
 func (p *BaseProvider) Exec(query string, args ...any) error {
@@ -102,8 +100,8 @@ func (p *BaseProvider) Exec(query string, args ...any) error {
 	return nil
 }
 
-// Execute query string and return the affected rows count, it maybe
-// return 0 when none updated or deleted.
+// Execute query string and return the affected rows count, it will return
+// invar.ErrNotChanged error when none updated or deleted.
 //
 //	Use UpdateBuilder or DeleteBuilder to build a query string and args.
 func (p *BaseProvider) ExecResult(query string, args ...any) (int64, error) {
@@ -170,7 +168,7 @@ func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
 	return nil
 }
 
-// Execute query string to insert a record into target table which contain
+// Execute query string to insert a row into target table which contain
 // the 'auto increment' field of id as primary key.
 //
 //	Use InsertBuilder to build a query string and args.
@@ -190,6 +188,29 @@ func (p *BaseProvider) Insert(query string, args ...any) (int64, error) {
 		return -1, err
 	}
 	return result.LastInsertId()
+}
+
+// Execute query string to insert multiple rows into target table with
+// a callback for format row values, it insert all rows at one time to
+// provide high-performance than call provider.Insert() one by one.
+//
+//	query := "INSERT table (field1, field2) VALUES"
+//	err := provider.Inserts(query, len(vs), func(index int) string {
+//		return fmt.Sprintf("(%v, %v)", v1, vs[index])
+//		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
+//	})
+//	// => INSERT table (field1, field2) VALUES (1,2),(3,4)..
+//	// => INSERT table (field1, field2) VALUES ('1','2'),('3','4')..
+func (p *BaseProvider) Inserts(query string, cnt int, cb InsertCallback) error {
+	values := []string{}
+	for i := 0; i < cnt; i++ {
+		value := strings.TrimSpace(cb(i))
+		if value != "" {
+			values = append(values, value)
+		}
+	}
+	query = query + " " + strings.Join(values, ",")
+	return p.Exec(query)
 }
 
 // Execute query string to update target records by where condition, it will
@@ -281,63 +302,6 @@ func (p *BaseProvider) Trans(cbs ...TransCallback) error {
 	return nil
 }
 
-// ---------------------------------------------------------------------
-
-// Insert the format and combine multiple values at once.
-//
-// This method can provide high-performance than call provider.Insert() one by one.
-//
-//	query := "INSERT sametable (field1, field2) VALUES"
-//	err := provider.Inserts(query, len(vs), func(index int) string {
-//		return fmt.Sprintf("(%v, %v)", v1, vs[index])
-//		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
-//	})
-func (p *BaseProvider) Inserts(query string, cnt int, cb InsertCallback) error {
-	values := []string{}
-	for i := 0; i < cnt; i++ {
-		value := strings.TrimSpace(cb(i))
-		if value != "" {
-			values = append(values, value)
-		}
-	}
-	query = query + " " + strings.Join(values, ",")
-	return p.Exec(query)
-}
-
-// Insert the format and combine slice values at once.
-//
-// This method can provide high-performance same as call provider.Insert() without callback.
-//
-//	values := []Person{
-//		{Age: 16, Male: true,  Name: "ZhangSan"},
-//		{Age: 22, Male: false, Name: "LiXiang"},
-//	}
-//	query := "INSERT person (age, male, name) VALUES"
-//	err := provider.Inserts2(query, values)
-func (p *BaseProvider) Inserts2(query string, values any) error {
-	items, err := p.FormatInserts(values)
-	if err != nil {
-		return err
-	}
-	return p.Exec(query + " " + items)
-}
-
-// Update record from mapping values as colmun sets, it not check the
-// updated result whatever changed or not.
-//
-//	values := map[string]any{ "Age": 16, "Name": "ZhangSan" }
-//	query := "UPDATE person SET %s WHERE id=?"
-//	err := provider.updates(query, values, "id-123456")
-//
-//	- Use provider.Update() to update record and check result.
-func (p *BaseProvider) Update2(query string, values map[string]any, args ...any) error {
-	sets, err := p.FormatSets(values)
-	if err != nil {
-		return err
-	}
-	return p.Exec(fmt.Sprintf(query, sets), args...)
-}
-
 /* ------------------------------------------------------------------- */
 /* Helper Methods For Construct Query or Parse Results                 */
 /* ------------------------------------------------------------------- */
@@ -345,36 +309,6 @@ func (p *BaseProvider) Update2(query string, values map[string]any, args ...any)
 // Check the database client whther prepared and connected.
 func (p *BaseProvider) prepared() bool {
 	return p.client != nil && p.client.DB() != nil
-}
-
-// Format where conditions to string with args, by default join conditions
-// with AND connector, but can change to OR or empty connector by set 'ornnoe'
-// param.
-//
-//	- ornone not set  : use AND connector.
-//	- ornone set true : use OR  connector.
-//	- ornone set false: not use any connector, by inset with condition as 'condition AND', 'condition OR'.
-func (p *BaseProvider) FormatWheres(wheres Wheres, ornone ...bool) (string, []any) {
-	where, args := "", []any{}
-	if len(wheres) > 0 {
-		conditions := []string{}
-		for condition, arg := range wheres {
-			conditions = append(conditions, condition)
-			args = append(args, arg)
-		}
-
-		// join conditions as:
-		//
-		// - WHERE  condition1 AND   condition2 AND condition3.
-		// - WHERE  condition1 OR    condition2 OR  condition3.
-		// - WHERE 'condition1 AND' 'condition2 OR' condition3.
-		sep := " AND "
-		if len(ornone) > 0 {
-			sep = utils.Condition(ornone[0], " OR ", " ")
-		}
-		where = "WHERE " + strings.Join(conditions, sep)
-	}
-	return where, args
 }
 
 // Get update or delete record counts.
@@ -396,131 +330,6 @@ func (p *BaseProvider) Affects(result sql.Result) int64 {
 func (p *BaseProvider) LastID(result sql.Result) int64 {
 	id, _ := result.LastInsertId()
 	return id
-}
-
-// -------------------------------------
-
-// Format update sets for sql update.
-//
-//	values := map[string]any{
-//		"":       123456,   // Filter out empty field
-//		"Age":    16,
-//		"Male":   true,
-//		"Name":   "ZhangSan",
-//		"Height": 176.8,
-//		"Secure": nil,      // Filter out nil value
-//	}
-//	// => Age=16, Male=true, Name='ZhangSan', Height=176.8
-func (p *BaseProvider) FormatSets(values map[string]any) (string, error) {
-	sets := []string{}
-	for key, value := range values {
-		if key == "" && value == nil {
-			continue
-		}
-
-		v := reflect.ValueOf(value)
-		if v.Kind() == reflect.String {
-			sets = append(sets, fmt.Sprintf(key+"='%s'", value))
-		} else if v.Kind() == reflect.Bool || v.CanInt() || v.CanFloat() || v.CanUint() {
-			sets = append(sets, fmt.Sprintf(key+"=%v", value))
-		}
-	}
-
-	if len(sets) == 0 {
-		return "", invar.ErrEmptyData
-	}
-	return strings.Join(sets, ","), nil
-}
-
-// Format insert values for sql multiple insert.
-//
-// ---
-//
-// `Usecase 1` : For struct objects.
-//
-//	values := []Person{
-//		{Age: 16, Male: true,  Name: "ZhangSan"},
-//		{Age: 22, Male: false, Name: "LiXiang"},
-//	}
-//	// => (16,true,'ZhangSan'),(22,false,'LiXiang')
-//
-// `Usecase 2` : For struct pointers, it will filter nil datas.
-//
-//	values := []*Person{
-//		{Age: 16, Male: true,  Name: "ZhangSan"},
-//		{Age: 22, Male: false, Name: "LiXiang"},
-//		nil,
-//	}
-//	// => (16,true,'ZhangSan'),(22,false,'LiXiang')
-//
-// `Usecase 3` : For no-struct single value array
-//
-//	values := []string{"ZhangSan", "LiXiang"} // => ('ZhangSan'),('LiXiang')
-//	values := []bool{true, false}             // => (true),(false)
-//	values := []float64{1.6, 22}              // => (1.6),(22)
-//	values := []int{16, -22}                  // => (16),(-22)
-//
-// ---
-//
-// `WARNING` : DO NOT define sliice item or struct field as pointer type like follows.
-//
-//	str:="123"; values := []*string{&str}     // Error input params
-//	type Person struct {
-//		Age  *int                             // Error struct field type define
-//		Male bool
-//		Name string
-//	}
-func (p *BaseProvider) FormatInserts(values any) (string, error) {
-	pv := reflect.ValueOf(values)
-	if pv.Kind() != reflect.Slice {
-		return "", invar.ErrInvalidData
-	}
-
-	items := []string{}
-	for i, cnt := 0, pv.Len(); i < cnt; i++ {
-		item := pv.Index(i) // fetch values array item
-		switch item.Kind() {
-		case reflect.Struct:
-			item = reflect.ValueOf(item.Interface())
-		case reflect.Pointer:
-			item = item.Elem()
-		case reflect.String: // for string values array
-			items = append(items, fmt.Sprintf("('%s')", item))
-			continue
-		default: // for basic data types values array
-			if item.Kind() == reflect.Bool || item.CanInt() || item.CanFloat() || item.CanUint() {
-				items = append(items, fmt.Sprintf("(%v)", item))
-				continue
-			}
-			return "", invar.ErrInvalidData
-		}
-
-		// for struct or struct pointer array to parse fields
-		if item.IsValid() && item.Kind() == reflect.Struct && item.NumField() > 0 {
-			fields := []string{}
-			for j, vs := 0, item.NumField(); j < vs; j++ {
-				itv := item.Field(j) // fetch value fields
-				if itv.Kind() == reflect.String {
-					fields = append(fields, fmt.Sprintf("'%s'", itv))
-				} else if itv.Kind() == reflect.Bool || itv.CanInt() || itv.CanFloat() || itv.CanUint() {
-					fields = append(fields, fmt.Sprintf("%v", itv))
-				} else {
-					return "", invar.ErrInvalidData
-				}
-			}
-
-			// join fields as "(1, '2', 3.4, -5, true, ...)"
-			if its := strings.Join(fields, ","); its != "" {
-				items = append(items, "("+its+")")
-			}
-		}
-	}
-
-	// check parse result and json items
-	if len(items) == 0 {
-		return "", invar.ErrEmptyData
-	}
-	return strings.Join(items, ","), nil
 }
 
 /* ------------------------------------------------------------------- */

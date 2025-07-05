@@ -31,21 +31,16 @@ type DataProvider interface {
 	One(query string, cb ScanCallback, args ...any) error
 	Query(query string, cb ScanCallback, args ...any) error
 	Insert(query string, args ...any) (int64, error)
+	Inserts(query string, cnt int, cb InsertCallback) error
 	Update(query string, args ...any) error
 	Delete(query string, args ...any) error
 	Clear(table string) error
 	Tran(query string, args ...any) error
 	Trans(cbs ...TransCallback) error
 
-	Inserts(query string, cnt int, cb InsertCallback) error
-	Inserts2(query string, values any) error
-	Update2(query string, values map[string]any, args ...any) error
-
 	Affected(result sql.Result) (int64, error)
 	Affects(result sql.Result) int64
 	LastID(result sql.Result) int64
-	FormatSets(values map[string]any) (string, error)
-	FormatInserts(values any) (string, error)
 
 	MysqlTable(table string, print ...bool) *Table
 	MssqlTable(table string, print ...bool) *Table
