@@ -42,15 +42,34 @@ func (b *InsertBuilder) Table(table string) *InsertBuilder {
 
 // Specify the values of row to insert.
 //
-//	- Set signle one row for provider.Insert().
-//	- Set multiple rows for provider.Inserts().
+// 1. Set signle one row for provider.Insert() insert a record.
+//
+//	row := KValues{
+//		"":       123456,   // Filter out empty field
+//		"Age":    16,
+//		"Male":   true,
+//		"Name":   "ZhangSan",
+//		"Height": 176.8,
+//		"Secure": nil,      // Filter out nil value
+//	}
+//	// => Age=?, Male=?, Name=?, Height=?
+//	// => ?,?,?,?
+//	// => []any{16, true, "ZhangSan", 176.8}
+//
+// 2. Set multiple rows for provider.Inserts() to insert records at one time.
+//
+//	rows := []KValues{
+//		{ "Age": 16, "Name": "ZhangSan", "Height": 176.8 },
+//		{ "Age": 15, "Name": "LiXu", "Height": 168.5 },
+//	}
+//	// => (Age=16,Name="ZhangSan",Height=176.8),(Age=15,Name="LiXu",Height=168.5)
 func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 	b.rows = row
 	return b
 }
 
 // Build and output query string and args for DataProvider execute insert action.
-func (b *InsertBuilder) Build() (string, []any) {
+func (b *InsertBuilder) Build(seq ...string) (string, []any) {
 	if cnt := len(b.rows); cnt == 1 {
 		// INSERT table (v1, v2...) VALUES (?,?...)'
 		fields, holders, args := b.FormatInserts(b.rows[0])
@@ -95,6 +114,7 @@ func (b *InsertBuilder) Build() (string, []any) {
 }
 
 // Reset builder datas for next prepare and build.
-func (b *InsertBuilder) Reset() {
+func (b *InsertBuilder) Reset() *InsertBuilder {
 	clear(b.rows)
+	return b
 }

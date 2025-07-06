@@ -55,6 +55,12 @@ func (b *QueryBuilder) Tags(tag ...string) *QueryBuilder {
 }
 
 // Specify the where conditions and args for query.
+//
+//	where = provider.Wheres{
+//		"acc=?":"123", "age>=?":20, "role<>?":"admin",
+//	}
+//	// => WHERE acc=? AND age>=? AND role<>?
+//	// => args ("123", 20, "admin")
 func (b *QueryBuilder) Wheres(where Wheres) *QueryBuilder {
 	b.wheres = where
 	return b
@@ -85,10 +91,10 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 }
 
 // Build and output query string and args for DataProvider execute query action.
-func (b *QueryBuilder) Build() (string, []any) {
-	tags := strings.Join(b.tags, ",")                     // out1,out2,out3...
-	where, args := b.BuildWheres(b.wheres, b.ins, b.like) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-	limit := b.FormatLimit(b.limit)                       // LIMIT n
+func (b *QueryBuilder) Build(sep ...string) (string, []any) {
+	tags := strings.Join(b.tags, ",")                             // out1,out2,out3...
+	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep...) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+	limit := b.FormatLimit(b.limit)                               // LIMIT n
 
 	query := "SELECT %s FROM %s %s %s %s"
 	query = fmt.Sprintf(query, tags, b.table, where, b.order, limit)
@@ -97,9 +103,10 @@ func (b *QueryBuilder) Build() (string, []any) {
 }
 
 // Reset builder datas for next prepare and build.
-func (b *QueryBuilder) Reset() {
+func (b *QueryBuilder) Reset() *QueryBuilder {
 	clear(b.tags)
 	clear(b.wheres)
 	b.ins, b.like, b.order = "", "", ""
 	b.limit = 0
+	return b
 }

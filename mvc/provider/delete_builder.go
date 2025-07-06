@@ -46,6 +46,12 @@ func (b *DeleteBuilder) Table(table string) *DeleteBuilder {
 }
 
 // Specify the where conditions and args for query.
+//
+//	where = provider.Wheres{
+//		"acc=?":"123", "age>=?":20, "role<>?":"admin",
+//	}
+//	// => WHERE acc=? AND age>=? AND role<>?
+//	// => args ("123", 20, "admin")
 func (b *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
 	b.wheres = where
 	return b
@@ -70,9 +76,9 @@ func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
 }
 
 // Build and output query string and args for DataProvider execute delete action.
-func (b *DeleteBuilder) Build() (string, []any) {
-	where, args := b.BuildWheres(b.wheres, b.ins, b.like) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-	limit := b.FormatLimit(b.limit)                       // LIMIT n
+func (b *DeleteBuilder) Build(sep ...string) (string, []any) {
+	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep...) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+	limit := b.FormatLimit(b.limit)                               // LIMIT n
 
 	query := "DELETE FROM %s %s %s"
 	query = fmt.Sprintf(query, b.table, where, limit)
@@ -81,8 +87,9 @@ func (b *DeleteBuilder) Build() (string, []any) {
 }
 
 // Reset builder datas for next prepare and build.
-func (b *DeleteBuilder) Reset() {
+func (b *DeleteBuilder) Reset() *DeleteBuilder {
 	clear(b.wheres)
 	b.ins, b.like = "", ""
 	b.limit = 0
+	return b
 }

@@ -46,12 +46,29 @@ func (b *UpdateBuilder) Table(table string) *UpdateBuilder {
 }
 
 // Specify the values of row to update.
+//
+//	values := KValues{
+//		"":       123456,   // Filter out empty field
+//		"Age":    16,
+//		"Male":   true,
+//		"Name":   "ZhangSan",
+//		"Height": 176.8,
+//		"Secure": nil,      // Filter out nil value
+//	}
+//	// => Age=?, Male=?, Name=?, Height=?
+//	// => []any{16, true, "ZhangSan", 176.8}
 func (b *UpdateBuilder) Values(row KValues) *UpdateBuilder {
 	b.values = row
 	return b
 }
 
 // Specify the where conditions and args for query.
+//
+//	where = provider.Wheres{
+//		"acc=?":"123", "age>=?":20, "role<>?":"admin",
+//	}
+//	// => WHERE acc=? AND age>=? AND role<>?
+//	// => args ("123", 20, "admin")
 func (b *UpdateBuilder) Wheres(where Wheres) *UpdateBuilder {
 	b.wheres = where
 	return b
@@ -70,9 +87,9 @@ func (b *UpdateBuilder) Like(field, filter string) *UpdateBuilder {
 }
 
 // Build and output query string and args for DataProvider execute update action.
-func (b *UpdateBuilder) Build() (string, []any) {
-	tags, args := b.FormatSets(b.values)                 // SET v1=?,v2=?...
-	where, wvs := b.BuildWheres(b.wheres, b.ins, b.like) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+func (b *UpdateBuilder) Build(sep ...string) (string, []any) {
+	tags, args := b.FormatSets(b.values)                         // SET v1=?,v2=?...
+	where, wvs := b.BuildWheres(b.wheres, b.ins, b.like, sep...) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	args = append(args, wvs)
 
 	query := "UPDATE %s SET %s %s"
@@ -82,8 +99,9 @@ func (b *UpdateBuilder) Build() (string, []any) {
 }
 
 // Reset builder datas for next prepare and build.
-func (b *UpdateBuilder) Reset() {
+func (b *UpdateBuilder) Reset() *UpdateBuilder {
 	clear(b.values)
 	clear(b.wheres)
 	b.ins, b.like = "", ""
+	return b
 }

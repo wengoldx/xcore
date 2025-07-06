@@ -17,15 +17,20 @@ import (
 	"github.com/wengoldx/xcore/utils"
 )
 
+// A interface implement by CUDA builder to build
+// a sql string for database access.
 type SQLBuilder interface {
-	Build() (string, []any)
+	Build(sep ...string) (string, []any) // Build sql string and return args.
 }
 
+// The base builder to support util methods to simple build a
+// sql string for database CUDA actions.
 type BaseBuilder struct{}
 
 var _ SQLBuilder = (*BaseBuilder)(nil)
 
-func (b *BaseBuilder) Build() (string, []any) {
+// Empty build method, override by CUDA builders.
+func (b *BaseBuilder) Build(sep ...string) (string, []any) {
 	return "", []any{} // not implement Build method.
 }
 
@@ -224,8 +229,8 @@ func (b *BaseBuilder) CheckLimit(query string) string {
 //	- WHERE field LIKE '%%filter%%'
 //
 // Use FormatWheres(), FormatWhereIn() to format Wheres data or where in condition.
-func (b *BaseBuilder) BuildWheres(wheres Wheres, ins, like string) (string, []any) {
-	where, args := b.FormatWheres(wheres) // WHERE wheres
+func (b *BaseBuilder) BuildWheres(wheres Wheres, ins, like string, sep ...string) (string, []any) {
+	where, args := b.FormatWheres(wheres, sep...) // WHERE wheres
 	if where != "" {
 		// WHERE wheres AND field IN (v1,v2...)
 		if ins != "" {
