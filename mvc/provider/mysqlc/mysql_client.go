@@ -111,8 +111,8 @@ func GetProvider() *pd.BaseProvider {
 }
 
 // Create and return BaseProvider instance with MySQL client.
-func GetSimpler() *pd.SimpleProvider {
-	return pd.NewSimpler(Select())
+func GetSimpler(opts ...pd.Option) *pd.SimpleProvider {
+	return pd.NewSimpler(Select(), opts...)
 }
 
 // Return MySQL database client, maybe nil when not call Connect() before.

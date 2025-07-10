@@ -10,28 +10,47 @@
 
 package provider
 
-import "github.com/wengoldx/xcore/invar"
+import (
+	"github.com/wengoldx/xcore/invar"
+)
 
 // Simple provider for using builder to build query string
 // and args for database datas access.
 type SimpleProvider struct {
 	BaseProvider
-
-	Table    string         // Table name
-	Querier  *QueryBuilder  //
-	Inserter *InsertBuilder //
-	Updater  *UpdateBuilder //
-	Deleter  *DeleteBuilder //
+	table string // Table name
 }
 
 // var _ DataProvider = (*SimpleProvider)(nil)
 
 // Create a SimpleProvider with given database client.
-func NewSimpler(client DBClient) *SimpleProvider {
-	return &SimpleProvider{
+func NewSimpler(client DBClient, opts ...Option) *SimpleProvider {
+	sp := &SimpleProvider{
 		BaseProvider: BaseProvider{client, &BaseBuilder{}},
 	}
+
+	for _, optFunc := range opts {
+		optFunc(sp)
+	}
+	return sp
 }
+
+// The setter for set SimpleProvider fields.
+type Option func(provider *SimpleProvider)
+
+// Specify the table name.
+func WithTable(table string) Option {
+	return func(provider *SimpleProvider) {
+		provider.table = table
+	}
+}
+
+/* Create and return builder instance */
+
+func (p *SimpleProvider) Querier() *QueryBuilder   { return NewQuery(p.table) }
+func (p *SimpleProvider) Inserter() *InsertBuilder { return NewInsert(p.table) }
+func (p *SimpleProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table) }
+func (p *SimpleProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table) }
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
