@@ -45,12 +45,14 @@ func WithTable(table string) Option {
 	}
 }
 
-/* Create and return builder instance */
+/* ------------------------------------------------------------------- */
+/* Create and Return Builder Instance                                  */
+/* ------------------------------------------------------------------- */
 
-func (p *SimpleProvider) Querier() *QueryBuilder   { return NewQuery(p.table) }
-func (p *SimpleProvider) Inserter() *InsertBuilder { return NewInsert(p.table) }
-func (p *SimpleProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table) }
-func (p *SimpleProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table) }
+func (p *SimpleProvider) Querier() *QueryBuilder   { return NewQuery(p.table).Master(p) }
+func (p *SimpleProvider) Inserter() *InsertBuilder { return NewInsert(p.table).Master(p) }
+func (p *SimpleProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table).Master(p) }
+func (p *SimpleProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Master(p) }
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */

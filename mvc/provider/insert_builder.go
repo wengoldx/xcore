@@ -34,6 +34,24 @@ func NewInsert(table string) *InsertBuilder {
 	return &InsertBuilder{table: table}
 }
 
+/* ------------------------------------------------------------------- */
+/* SQL Action Utils By Using master Provider                           */
+/* ------------------------------------------------------------------- */
+
+func (b *InsertBuilder) Exec() error             { return b.master.Exec(b) }
+func (b *InsertBuilder) Insert() (int64, error)  { return b.master.Insert(b) }
+func (b *InsertBuilder) Inserts() (int64, error) { return b.master.Inserts(b) }
+
+/* ------------------------------------------------------------------- */
+/* SQL Action Builder Methonds                                         */
+/* ------------------------------------------------------------------- */
+
+// Specify master provider.
+func (b *InsertBuilder) Master(master *SimpleProvider) *InsertBuilder {
+	b.master = master
+	return b
+}
+
 // Specify the target table for query.
 func (b *InsertBuilder) Table(table string) *InsertBuilder {
 	b.table = table
@@ -69,7 +87,7 @@ func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 }
 
 // Build and output query string and args for DataProvider execute insert action.
-func (b *InsertBuilder) Build(seq ...string) (string, []any) {
+func (b *InsertBuilder) Build() (string, []any) {
 	if cnt := len(b.rows); cnt == 1 {
 		// INSERT table (v1, v2...) VALUES (?,?...)'
 		fields, holders, args := b.FormatInserts(b.rows[0])

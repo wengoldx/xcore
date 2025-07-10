@@ -13,6 +13,8 @@ package provider
 import (
 	"fmt"
 	"strings"
+
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Build a query string for sql query.
@@ -29,6 +31,7 @@ type QueryBuilder struct {
 	table  string   // Table name for query
 	tags   []string // Target fields for output values.
 	wheres Wheres   // Where conditions and args values.
+	sep    string   // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
 	ins    string   // Where in conditions.
 	like   string   // Like conditions string.
 	order  string   // Keyword for order by condition.
@@ -40,6 +43,26 @@ var _ SQLBuilder = (*QueryBuilder)(nil)
 // Create a QueryBuilder instance to build a query string.
 func NewQuery(table string) *QueryBuilder {
 	return &QueryBuilder{table: table}
+}
+
+/* ------------------------------------------------------------------- */
+/* SQL Action Utils By Using master Provider                           */
+/* ------------------------------------------------------------------- */
+
+func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }
+func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }
+func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }
+func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }
+func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }
+
+/* ------------------------------------------------------------------- */
+/* SQL Action Builder Methonds                                         */
+/* ------------------------------------------------------------------- */
+
+// Specify master provider.
+func (b *QueryBuilder) Master(master *SimpleProvider) *QueryBuilder {
+	b.master = master
+	return b
 }
 
 // Specify the target table for query.
@@ -72,6 +95,15 @@ func (b *QueryBuilder) WhereIn(field string, args []any) *QueryBuilder {
 	return b
 }
 
+// Specify the where in condition with field and args for query.
+func (b *QueryBuilder) WhereSep(sep string) *QueryBuilder {
+	switch s := strings.ToUpper(sep); s {
+	case "AND", "OR", " " /* for none where connector */ :
+		b.sep = s
+	}
+	return b
+}
+
 // Specify the order by condition for query.
 func (b *QueryBuilder) OrderBy(field string, desc bool) *QueryBuilder {
 	b.order = b.FormatOrder(field, desc)
@@ -91,10 +123,12 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 }
 
 // Build and output query string and args for DataProvider execute query action.
-func (b *QueryBuilder) Build(sep ...string) (string, []any) {
-	tags := strings.Join(b.tags, ",")                             // out1,out2,out3...
-	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep...) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-	limit := b.FormatLimit(b.limit)                               // LIMIT n
+func (b *QueryBuilder) Build() (string, []any) {
+	sep := utils.Condition(b.sep == "", "AND", b.sep)
+
+	tags := strings.Join(b.tags, ",")                          // out1,out2,out3...
+	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+	limit := b.FormatLimit(b.limit)                            // LIMIT n
 
 	query := "SELECT %s FROM %s %s %s %s"
 	query = fmt.Sprintf(query, tags, b.table, where, b.order, limit)

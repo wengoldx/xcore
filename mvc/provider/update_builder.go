@@ -13,6 +13,8 @@ package provider
 import (
 	"fmt"
 	"strings"
+
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Build a query string for sql update.
@@ -28,6 +30,7 @@ type UpdateBuilder struct {
 	table  string  // Table name for update
 	values KValues // Target fields and values to update.
 	wheres Wheres  // Where conditions and args values.
+	sep    string  // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
 	ins    string  // Where in conditions.
 	like   string  // Like conditions string.
 }
@@ -37,6 +40,23 @@ var _ SQLBuilder = (*UpdateBuilder)(nil)
 // Create a UpdateBuilder instance to build a query string.
 func NewUpdate(table string) *UpdateBuilder {
 	return &UpdateBuilder{table: table}
+}
+
+/* ------------------------------------------------------------------- */
+/* SQL Action Utils By Using master Provider                           */
+/* ------------------------------------------------------------------- */
+
+func (b *UpdateBuilder) Exec() error   { return b.master.Exec(b) }
+func (b *UpdateBuilder) Update() error { return b.master.Update(b) }
+
+/* ------------------------------------------------------------------- */
+/* SQL Action Builder Methonds                                         */
+/* ------------------------------------------------------------------- */
+
+// Specify master provider.
+func (b *UpdateBuilder) Master(master *SimpleProvider) *UpdateBuilder {
+	b.master = master
+	return b
 }
 
 // Specify the target table for query.
@@ -80,6 +100,15 @@ func (b *UpdateBuilder) WhereIn(field string, args []any) *UpdateBuilder {
 	return b
 }
 
+// Specify the where in condition with field and args for query.
+func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
+	switch s := strings.ToUpper(sep); s {
+	case "AND", "OR", " " /* for none where connector */ :
+		b.sep = s
+	}
+	return b
+}
+
 // Specify the like condition for query.
 func (b *UpdateBuilder) Like(field, filter string) *UpdateBuilder {
 	b.like = b.FormatLike(field, filter)
@@ -87,9 +116,11 @@ func (b *UpdateBuilder) Like(field, filter string) *UpdateBuilder {
 }
 
 // Build and output query string and args for DataProvider execute update action.
-func (b *UpdateBuilder) Build(sep ...string) (string, []any) {
-	tags, args := b.FormatSets(b.values)                         // SET v1=?,v2=?...
-	where, wvs := b.BuildWheres(b.wheres, b.ins, b.like, sep...) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+func (b *UpdateBuilder) Build() (string, []any) {
+	sep := utils.Condition(b.sep == "", "AND", b.sep)
+
+	tags, args := b.FormatSets(b.values)                      // SET v1=?,v2=?...
+	where, wvs := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	args = append(args, wvs)
 
 	query := "UPDATE %s SET %s %s"
