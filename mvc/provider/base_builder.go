@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -49,6 +50,7 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any)
 	if len(wheres) > 0 {
 		conditions := []string{}
 		for condition, arg := range wheres {
+			logger.D("- Where:", condition, "-", "arg:", arg)
 			if arg != nil {
 				conditions = append(conditions, condition)
 				args = append(args, arg)
@@ -71,6 +73,7 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any)
 		}
 		where = "WHERE " + strings.Join(conditions, connector)
 	}
+	logger.D("Formated where:", where, "with arg:", args)
 	return where, args
 }
 
