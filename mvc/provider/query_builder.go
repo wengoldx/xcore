@@ -55,6 +55,9 @@ func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }
 func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }
 func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }
 func (b *QueryBuilder) OneOuts(outs ...any) error   { return b.master.OneOuts(b, outs...) }
+func (b *QueryBuilder) OneDone(done DoneCallback, outs ...any) error {
+	return b.master.OneDone(b, done, outs...)
+}
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Builder Methonds                                         */
