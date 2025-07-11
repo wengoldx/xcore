@@ -38,9 +38,9 @@ func NewInsert(table string) *InsertBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *InsertBuilder) Exec() error             { return b.master.Exec(b) }
-func (b *InsertBuilder) Insert() (int64, error)  { return b.master.Insert(b) }
-func (b *InsertBuilder) Inserts() (int64, error) { return b.master.Inserts(b) }
+func (b *InsertBuilder) Exec() error            { return b.master.Exec(b) }
+func (b *InsertBuilder) Insert() (int64, error) { return b.master.Insert(b) }
+func (b *InsertBuilder) InsertUncheck() error   { return b.master.InsertUncheck(b) }
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Builder Methonds                                         */

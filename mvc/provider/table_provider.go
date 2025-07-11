@@ -139,27 +139,30 @@ func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 	return p.BaseProvider.Query(query, cb, args...)
 }
 
-// Insert the given values as a record into target table, and return
-// the inserted id of the 'auto increment' primary key field.
+// Insert the given rows into target table and return inserted row id of
+// single value, or inserted rows count of multiple values.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
 func (p *TableProvider) Insert(builder *InsertBuilder) (int64, error) {
-	if cnt := len(builder.rows); cnt != 1 {
-		return -1, invar.ErrInvalidData
-	}
 	query, args := builder.Build()
-	return p.BaseProvider.Insert(query, args...)
+	if cnt := len(builder.rows); cnt <= 0 {
+		return -1, invar.ErrInvalidData
+	} else if cnt == 1 {
+		return p.BaseProvider.Insert(query, args...)
+	} else {
+		return p.BaseProvider.ExecResult(query)
+	}
 }
 
 // Insert the given rows into target table without check insert counts.
 //
-// Use BaseProvider.Inserts() method to direct execute query string.
-func (p *TableProvider) Inserts(builder *InsertBuilder) (int64, error) {
-	if cnt := len(builder.rows); cnt < 1 {
-		return -1, invar.ErrInvalidData
+// Use BaseProvider.Insert() method to direct execute query string.
+func (p *TableProvider) InsertUncheck(builder *InsertBuilder) error {
+	if cnt := len(builder.rows); cnt <= 0 {
+		return invar.ErrInvalidData
 	}
-	query, _ := builder.Build()
-	return p.BaseProvider.ExecResult(query)
+	query, args := builder.Build()
+	return p.BaseProvider.Exec(query, args)
 }
 
 // Update target record by given builder to build a query string, it will
