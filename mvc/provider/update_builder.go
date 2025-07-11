@@ -129,7 +129,7 @@ func (b *UpdateBuilder) Build() (string, []any) {
 
 	tags, args := b.FormatSets(b.values)                      // SET v1=?,v2=?...
 	where, wvs := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-	args = append(args, wvs)
+	args = append(args, wvs...)
 
 	query := "UPDATE %s SET %s %s"
 	query = fmt.Sprintf(query, b.table, tags, where)
