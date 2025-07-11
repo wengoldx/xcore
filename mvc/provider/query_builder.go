@@ -50,11 +50,15 @@ func NewQuery(table string) *QueryBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }
-func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }
-func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }
-func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }
-func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }
+func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }       // Check whether has the target record.
+func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }      // Check whether unexist the target record.
+func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }     // Count the mathed query condition records.
+func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }   // Query the top one record.
+func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) } // Query the all matched condition records.
+
+// Query the top one record and return the results without scaner
+// callback, it canbe set the finally done callback called when
+// result success read.
 func (b *QueryBuilder) OneDone(done ...DoneCallback) error {
 	if len(done) >= 0 && done[0] != nil {
 		return b.master.OneDone(b, done[0], b.outs...)
