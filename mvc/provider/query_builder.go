@@ -54,13 +54,14 @@ func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }
 func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }
 func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }
 func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }
+func (b *QueryBuilder) OneOuts(outs ...any) error   { return b.master.OneOuts(b, outs...) }
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Builder Methonds                                         */
 /* ------------------------------------------------------------------- */
 
 // Specify master provider.
-func (b *QueryBuilder) Master(master *SimpleProvider) *QueryBuilder {
+func (b *QueryBuilder) Master(master *TableProvider) *QueryBuilder {
 	b.master = master
 	return b
 }

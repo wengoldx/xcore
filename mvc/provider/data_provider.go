@@ -22,6 +22,9 @@ type InsertCallback func(index int) string
 // A callback for handle transaction by call provider.Trans().
 type TransCallback func(tx *sql.Tx) error
 
+// A callback for single record query finaly notify.
+type DoneCallback func()
+
 // A interface for data provider export util methods.
 type DataProvider interface {
 	Has(query string, args ...any) (bool, error)

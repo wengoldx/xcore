@@ -54,7 +54,7 @@ func (b *UpdateBuilder) Update() error { return b.master.Update(b) }
 /* ------------------------------------------------------------------- */
 
 // Specify master provider.
-func (b *UpdateBuilder) Master(master *SimpleProvider) *UpdateBuilder {
+func (b *UpdateBuilder) Master(master *TableProvider) *UpdateBuilder {
 	b.master = master
 	return b
 }

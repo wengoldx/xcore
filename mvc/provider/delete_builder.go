@@ -54,7 +54,7 @@ func (b *DeleteBuilder) Delete() error { return b.master.Delete(b) }
 /* ------------------------------------------------------------------- */
 
 // Specify master provider.
-func (b *DeleteBuilder) Master(master *SimpleProvider) *DeleteBuilder {
+func (b *DeleteBuilder) Master(master *TableProvider) *DeleteBuilder {
 	b.master = master
 	return b
 }

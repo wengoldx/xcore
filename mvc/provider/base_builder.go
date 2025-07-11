@@ -26,7 +26,7 @@ type SQLBuilder interface {
 // The base builder to support util methods to simple build a
 // sql string for database CUDA actions.
 type BaseBuilder struct {
-	master *SimpleProvider // Simple provider for execute sql actions.
+	master *TableProvider // Table provider for execute sql actions.
 }
 
 var _ SQLBuilder = (*BaseBuilder)(nil)

@@ -14,18 +14,18 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
-// Simple provider for using builder to build query string
+// Table provider for using builder to build query string
 // and args for database datas access.
-type SimpleProvider struct {
+type TableProvider struct {
 	BaseProvider
 	table string // Table name
 }
 
-// var _ DataProvider = (*SimpleProvider)(nil)
+// var _ DataProvider = (*TableProvider)(nil)
 
-// Create a SimpleProvider with given database client.
-func NewSimpler(client DBClient, opts ...Option) *SimpleProvider {
-	sp := &SimpleProvider{
+// Create a TableProvider with given database client.
+func NewTabler(client DBClient, opts ...Option) *TableProvider {
+	sp := &TableProvider{
 		BaseProvider: BaseProvider{client, &BaseBuilder{}},
 	}
 
@@ -35,12 +35,12 @@ func NewSimpler(client DBClient, opts ...Option) *SimpleProvider {
 	return sp
 }
 
-// The setter for set SimpleProvider fields.
-type Option func(provider *SimpleProvider)
+// The setter for set TableProvider fields.
+type Option func(provider *TableProvider)
 
 // Specify the table name.
 func WithTable(table string) Option {
-	return func(provider *SimpleProvider) {
+	return func(provider *TableProvider) {
 		provider.table = table
 	}
 }
@@ -49,10 +49,10 @@ func WithTable(table string) Option {
 /* Create and Return Builder Instance                                  */
 /* ------------------------------------------------------------------- */
 
-func (p *SimpleProvider) Querier() *QueryBuilder   { return NewQuery(p.table).Master(p) }
-func (p *SimpleProvider) Inserter() *InsertBuilder { return NewInsert(p.table).Master(p) }
-func (p *SimpleProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table).Master(p) }
-func (p *SimpleProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Master(p) }
+func (p *TableProvider) Querier() *QueryBuilder   { return NewQuery(p.table).Master(p) }
+func (p *TableProvider) Inserter() *InsertBuilder { return NewInsert(p.table).Master(p) }
+func (p *TableProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table).Master(p) }
+func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Master(p) }
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
@@ -62,7 +62,7 @@ func (p *SimpleProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).M
 // build query string.
 //
 // Use None() method to check whether unexist.
-func (p *SimpleProvider) Has(builder *QueryBuilder) (bool, error) {
+func (p *TableProvider) Has(builder *QueryBuilder) (bool, error) {
 	query, args := builder.Build()
 	return p.BaseProvider.Has(query, args...)
 }
@@ -71,7 +71,7 @@ func (p *SimpleProvider) Has(builder *QueryBuilder) (bool, error) {
 // build query string.
 //
 // Use Has() method to check has result.
-func (p *SimpleProvider) None(builder *QueryBuilder) (bool, error) {
+func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
 	has, err := p.Has(builder)
 	return !has, err
 }
@@ -80,7 +80,7 @@ func (p *SimpleProvider) None(builder *QueryBuilder) (bool, error) {
 // return 0 when notfound anyone.
 //
 // Use BaseProvider.Count() method to direct execute query string.
-func (p *SimpleProvider) Count(builder *QueryBuilder) (int, error) {
+func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
 	query, args := builder.Build()
 	return p.BaseProvider.Count(query, args...)
 }
@@ -89,7 +89,7 @@ func (p *SimpleProvider) Count(builder *QueryBuilder) (int, error) {
 // UpdateBuilder or DeleteBuilder, it not check the affected row counts.
 //
 // Use BaseProvider.Exec() method to direct execute query string.
-func (p *SimpleProvider) Exec(builder SQLBuilder) error {
+func (p *TableProvider) Exec(builder SQLBuilder) error {
 	query, args := builder.Build()
 	return p.BaseProvider.Exec(query, args...)
 }
@@ -98,7 +98,7 @@ func (p *SimpleProvider) Exec(builder SQLBuilder) error {
 // UpdateBuilder or DeleteBuilder, and check the affected row counts.
 //
 // Use BaseProvider.Exec() method to direct execute query string.
-func (p *SimpleProvider) ExecResult(builder SQLBuilder) (int64, error) {
+func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
 	query, args := builder.Build()
 	return p.BaseProvider.ExecResult(query, args...)
 }
@@ -107,16 +107,34 @@ func (p *SimpleProvider) ExecResult(builder SQLBuilder) (int64, error) {
 // from scan callback.
 //
 // Use BaseProvider.One() method to direct execute query string.
-func (p *SimpleProvider) One(builder *QueryBuilder, cb ScanCallback) error {
+func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
 	query, args := builder.Build()
 	return p.BaseProvider.One(query, cb, args...)
+}
+
+// Query one record by given builder builded query string, and return the
+// result datas by given outs params.
+//
+// Use BaseProvider.OneDone() method to direct execute query string.
+func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
+	return p.OneDone(builder, nil, outs...)
+}
+
+// Query one record by given builder builded query string, and return the
+// result datas by given outs params, finally call done callback to translate
+// the outs datas before provider method returned.
+//
+// Use BaseProvider.OneDone() method to direct execute query string.
+func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs ...any) error {
+	query, args := builder.Build()
+	return p.BaseProvider.OneDone(query, outs, done, args...)
 }
 
 // Query records by given builder builded query string, and read datas
 // from scan callback.
 //
 // Use BaseProvider.Query() method to direct execute query string.
-func (p *SimpleProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
+func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 	query, args := builder.Build()
 	return p.BaseProvider.Query(query, cb, args...)
 }
@@ -125,7 +143,7 @@ func (p *SimpleProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 // the inserted id of the 'auto increment' primary key field.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *SimpleProvider) Insert(builder *InsertBuilder) (int64, error) {
+func (p *TableProvider) Insert(builder *InsertBuilder) (int64, error) {
 	if cnt := len(builder.rows); cnt != 1 {
 		return -1, invar.ErrInvalidData
 	}
@@ -136,7 +154,7 @@ func (p *SimpleProvider) Insert(builder *InsertBuilder) (int64, error) {
 // Insert the given rows into target table without check insert counts.
 //
 // Use BaseProvider.Inserts() method to direct execute query string.
-func (p *SimpleProvider) Inserts(builder *InsertBuilder) (int64, error) {
+func (p *TableProvider) Inserts(builder *InsertBuilder) (int64, error) {
 	if cnt := len(builder.rows); cnt < 1 {
 		return -1, invar.ErrInvalidData
 	}
@@ -148,7 +166,7 @@ func (p *SimpleProvider) Inserts(builder *InsertBuilder) (int64, error) {
 // return invar.ErrNotChanged error when none updated.
 //
 // Use BaseProvider.Update() method to direct execute query string.
-func (p *SimpleProvider) Update(builder *UpdateBuilder) error {
+func (p *TableProvider) Update(builder *UpdateBuilder) error {
 	query, args := builder.Build()
 	return p.BaseProvider.Update(query, args...)
 }
@@ -157,7 +175,7 @@ func (p *SimpleProvider) Update(builder *UpdateBuilder) error {
 // return invar.ErrNotChanged error when none deleted.
 //
 // Use BaseProvider.Delete() method to direct execute query string.
-func (p *SimpleProvider) Delete(builder *DeleteBuilder) error {
+func (p *TableProvider) Delete(builder *DeleteBuilder) error {
 	query, args := builder.Build()
 	return p.BaseProvider.Delete(query, args...)
 }

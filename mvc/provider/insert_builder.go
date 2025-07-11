@@ -47,7 +47,7 @@ func (b *InsertBuilder) Inserts() (int64, error) { return b.master.Inserts(b) }
 /* ------------------------------------------------------------------- */
 
 // Specify master provider.
-func (b *InsertBuilder) Master(master *SimpleProvider) *InsertBuilder {
+func (b *InsertBuilder) Master(master *TableProvider) *InsertBuilder {
 	b.master = master
 	return b
 }

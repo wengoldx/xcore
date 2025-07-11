@@ -145,6 +145,34 @@ func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
 	return cb(rows)
 }
 
+// Execute query string to get the top one record with outs non-nil params,
+// it will auto append 'LIMIT 1' as tail in query string for high-performance.
+//
+//	Use QueryBuilder to build a query string and agrs.
+func (p *BaseProvider) OneDone(query string, outs []any, done DoneCallback, args ...any) error {
+	if !p.prepared() || query == "" || len(outs) <= 0 {
+		return invar.ErrBadDBConnect
+	}
+
+	query = p.Builder.CheckLimit(query)
+	rows, err := p.client.DB().Query(query, args...)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	if !rows.Next() {
+		return invar.ErrNotFound
+	}
+	rows.Columns()
+	if err := rows.Scan(outs...); err != nil {
+		return err
+	} else if done != nil {
+		done()
+	}
+	return nil
+}
+
 // Execute query string with scan callback to read result records.
 //
 //	Use QueryBuilder to build a query string and agrs.

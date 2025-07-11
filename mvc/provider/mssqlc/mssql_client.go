@@ -109,9 +109,9 @@ func GetProvider() *pd.BaseProvider {
 	return pd.NewProvider(Select())
 }
 
-// Create and return SimpleProvider instance with MSSQL client.
-func GetSimpler(opts ...pd.Option) *pd.SimpleProvider {
-	return pd.NewSimpler(Select(), opts...)
+// Create and return TableProvider instance with MSSQL client.
+func GetTabler(opts ...pd.Option) *pd.TableProvider {
+	return pd.NewTabler(Select(), opts...)
 }
 
 // Return MSSQL database client, maybe nil when not call Connect() before.
