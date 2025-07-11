@@ -93,9 +93,10 @@ func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 //
 //	- desc = true : ORDER BY field DESC
 //	- desc = false: ORDER BY field ASC
-func (b *BaseBuilder) FormatOrder(field string, desc bool) string {
+func (b *BaseBuilder) FormatOrder(field string, desc ...bool) string {
 	if field != "" {
-		order := utils.Condition(desc, "DESC", "ASC")
+		isdesc := utils.Variable(desc, true) // default for DESC.
+		order := utils.Condition(isdesc, "DESC", "ASC")
 		return fmt.Sprintf("ORDER BY %s %s", field, order)
 	}
 	return ""

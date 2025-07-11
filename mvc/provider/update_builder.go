@@ -75,8 +75,8 @@ func (b *UpdateBuilder) Table(table string) *UpdateBuilder {
 //		"Height": 176.8,
 //		"Secure": nil,      // Filter out nil value
 //	}
-//	// => Age=?, Male=?, Name=?, Height=?
-//	// => []any{16, true, "ZhangSan", 176.8}
+//	// => SET Age=?, Male=?, Name=?, Height=?
+//	// => values: []any{16, true, "ZhangSan", 176.8}
 func (b *UpdateBuilder) Values(row KValues) *UpdateBuilder {
 	b.values = row
 	return b
@@ -95,6 +95,8 @@ func (b *UpdateBuilder) Wheres(where Wheres) *UpdateBuilder {
 }
 
 // Specify the where in condition with field and args for query.
+//
+//	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
 func (b *UpdateBuilder) WhereIn(field string, args []any) *UpdateBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
@@ -110,12 +112,18 @@ func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
 }
 
 // Specify the like condition for query.
+//
+//	builder.Like("acc", "zhang") // => acc LIKE '%%zhang%%'
 func (b *UpdateBuilder) Like(field, filter string) *UpdateBuilder {
 	b.like = b.FormatLike(field, filter)
 	return b
 }
 
 // Build and output query string and args for DataProvider execute update action.
+//
+//	UPDATE table
+//		SET v1=?, v2=?, v3=?...
+//		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 func (b *UpdateBuilder) Build() (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 

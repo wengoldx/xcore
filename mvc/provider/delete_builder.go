@@ -78,6 +78,8 @@ func (b *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
 }
 
 // Specify the where in condition with field and args for query.
+//
+//	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
 func (b *DeleteBuilder) WhereIn(field string, args []any) *DeleteBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
@@ -93,18 +95,26 @@ func (b *DeleteBuilder) WhereSep(sep string) *DeleteBuilder {
 }
 
 // Specify the like condition for query.
+//
+//	builder.Like("acc", "zhang") // => acc LIKE '%%zhang%%'
 func (b *DeleteBuilder) Like(field, filter string) *DeleteBuilder {
 	b.like = b.FormatLike(field, filter)
 	return b
 }
 
 // Specify the limit result for query.
+//
+//	builder.Limit(20) // => LIMIT 20
 func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
 	b.limit = limit
 	return b
 }
 
 // Build and output query string and args for DataProvider execute delete action.
+//
+//	DELETE FROM table
+//		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		LIMIT limit.
 func (b *DeleteBuilder) Build() (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'

@@ -19,7 +19,7 @@ import (
 
 // Build a query string for sql query.
 //
-//	SELECT outs FROM table
+//	SELECT tags FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
 //		LIMIT limit.
@@ -71,7 +71,7 @@ func (b *QueryBuilder) OneDone(done ...DoneCallback) error {
 /* SQL Action Builder Methonds                                         */
 /* ------------------------------------------------------------------- */
 
-// Specify master provider.
+// Specify master table provider.
 func (b *QueryBuilder) Master(master *TableProvider) *QueryBuilder {
 	b.master = master
 	return b
@@ -109,6 +109,8 @@ func (b *QueryBuilder) Wheres(where Wheres) *QueryBuilder {
 }
 
 // Specify the where in condition with field and args for query.
+//
+//	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
 func (b *QueryBuilder) WhereIn(field string, args []any) *QueryBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
@@ -124,24 +126,36 @@ func (b *QueryBuilder) WhereSep(sep string) *QueryBuilder {
 }
 
 // Specify the order by condition for query.
-func (b *QueryBuilder) OrderBy(field string, desc bool) *QueryBuilder {
-	b.order = b.FormatOrder(field, desc)
+//
+//	builder.OrderBy("id")          // => ORDER BY id DESC
+//	builder.OrderBy("slug", false) // => ORDER BY slug ASC
+func (b *QueryBuilder) OrderBy(field string, desc ...bool) *QueryBuilder {
+	b.order = b.FormatOrder(field, desc...)
 	return b
 }
 
 // Specify the like condition for query.
+//
+//	builder.Like("acc", "zhang") // => acc LIKE '%%zhang%%'
 func (b *QueryBuilder) Like(field, filter string) *QueryBuilder {
 	b.like = b.FormatLike(field, filter)
 	return b
 }
 
 // Specify the limit result for query.
+//
+//	builder.Limit(20) // => LIMIT 20
 func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 	b.limit = limit
 	return b
 }
 
 // Build and output query string and args for DataProvider execute query action.
+//
+//	SELECT tags FROM table
+//		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		ORDER BY order DESC
+//		LIMIT limit.
 func (b *QueryBuilder) Build() (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 

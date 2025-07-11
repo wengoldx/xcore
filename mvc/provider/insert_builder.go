@@ -17,7 +17,7 @@ import (
 
 // Build a query string for sql insert.
 //
-//	INSERT table (tags) VALUES (?, ?, ?)
+//	INSERT table (tags) VALUES (?, ?, ?)...
 //
 // See QueryBuilder, UpdateBuilder, DeleteBuilder.
 type InsertBuilder struct {
@@ -87,6 +87,8 @@ func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 }
 
 // Build and output query string and args for DataProvider execute insert action.
+//
+//	INSERT table (tags) VALUES (?, ?, ?)...
 func (b *InsertBuilder) Build() (string, []any) {
 	if cnt := len(b.rows); cnt == 1 {
 		// INSERT table (v1, v2...) VALUES (?,?...)'
