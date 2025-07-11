@@ -76,15 +76,18 @@ func NewMySQL(opts ...Option) *MySQL {
 //
 // This method useful for beego project easy to connect a mysql database.
 func OpenMySQL(charset string, session ...string) error {
-	return OpenWithOptions(charset, LoadOptions(session...))
+	return OpenWithOptions(LoadOptions(session...), charset)
 }
 
 // Create a MySQL client by given options, and connect with database.
-func OpenWithOptions(charset string, opts Options) error {
+func OpenWithOptions(opts Options, charset ...string) error {
 	if opts.Database == "" || opts.User == "" || opts.Password == "" {
 		return invar.ErrInvalidConfigs
 	}
 
+	if len(charset) > 0 && charset[0] != "" {
+		opts.Charset = charset[0]
+	}
 	client := &MySQL{options: opts}
 	_mysqlClients[opts.Session] = client
 	return client.Connect()

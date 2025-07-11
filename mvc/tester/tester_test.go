@@ -159,7 +159,7 @@ func setupTestDatabase() error {
 	opts.Password = "123456"
 	opts.Database = "testdb"
 
-	if err := mysqlc.OpenWithOptions("utf8mb4", opts); err != nil {
+	if err := mysqlc.OpenWithOptions(opts, "utf8mb4"); err != nil {
 		return err
 	}
 	return nil
