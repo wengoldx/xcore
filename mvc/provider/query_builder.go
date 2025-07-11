@@ -60,7 +60,7 @@ func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, c
 // callback, it canbe set the finally done callback called when
 // result success read.
 func (b *QueryBuilder) OneDone(done ...DoneCallback) error {
-	if len(done) >= 0 && done[0] != nil {
+	if len(done) > 0 && done[0] != nil {
 		return b.master.OneDone(b, done[0], b.outs...)
 	} else {
 		return b.master.OneOuts(b, b.outs...)
