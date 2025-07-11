@@ -133,6 +133,6 @@ func (b *UpdateBuilder) Build() (string, []any) {
 func (b *UpdateBuilder) Reset() *UpdateBuilder {
 	clear(b.values)
 	clear(b.wheres)
-	b.ins, b.like = "", ""
+	b.sep, b.ins, b.like = "", "", ""
 	return b
 }

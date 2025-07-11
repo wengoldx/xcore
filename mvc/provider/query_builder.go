@@ -30,6 +30,7 @@ type QueryBuilder struct {
 
 	table  string   // Table name for query
 	tags   []string // Target fields for output values.
+	outs   []any    // The params output query results, only for single query.
 	wheres Wheres   // Where conditions and args values.
 	sep    string   // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
 	ins    string   // Where in conditions.
@@ -54,9 +55,12 @@ func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }
 func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }
 func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }
 func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }
-func (b *QueryBuilder) OneOuts(outs ...any) error   { return b.master.OneOuts(b, outs...) }
-func (b *QueryBuilder) OneDone(done DoneCallback, outs ...any) error {
-	return b.master.OneDone(b, done, outs...)
+func (b *QueryBuilder) OneDone(done ...DoneCallback) error {
+	if len(done) >= 0 && done[0] != nil {
+		return b.master.OneDone(b, done[0], b.outs...)
+	} else {
+		return b.master.OneOuts(b, b.outs...)
+	}
 }
 
 /* ------------------------------------------------------------------- */
@@ -75,9 +79,16 @@ func (b *QueryBuilder) Table(table string) *QueryBuilder {
 	return b
 }
 
-// Specify the target output fields for query.
+// Specify the target output fields name for query.
 func (b *QueryBuilder) Tags(tag ...string) *QueryBuilder {
 	b.tags = tag
+	return b
+}
+
+// Specify the target output params for single query, the
+// outs length must same as Tags length.
+func (b *QueryBuilder) Outs(outs ...any) *QueryBuilder {
+	b.outs = outs
 	return b
 }
 
@@ -144,7 +155,8 @@ func (b *QueryBuilder) Build() (string, []any) {
 func (b *QueryBuilder) Reset() *QueryBuilder {
 	clear(b.tags)
 	clear(b.wheres)
-	b.ins, b.like, b.order = "", "", ""
+	clear(b.outs)
+	b.sep, b.ins, b.like, b.order = "", "", "", ""
 	b.limit = 0
 	return b
 }

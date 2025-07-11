@@ -119,7 +119,7 @@ func (b *DeleteBuilder) Build() (string, []any) {
 // Reset builder datas for next prepare and build.
 func (b *DeleteBuilder) Reset() *DeleteBuilder {
 	clear(b.wheres)
-	b.ins, b.like = "", ""
+	b.sep, b.ins, b.like = "", "", ""
 	b.limit = 0
 	return b
 }
