@@ -27,6 +27,10 @@ type TransCallback func(tx *sql.Tx) error
 // A callback for single record query finaly notify.
 type DoneCallback func()
 
+/* ------------------------------------------------------------------- */
+/* Key-Value                                                           */
+/* ------------------------------------------------------------------- */
+
 // Fields name and referened values for insert or update.
 type KValues map[string]any
 
@@ -41,6 +45,10 @@ func (v *KValues) Remove(key string) *KValues {
 	delete(*v, key)
 	return v
 }
+
+/* ------------------------------------------------------------------- */
+/* Wheres                                                              */
+/* ------------------------------------------------------------------- */
 
 // Fields name and referened values for construct where condition string.
 type Wheres map[string]any
