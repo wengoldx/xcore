@@ -14,14 +14,25 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
-// Table provider for using builder to build query string
-// and args for database datas access.
+// Table provider for using builder to build query string and args for
+// database datas access.
+//
+// Usage: Define the custom provider as follow code.
+//
+//	// define the custom provider.
+//	type SampleProvider struct {
+//		provider.TableProvider
+//	}
+//	s := &SampleProvider{*mysqlc.GetTabler(
+//		provider.WithTable("sample"), //set table name.
+//	)}
+//
+// Use mysqlc.GetTabler(), mysqlc.GetTabler() to create TableProvider with
+// connected mysql or mssql database client.
 type TableProvider struct {
 	BaseProvider
 	table string // Table name
 }
-
-// var _ DataProvider = (*TableProvider)(nil)
 
 // Create a TableProvider with given database client.
 func NewTabler(client DBClient, opts ...Option) *TableProvider {

@@ -38,9 +38,9 @@ func NewInsert(table string) *InsertBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *InsertBuilder) Exec() error            { return b.master.Exec(b) }
-func (b *InsertBuilder) Insert() (int64, error) { return b.master.Insert(b) }
-func (b *InsertBuilder) InsertUncheck() error   { return b.master.InsertUncheck(b) }
+func (b *InsertBuilder) Exec() error            { return b.master.Exec(b) }          // Insert a new record without check.
+func (b *InsertBuilder) Insert() (int64, error) { return b.master.Insert(b) }        // Insert records and check inserted row id or counts.
+func (b *InsertBuilder) InsertUncheck() error   { return b.master.InsertUncheck(b) } // Insert records without result check.
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Builder Methonds                                         */
@@ -86,7 +86,7 @@ func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 	return b
 }
 
-// Build and output query string and args for DataProvider execute insert action.
+// Build the insert action sql string and args for provider to insert datas.
 //
 //	INSERT table (tags) VALUES (?, ?, ?)...
 func (b *InsertBuilder) Build() (string, []any) {

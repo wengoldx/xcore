@@ -25,8 +25,6 @@ type BaseProvider struct {
 	Builder *BaseBuilder // Base builder as utils tools.
 }
 
-var _ DataProvider = (*BaseProvider)(nil)
-
 // Create a BaseProvider with given database client.
 func NewProvider(client DBClient) *BaseProvider {
 	return &BaseProvider{client, &BaseBuilder{}}
@@ -531,4 +529,36 @@ func printHeader(header int, ps [6]int) {
 			asDivider(ps[0]), asDivider(ps[1]), asDivider(ps[2]),
 			asDivider(ps[3]), asDivider(ps[4]), asDivider(ps[5]))
 	}
+}
+
+/* ------------------------------------------------------------------- */
+/* Util Methods For package callable                                   */
+/* ------------------------------------------------------------------- */
+
+// Query the target column values and return array by callback.
+func QueryColumn[T any](builder *QueryBuilder, cb func([]T)) error {
+	if cb == nil || builder == nil || builder.master == nil || !builder.master.prepared(){
+		return invar.ErrBadDBConnect
+	}
+
+	query, args := builder.Build()
+	db := builder.master.client.DB()
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	outs := []T{}
+	for rows.Next() {
+		rows.Columns()
+
+		var v T
+		if err := rows.Scan(&v); err != nil {
+			return err
+		}
+		outs = append(outs, v)
+	}
+	cb(outs)
+	return nil
 }

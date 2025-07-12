@@ -46,8 +46,8 @@ func NewUpdate(table string) *UpdateBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *UpdateBuilder) Exec() error   { return b.master.Exec(b) }
-func (b *UpdateBuilder) Update() error { return b.master.Update(b) }
+func (b *UpdateBuilder) Exec() error   { return b.master.Exec(b) }   // Update target record without check.
+func (b *UpdateBuilder) Update() error { return b.master.Update(b) } // Update target record and check changes counts.
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Builder Methonds                                         */
@@ -119,7 +119,7 @@ func (b *UpdateBuilder) Like(field, filter string) *UpdateBuilder {
 	return b
 }
 
-// Build and output query string and args for DataProvider execute update action.
+// Build the update action sql string and args for provider to update datas.
 //
 //	UPDATE table
 //		SET v1=?, v2=?, v3=?...

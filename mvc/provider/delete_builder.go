@@ -46,8 +46,8 @@ func NewDelete(table string) *DeleteBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *DeleteBuilder) Exec() error   { return b.master.Exec(b) }
-func (b *DeleteBuilder) Delete() error { return b.master.Delete(b) }
+func (b *DeleteBuilder) Exec() error   { return b.master.Exec(b) }   // Delete record without check.
+func (b *DeleteBuilder) Delete() error { return b.master.Delete(b) } // Delete record and check deleted counts.
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Builder Methonds                                         */
@@ -110,7 +110,7 @@ func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
 	return b
 }
 
-// Build and output query string and args for DataProvider execute delete action.
+// Build the delete action sql string and args for provider to delete datas.
 //
 //	DELETE FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'

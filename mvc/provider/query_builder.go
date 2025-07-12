@@ -150,7 +150,7 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 	return b
 }
 
-// Build and output query string and args for DataProvider execute query action.
+// Build the query action sql string and args for provider to query datas.
 //
 //	SELECT tags FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
