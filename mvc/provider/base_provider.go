@@ -495,20 +495,17 @@ func defPaddings() [6]int { return [6]int{5, 4, 11, 7, 3, 5} }
 // Tial ' ' chars into given text if length over max.
 func withSpan(text string, max int) string {
 	if cnt := len(text); cnt < max {
-		for i := 0; i < max-cnt; i++ {
-			text += " "
-		}
+		text += strings.Repeat(" ", max-cnt)
 	}
 	return text
 }
 
 // Get max length divider as '---'.
 func asDivider(max int) string {
-	devider := ""
-	for i := 0; i < max; i++ {
-		devider += "-"
+	if max > 0 {
+		return strings.Repeat("-", max)
 	}
-	return devider
+	return ""
 }
 
 // Print table columns labels on formated.
