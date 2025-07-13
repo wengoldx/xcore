@@ -29,6 +29,7 @@ type QueryBuilder struct {
 	BaseBuilder
 
 	table  string   // Table name for query
+	joins  Joins    // Table-Alias for multi-table joins.
 	tags   []string // Target fields for output values.
 	outs   []any    // The params output query results, only for single query.
 	wheres Wheres   // Where conditions and args values.
@@ -80,6 +81,12 @@ func (b *QueryBuilder) Master(master *TableProvider) *QueryBuilder {
 // Specify the target table for query.
 func (b *QueryBuilder) Table(table string) *QueryBuilder {
 	b.table = table
+	return b
+}
+
+// Specify the table-alias joins for query.
+func (b *QueryBuilder) Joins(tables Joins) *QueryBuilder {
+	b.joins = tables
 	return b
 }
 
@@ -152,7 +159,7 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 
 // Build the query action sql string and args for provider to query datas.
 //
-//	SELECT tags FROM table
+//	SELECT tags FROM [table | table1 AS a, table2 AS b, ...]
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
 //		LIMIT limit.
@@ -163,8 +170,11 @@ func (b *QueryBuilder) Build() (string, []any) {
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	limit := b.FormatLimit(b.limit)                            // LIMIT n
 
+	joins := b.FormatJoins(b.joins)                       // table1 AS a, table2 AS b
+	table := utils.Condition(joins != "", joins, b.table) // priority use of joined tables, or use b.table
+
 	query := "SELECT %s FROM %s %s %s %s"
-	query = fmt.Sprintf(query, tags, b.table, where, b.order, limit)
+	query = fmt.Sprintf(query, tags, table, where, b.order, limit)
 	query = strings.TrimSuffix(query, " ")
 	return query, args
 }

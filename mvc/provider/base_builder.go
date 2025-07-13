@@ -36,6 +36,25 @@ func (b *BaseBuilder) Build() (string, []any) {
 	return "", []any{} // not implement Build method.
 }
 
+// Format table joins to string for multi-table query, it will filter out the
+// empty table or alias join datas.
+//
+//	tables := provider.Joins{
+//		"account":"a", "profile":"b", "other":"", // the 'other' table will filter out!
+//	}
+//	joins := builder.FormatJoins(tables)
+//	fmt.Println(joins) // => account AS a, profile AS b
+func (b *BaseBuilder) FormatJoins(tables Joins) string {
+	ts := []string{}
+	for table, alias := range tables {
+		table, alias = strings.TrimSpace(table), strings.TrimSpace(alias)
+		if table != "" && alias != "" {
+			ts = append(ts, fmt.Sprintf("%s AS %s", table, alias))
+		}
+	}
+	return strings.Join(ts, ", ")
+}
+
 // Format where conditions to string with args, by default join conditions with
 // AND connector, but can change to OR or empty connector by set 'connector' param.
 //
@@ -49,8 +68,8 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any)
 	if len(wheres) > 0 {
 		conditions := []string{}
 		for condition, arg := range wheres {
-			if arg != nil {
-				conditions = append(conditions, condition)
+			conditions = append(conditions, condition) // append conditions whatever arg is nil.
+			if arg != nil {                            // filter out the nil args, it useful for where joins like 'a.acc=b.user'.
 				args = append(args, arg)
 			}
 		}

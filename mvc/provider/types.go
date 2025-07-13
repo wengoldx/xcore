@@ -28,7 +28,26 @@ type TransCallback func(tx *sql.Tx) error
 type DoneCallback func()
 
 /* ------------------------------------------------------------------- */
-/* Key-Value                                                           */
+/* Table-Alias typed data for Join-Query                               */
+/* ------------------------------------------------------------------- */
+
+// Table name with join alias for multi-table join.
+type Joins map[string]string
+
+// Append a table-alias into table Joins.
+func (t *Joins) Add(table, alias string) *Joins {
+	(*t)[table] = alias
+	return t
+}
+
+// Remove target table out from table Joins.
+func (t *Joins) Remove(table string) *Joins {
+	delete(*t, table)
+	return t
+}
+
+/* ------------------------------------------------------------------- */
+/* Key-Value typed data for Insert, Update                             */
 /* ------------------------------------------------------------------- */
 
 // Fields name and referened values for insert or update.
@@ -47,7 +66,7 @@ func (v *KValues) Remove(key string) *KValues {
 }
 
 /* ------------------------------------------------------------------- */
-/* Wheres                                                              */
+/* Wheres typed data for Query, Update, Delete                         */
 /* ------------------------------------------------------------------- */
 
 // Fields name and referened values for construct where condition string.
