@@ -119,7 +119,7 @@ func GetTabler(opts ...pd.Option) *pd.TableProvider {
 }
 
 // Setup tables with name and provider.
-func SetupTables(tables map[string]*pd.TableProvider) {
+func SetupTables(tables map[string]pd.TableSetup) {
 	for name, table := range tables {
 		table.Setup(Select(), pd.WithTable(name))
 	}

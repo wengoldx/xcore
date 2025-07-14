@@ -34,11 +34,13 @@ type TableProvider struct {
 	table string // Table name
 }
 
+var _ TableSetup = (*TableProvider)(nil)
+
 // Create a TableProvider with given database client.
 func NewTabler(client DBClient, opts ...Option) *TableProvider {
-	sp := &TableProvider{}
-	sp.Setup(client, opts...)
-	return sp
+	tp := &TableProvider{}
+	tp.Setup(client, opts...)
+	return tp
 }
 
 // The setter for set TableProvider fields.

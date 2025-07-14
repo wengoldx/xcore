@@ -17,11 +17,7 @@ import (
 	"github.com/wengoldx/xcore/utils"
 )
 
-// A interface implement by CUDA builder to build
-// a sql string for database access.
-type SQLBuilder interface {
-	Build() (string, []any) // Build sql string and return args.
-}
+
 
 // The base builder to support util methods to simple build a
 // sql string for database CUDA actions.
