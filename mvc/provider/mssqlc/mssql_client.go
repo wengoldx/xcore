@@ -114,6 +114,13 @@ func GetTabler(opts ...pd.Option) *pd.TableProvider {
 	return pd.NewTabler(Select(), opts...)
 }
 
+// Setup tables with name and provider.
+func SetupTables(tables map[string]*pd.TableProvider) {
+	for name, table := range tables {
+		table.Setup(Select(), pd.WithTable(name))
+	}
+}
+
 // Return MSSQL database client, maybe nil when not call Connect() before.
 func (m *MSSQL) DB() *sql.DB {
 	return m.client

@@ -36,13 +36,8 @@ type TableProvider struct {
 
 // Create a TableProvider with given database client.
 func NewTabler(client DBClient, opts ...Option) *TableProvider {
-	sp := &TableProvider{
-		BaseProvider: BaseProvider{client, &BaseBuilder{}},
-	}
-
-	for _, optFunc := range opts {
-		optFunc(sp)
-	}
+	sp := &TableProvider{}
+	sp.Setup(client, opts...)
 	return sp
 }
 
@@ -68,6 +63,14 @@ func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Ma
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
 /* ------------------------------------------------------------------- */
+
+// Setup TableProvider with database client and options.
+func (p *TableProvider) Setup(client DBClient, opts ...Option) {
+	p.BaseProvider = BaseProvider{client, &BaseBuilder{}}
+	for _, optFunc := range opts {
+		optFunc(p)
+	}
+}
 
 // Check the target record whether exist by the given QueryBuilder to
 // build query string.
