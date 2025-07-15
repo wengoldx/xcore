@@ -8,21 +8,18 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package tester
+package ut
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/wengoldx/xcore/utils"
 )
 
 // Test case datas for multiple testing.
@@ -74,7 +71,7 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 		case http.MethodGet:
 			contentType = "application/x-www-form-urlencoded"
 			if params != nil && params != struct{}{} {
-				if forms := Wter.parseForms(params.(TestForm)); forms != "" {
+				if forms := _t.parseForms(params.(TestForm)); forms != "" {
 					url += "?" + forms
 				}
 			}
@@ -86,8 +83,8 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 		req, _ := http.NewRequest(method, url, requestBody)
 		req.Header.Add("Content-Type", contentType)
 		if uid != "" {
-			req.Header.Add("Author", Wter.Author)
-			req.Header.Add("Token", Wter.getToken(uid))
+			req.Header.Add("Author", _t.author)
+			req.Header.Add("Token", _t.getToken(uid))
 		}
 
 		beego.BeeApp.Handlers.ServeHTTP(resp, req)
@@ -100,56 +97,4 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 	if rst := resp.Body.String(); rst != "" && rst != "<nil>" && rst != "null" {
 		t.Log("Test response:", rst)
 	}
-}
-
-// Restful api tester runtime configs.
-type tester struct {
-	tokens   map[string]string // Auth token of test user, format as {uuid:token}.
-	Author   string            // Author header, such as 'WENGOLD-V1.1', 'WENGOLD-V1.2', 'WENGOLD-V2.0'
-	TokenApi string            // Rest4 API to get user token, like 'http://192.168.1.100:8000/server/token?id=%s'
-	User     string            // User uuid for testing
-
-	// Env params for testing, set param by code 'Wter.Env["param-name"] = param-vaule'
-	// and used as 'value := Wter.Env["param-name"].(string)' to get string value.
-	Env map[string]any
-}
-
-// Global Restful API tester signleton.
-//
-//	USAGE: Init mvc.Wter configs before use it as follow:
-//
-//	func init() {
-//		// logger.SilentLoggers() // silent logger if comment out.
-//		mvc.Wter.Author = "WENGOLD-V2.0"
-//		mvc.Wter.TokenApi = "http://192.168.1.100:8000/server/token?id=%s"
-//		mvc.Wter.User = "12345678"
-//	}
-var Wter = &tester{
-	tokens: make(map[string]string),
-	Env:    make(map[string]any),
-}
-
-// Transform url params map to url.Values for http GET method.
-func (t *tester) parseForms(params TestForm) string {
-	forms := url.Values{}
-	for param, value := range params {
-		forms[param] = []string{fmt.Sprintf("%v", value)}
-	}
-	return forms.Encode()
-}
-
-// Get test token of target user from cachs map, or request by restful api.
-func (t *tester) getToken(uid string) string {
-	if token, ok := t.tokens[uid]; ok {
-		return token
-	} else if t.TokenApi == "" {
-		return ""
-	}
-
-	// request user token from remote server by given debug api.
-	if token, err := utils.HttpUtils.GString(t.TokenApi, uid); err == nil {
-		t.tokens[uid] = token
-		return token
-	}
-	return ""
 }
