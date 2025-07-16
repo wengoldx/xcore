@@ -32,7 +32,7 @@ import (
 // MSSQL client for access target Microsoft SQL Server database.
 type MSSQL struct {
 	options Options
-	client  *sql.DB
+	conn    *sql.DB
 }
 
 var _ pd.DBClient = (*MSSQL)(nil)
@@ -123,7 +123,7 @@ func SetupTables(tables map[string]pd.TableSetup) {
 
 // Return MSSQL database client, maybe nil when not call Connect() before.
 func (m *MSSQL) DB() *sql.DB {
-	return m.client
+	return m.conn
 }
 
 // Connect mssql database and cache the client to MSSQL clients pool.
@@ -133,26 +133,26 @@ func (m *MSSQL) Connect() error {
 	logger.I("Connect MSSQL from session:", o.Session)
 
 	// open and connect database.
-	con, err := sql.Open(_mssqlDriver, dsn)
+	conn, err := sql.Open(_mssqlDriver, dsn)
 	if err != nil {
 		return err
 	}
 
 	// check database validable.
-	if err = con.Ping(); err != nil {
+	if err = conn.Ping(); err != nil {
 		return err
 	}
 
-	con.SetMaxIdleConns(o.MaxIdles)
-	con.SetMaxOpenConns(o.MaxOpens)
-	m.client = con
+	conn.SetMaxIdleConns(o.MaxIdles)
+	conn.SetMaxOpenConns(o.MaxOpens)
+	m.conn = conn
 	return nil
 }
 
 // Close the MSSQL client and remove from cache pool.
 func (m *MSSQL) Close() error {
-	if m.client != nil {
-		if err := m.client.Close(); err != nil {
+	if m.conn != nil {
+		if err := m.conn.Close(); err != nil {
 			logger.E("Close MSSQL err:", err)
 			return err
 		}

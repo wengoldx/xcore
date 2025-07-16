@@ -32,7 +32,7 @@ import (
 // Mysql client for access target mysql database.
 type MySQL struct {
 	options Options
-	client  *sql.DB
+	conn    *sql.DB
 }
 
 var _ pd.DBClient = (*MySQL)(nil)
@@ -127,7 +127,7 @@ func SetupTables(tables map[string]pd.TableSetup) {
 
 // Return MySQL database client, maybe nil when not call Connect() before.
 func (m *MySQL) DB() *sql.DB {
-	return m.client
+	return m.conn
 }
 
 // Connect mysql database and cache the client to MySQL clients pool.
@@ -143,27 +143,27 @@ func (m *MySQL) Connect() error {
 	logger.I("Connect MySQL from session:", o.Session)
 
 	// open and connect database.
-	con, err := sql.Open(_mysqlDriver, dsn)
+	conn, err := sql.Open(_mysqlDriver, dsn)
 	if err != nil {
 		return err
 	}
 
 	// check database validable.
-	if err = con.Ping(); err != nil {
+	if err = conn.Ping(); err != nil {
 		return err
 	}
 
-	con.SetMaxIdleConns(o.MaxIdles)
-	con.SetMaxOpenConns(o.MaxOpens)
-	con.SetConnMaxLifetime(o.MaxLifetime)
-	m.client = con
+	conn.SetMaxIdleConns(o.MaxIdles)
+	conn.SetMaxOpenConns(o.MaxOpens)
+	conn.SetConnMaxLifetime(o.MaxLifetime)
+	m.conn = conn
 	return nil
 }
 
 // Close the MySQL client and remove from cache pool.
 func (m *MySQL) Close() error {
-	if m.client != nil {
-		if err := m.client.Close(); err != nil {
+	if m.conn != nil {
+		if err := m.conn.Close(); err != nil {
 			logger.E("Close MySQL err:", err)
 			return err
 		}
