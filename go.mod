@@ -1,6 +1,6 @@
 module github.com/wengoldx/xcore
 
-go 1.22
+go 1.24.2
 
 require (
 	github.com/astaxie/beego v1.12.3
@@ -8,7 +8,6 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/elastic/go-elasticsearch/v8 v8.3.0
 	github.com/go-playground/validator/v10 v10.11.1
-	github.com/go-sql-driver/mysql v1.9.2
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/googollee/go-socket.io v1.0.1
 	github.com/mozillazg/go-pinyin v0.19.0
@@ -21,7 +20,6 @@ require (
 )
 
 require (
-	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1704 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
