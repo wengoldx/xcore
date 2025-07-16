@@ -52,16 +52,16 @@ func SetupTester(opts ...Option) {
 }
 
 // Return tester instance.
-func Tester() *tester {return _t }
+func Tester() *tester { return _t }
 
 /* ------------------------------------------------------------------- */
 /* SQL Querier, Inserter, Updater, Deleter                             */
 /* ------------------------------------------------------------------- */
 
-func Querier(t ...string) *pd.QueryBuilder   { return _t.tabler.Querier().Table(utils.Variable(t, ""))}
-func Inserter(t ...string) *pd.InsertBuilder { return _t.tabler.Inserter().Table(utils.Variable(t, ""))}
-func Updater(t ...string) *pd.UpdateBuilder  { return _t.tabler.Updater().Table(utils.Variable(t, ""))}
-func Deleter(t ...string) *pd.DeleteBuilder  { return _t.tabler.Deleter().Table(utils.Variable(t, ""))}
+func Querier(t ...string) *pd.QueryBuilder   { return _t.tabler.Querier().Table(utils.Variable(t, "")) }
+func Inserter(t ...string) *pd.InsertBuilder { return _t.tabler.Inserter().Table(utils.Variable(t, "")) }
+func Updater(t ...string) *pd.UpdateBuilder  { return _t.tabler.Updater().Table(utils.Variable(t, "")) }
+func Deleter(t ...string) *pd.DeleteBuilder  { return _t.tabler.Deleter().Table(utils.Variable(t, "")) }
 
 /* ------------------------------------------------------------------- */
 /* Env datas getter and setter                                         */
@@ -83,15 +83,12 @@ func (t *tester) parseForms(params TestForm) string {
 func (t *tester) getToken(uid string) string {
 	if token, ok := t.tokens[uid]; ok {
 		return token
-	} else if t.tokenApi == "" {
-		return ""
-	}
-
-	// get access token from server by debug api.
-	token, err := utils.HttpUtils.GString(t.tokenApi, uid)
-	if err == nil {
-		t.tokens[uid] = token
-		return token
+	} else if t.tokenApi != "" {
+		token, err := utils.HttpUtils.GString(t.tokenApi, uid)
+		if err == nil {
+			t.tokens[uid] = token
+			return token
+		}
 	}
 	return ""
 }
