@@ -8,14 +8,14 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package ut
+package tu
 
 import (
 	"fmt"
 	"net/url"
 
 	pd "github.com/wengoldx/xcore/mvc/provider"
-	"github.com/wengoldx/xcore/mvc/provider/mysqlc"
+	"github.com/wengoldx/xcore/mvc/provider/mysql"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -45,7 +45,7 @@ var _t = &tester{
 
 // Setup tester instance with options and table provider.
 func SetupTester(opts ...Option) {
-	_t.tabler = mysqlc.GetTabler()
+	_t.tabler = mysql.GetTabler()
 	for _, optFunc := range opts {
 		optFunc(_t)
 	}

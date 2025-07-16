@@ -8,7 +8,7 @@
 // 00001       2025/07/01   yangping       New version
 // -------------------------------------------------------------------
 
-package mssqlc
+package mssql
 
 import (
 	"database/sql"
@@ -61,7 +61,7 @@ const (
 //		mssqlc.WithMaxIdles(100),
 //		mssqlc.WithMaxOpens(100),
 //	)
-func NewMSSQL(opts ...Option) *MSSQL {
+func New(opts ...Option) *MSSQL {
 	client := &MSSQL{options: DefaultOptions(_mssqlDriver)}
 	for _, optFunc := range opts {
 		optFunc(client)
@@ -72,7 +72,7 @@ func NewMSSQL(opts ...Option) *MSSQL {
 // Create a MSSQL client and connect with options which loaded from app.conf file.
 //
 // This method useful for beego project easy to connect a mssql database.
-func OpenMSSQL(session ...string) error {
+func Open(session ...string) error {
 	return OpenWithOptions(LoadOptions(session...))
 }
 

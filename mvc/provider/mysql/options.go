@@ -8,7 +8,7 @@
 // 00001       2025/07/01   yangping       New version
 // -------------------------------------------------------------------
 
-package mysqlc
+package mysql
 
 import (
 	"fmt"

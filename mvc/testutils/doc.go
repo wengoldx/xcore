@@ -10,4 +10,4 @@
 
 // Package test utils as helper for simple code test scripts to test
 // Rest4 APIs and database access methods.
-package ut
+package tu

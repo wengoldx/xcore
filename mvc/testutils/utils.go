@@ -8,18 +8,22 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package ut
+package tu
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Test case datas for multiple testing.
@@ -97,4 +101,38 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 	if rst := resp.Body.String(); rst != "" && rst != "<nil>" && rst != "null" {
 		t.Log("Test response:", rst)
 	}
+}
+
+// Set 'dev' runmode and fix debug logger.
+func UseDebugLogger() {
+	beego.BConfig.RunMode = "dev"
+	logs.SetLevel(beego.LevelDebug)
+}
+
+// Check app whether running on test mode, it just check the .test
+// file whether exist in ~/{app}/conf/ folder.
+//
+//	~/{app}
+//	  |- bin
+//	  |- conf
+//	  |    |- .test  // -> Enable test mode, delete it for disable.
+//	  ...
+func CheckTestMode() bool {
+	if pwd, err := os.Getwd(); err == nil {
+		app := beego.BConfig.AppName
+		if length := len(app); length > 0 {
+			if start := strings.Index(pwd, app); start > 0 {
+				env := pwd[:start+length] + "/conf/.test"
+				if utils.IsExistFile(env) {
+					fmt.Println()
+					fmt.Println("\t+--------------------+")
+					fmt.Println("\t+ LAUNCHED TEST MODE +")
+					fmt.Println("\t+--------------------+")
+					fmt.Println()
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

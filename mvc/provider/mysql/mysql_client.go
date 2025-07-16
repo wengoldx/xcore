@@ -8,7 +8,7 @@
 // 00001       2025/07/01   yangping       New version
 // -------------------------------------------------------------------
 
-package mysqlc
+package mysql
 
 import (
 	"database/sql"
@@ -53,7 +53,7 @@ const (
 
 // Create a MySQL client, set the options by mysqlc.WithXxxx(x) setters.
 //
-//	client := mysqlc.NewMySQL(
+//	client := mysqlc.New(
 //		mysqlc.WithSession("mysql"),
 //		mysqlc.WithHost("127.0.0.1:3306"), // maybe empty for localhost.
 //		mysqlc.WithUser("user"),
@@ -64,7 +64,7 @@ const (
 //		mysqlc.WithMaxOpens(100),
 //		mysqlc.WithMaxLifetime(28740),
 //	)
-func NewMySQL(opts ...Option) *MySQL {
+func New(opts ...Option) *MySQL {
 	client := &MySQL{options: DefaultOptions(_mysqlDriver)}
 	for _, optFunc := range opts {
 		optFunc(client)
@@ -75,7 +75,7 @@ func NewMySQL(opts ...Option) *MySQL {
 // Create a MySQL client and connect with options which loaded from app.conf file.
 //
 // This method useful for beego project easy to connect a mysql database.
-func OpenMySQL(charset string, session ...string) error {
+func Open(charset string, session ...string) error {
 	return OpenWithOptions(LoadOptions(session...), charset)
 }
 
