@@ -117,9 +117,10 @@ func UseDebugLogger() {
 //	  |- conf
 //	  |    |- .test  // -> Enable test mode, delete it for disable.
 //	  ...
-func CheckTestMode() bool {
+//
+// WARNING: DO NOT use beego.BConfig.AppName when unexist app.conf!
+func CheckTestMode(app string) bool {
 	if pwd, err := os.Getwd(); err == nil {
-		app := beego.BConfig.AppName
 		if length := len(app); length > 0 {
 			if start := strings.Index(pwd, app); start > 0 {
 				env := pwd[:start+length] + "/conf/.test"
