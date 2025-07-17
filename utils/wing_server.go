@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -49,6 +50,7 @@ func HttpServer(allowCredentials ...bool) {
 	// just output log to file on prod mode
 	if beego.BConfig.RunMode != "dev" &&
 		logger.GetLevel() != logger.LevelDebug {
+		showWarningLogs()
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
 	}
 	beego.Run()
@@ -71,6 +73,16 @@ func AccessAllowOriginByLocal(category int, allowCredentials bool) {
 		localhosturl := fmt.Sprintf("http://127.0.0.1:%v/", beego.BConfig.Listen.HTTPPort)
 		accessAllowOriginBy(category, localhosturl, allowCredentials)
 	}
+}
+
+// Show warning when output logs to files.
+func showWarningLogs() {
+	fmt.Println()
+	fmt.Println("\t+=====================================+")
+	fmt.Println("\t+ OUTPUT LOGS TO FILES: ~/logs/*.logs +")
+	fmt.Println("\t+=====================================+")
+	fmt.Println()
+	time.Sleep(20 * time.Millisecond)
 }
 
 // Ignore system PIPE signal
