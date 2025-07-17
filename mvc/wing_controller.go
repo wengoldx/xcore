@@ -99,7 +99,6 @@ func RegisterFieldValidator(tag string, valfunc validator.Func) {
 		logger.E("Register validator:"+tag+", err:", err)
 		return
 	}
-	logger.I("Registered validator:", tag)
 }
 
 // ----------------------------------------
