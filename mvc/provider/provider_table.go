@@ -178,7 +178,7 @@ func (p *TableProvider) InsertUncheck(builder *InsertBuilder) error {
 		return invar.ErrInvalidData
 	}
 	query, args := builder.Build()
-	return p.BaseProvider.Exec(query, args)
+	return p.BaseProvider.Exec(query, args...)
 }
 
 // Update target record by given builder to build a query string, it will

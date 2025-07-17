@@ -48,3 +48,15 @@ func TestQueryBuilder(t *testing.T) {
 	query, arg = q.Build()
 	fmt.Println(query, "-", arg)
 }
+
+func TestInsertBuilder(t *testing.T) {
+	i := NewInsert("test_table")
+	v1 := KValues{"manager": "123456", "perfer": 2}
+	v2 := KValues{"manager": "qwertyu", "perfer": 6}
+
+	query, arg := i.Values(v1).Build()
+	fmt.Println(query, "-", arg)
+
+	query, arg = i.Values(v1, v2).Build()
+	fmt.Println(query, "-", arg)
+}
