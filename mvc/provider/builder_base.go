@@ -17,8 +17,6 @@ import (
 	"github.com/wengoldx/xcore/utils"
 )
 
-
-
 // The base builder to support util methods to simple build a
 // sql string for database CUDA actions.
 type BaseBuilder struct {
@@ -147,14 +145,23 @@ func (b *BaseBuilder) FormatLike(field, filter string) string {
 //		"Height": 176.8,
 //		"Secure": nil,      // Filter out nil value
 //	}
-//	// => Age=?, Male=?, Name=?, Height=?
+//	// => Age=?, Male=?, Name=?, Height=?, Secure=?
 //	// => ?,?,?,?
 //	// => []any{16, true, "ZhangSan", 176.8}
+//
+// WARNING: This method not well support insert nil value by arg, the nil
+// value will inserted like '<nil>' string, not NULL value;
 func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
 	fields, holders, args := "", "", []any{}
 	if cnt := len(values); cnt > 0 {
 		tags := []string{}
 		for key, arg := range values {
+			if key == "" { // filter out the empty field key.
+				continue
+			}
+
+			// FIXME: The nil arg will be insert like '<nil>' string by
+			// arg, so DO NOT insert nil values if you can if possible!
 			tags = append(tags, key)
 			args = append(args, arg)
 		}
@@ -174,20 +181,30 @@ func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
 //		"Male":   true,
 //		"Name":   "ZhangSan",
 //		"Height": 176.8,
-//		"Secure": nil,      // Filter out nil value
+//		"Secure": nil,      // Set value as NULL
 //	}
-//	// => Age=?, Male=?, Name=?, Height=?
+//	// => Age=?, Male=?, Name=?, Height=?, Secure=NULL
 //	// => []any{16, true, "ZhangSan", 176.8}
+//
+// WARNING: This method support update nil arg as NULL value.
 func (b *BaseBuilder) FormatSets(values KValues) (string, []any) {
 	fields, args := "", []any{}
 	if cnt := len(values); cnt > 0 {
 		sets := []string{}
 		for key, arg := range values {
+			if key == "" { // filter out the empty field key.
+				continue
+			}
 
+			// FIXME: The nil arg will be translate to NULL value
+			// for single row or multiple rows insert.
+			if arg == nil {
+				sets = append(sets, key+"=NULL")
+				continue
+			}
 			sets = append(sets, key+"=?")
 			args = append(args, arg)
 		}
-
 		fields = strings.Join(sets, ", ")
 	}
 	return fields, args

@@ -90,6 +90,11 @@ func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 // Build the insert action sql string and args for provider to insert datas.
 //
 //	INSERT table (tags) VALUES (?, ?, ?)...
+//
+// WARNNG: The InsertBuild not well insert nil value by arg for single row
+// insert, but good for insert nil value as NULL for multiple rows insert.
+//
+// And, it use the first row args key as the column headers.
 func (b *InsertBuilder) Build() (string, []any) {
 	if cnt := len(b.rows); cnt == 1 {
 		// INSERT table (v1, v2...) VALUES (?,?...)'
@@ -101,8 +106,8 @@ func (b *InsertBuilder) Build() (string, []any) {
 	} else if cnt > 1 {
 		// INSERT table (v1, v2...) VALUES (1,2...),(3,4...)...'
 		headers := []string{}
-		for key, value := range b.rows[0] { //fetch headers
-			if key != "" && value != nil {
+		for key := range b.rows[0] {
+			if key != "" { //fetch valid headers.
 				headers = append(headers, key)
 			}
 		}
@@ -112,6 +117,13 @@ func (b *InsertBuilder) Build() (string, []any) {
 			vs := []string{}
 			for _, h := range headers { // fetch colmuns
 				if value, ok := row[h]; ok {
+					// FIXME: Translate nil arg to NULL value
+					// for multiple rows insert!
+					if value == nil {
+						vs = append(vs, "NULL")
+						continue
+					}
+
 					switch v := value.(type) {
 					case string:
 						vs = append(vs, "'"+v+"'")
@@ -120,7 +132,7 @@ func (b *InsertBuilder) Build() (string, []any) {
 					}
 				}
 			}
-			// append row values: (1,'2',3.45,true,...)
+			// append row values: (1,'2',3.45,true,NULL,...)
 			rows = append(rows, "("+strings.Join(vs, ",")+")")
 		}
 

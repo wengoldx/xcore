@@ -52,11 +52,12 @@ func TestQueryBuilder(t *testing.T) {
 func TestInsertBuilder(t *testing.T) {
 	i := NewInsert("test_table")
 	v1 := KValues{"manager": "123456", "perfer": 2}
-	v2 := KValues{"manager": "qwertyu", "perfer": 6}
+	v2 := KValues{"manager": "qwertyu", "perfer": 6, "obj": nil}
+	v3 := KValues{"": 123, "manager": "poiuytr", "perfer": 8, "obj": nil}
 
 	query, arg := i.Values(v1).Build()
 	fmt.Println(query, "-", arg)
 
-	query, arg = i.Values(v1, v2).Build()
+	query, arg = i.Values(v3, v2, v1).Build()
 	fmt.Println(query, "-", arg)
 }
