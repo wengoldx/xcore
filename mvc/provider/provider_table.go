@@ -170,6 +170,15 @@ func (p *TableProvider) Insert(builder *InsertBuilder) (int64, error) {
 	}
 }
 
+// Insert the given rows into target table, and check inserted result
+// but not return insert id or counts.
+//
+// Use BaseProvider.Insert() method to direct execute query string.
+func (p *TableProvider) InsertCheck(builder *InsertBuilder) error {
+	_, err := p.Insert(builder)
+	return err
+}
+
 // Insert the given rows into target table without check insert counts.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
@@ -177,8 +186,7 @@ func (p *TableProvider) InsertUncheck(builder *InsertBuilder) error {
 	if cnt := len(builder.rows); cnt <= 0 {
 		return invar.ErrInvalidData
 	}
-	query, args := builder.Build()
-	return p.BaseProvider.Exec(query, args...)
+	return p.Exec(builder)
 }
 
 // Update target record by given builder to build a query string, it will

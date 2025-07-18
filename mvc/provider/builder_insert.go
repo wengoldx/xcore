@@ -40,6 +40,7 @@ func NewInsert(table string) *InsertBuilder {
 
 func (b *InsertBuilder) Exec() error            { return b.master.Exec(b) }          // Insert a new record without check.
 func (b *InsertBuilder) Insert() (int64, error) { return b.master.Insert(b) }        // Insert records and check inserted row id or counts.
+func (b *InsertBuilder) InsertCheck() error     { return b.master.InsertCheck(b) }   // Insert records and check result.
 func (b *InsertBuilder) InsertUncheck() error   { return b.master.InsertUncheck(b) } // Insert records without result check.
 
 /* ------------------------------------------------------------------- */
