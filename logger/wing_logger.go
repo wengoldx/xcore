@@ -11,6 +11,7 @@
 package logger
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 
@@ -125,6 +126,7 @@ func logFormatString(n int, opts ...string) string {
 func SetOutputLogger() {
 	if beego.BConfig.RunMode != "dev" && GetLevel() != LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
+		ShowWarningLogs()
 	}
 }
 
@@ -132,6 +134,21 @@ func SetOutputLogger() {
 func SilentLoggers() {
 	beego.BeeLogger.DelLogger(logs.AdapterFile)
 	beego.BeeLogger.DelLogger(logs.AdapterConsole)
+
+	fmt.Println()
+	fmt.Println("\t+===============================+")
+	fmt.Println("\t+ SILENT CONSOLE & FILE LOGGERS +")
+	fmt.Println("\t+===============================+")
+	fmt.Println()
+}
+
+// Show warning when output logs to files.
+func ShowWarningLogs() {
+	fmt.Println()
+	fmt.Println("\t+=====================================+")
+	fmt.Println("\t+ OUTPUT LOGS TO FILES: ~/logs/*.logs +")
+	fmt.Println("\t+=====================================+")
+	fmt.Println()
 }
 
 // GetLevel return current logger output level

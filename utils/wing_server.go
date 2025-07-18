@@ -48,10 +48,9 @@ func HttpServer(allowCredentials ...bool) {
 	accessAllowOriginBy(beego.BeforeStatic, "*", allow)
 
 	// just output log to file on prod mode
-	if beego.BConfig.RunMode != "dev" &&
-		logger.GetLevel() != logger.LevelDebug {
-		showWarningLogs()
+	if beego.BConfig.RunMode != "dev" && logger.GetLevel() != logger.LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
+		logger.ShowWarningLogs()
 	}
 	beego.Run()
 }
