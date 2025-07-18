@@ -49,6 +49,9 @@ const (
 
 	// Mysql Server database source name for tcp connection.
 	_mysqlDsnTcp = "%s:%s@tcp(%s)/%s?charset=%s"
+
+	// default charset for database access
+	_defCharset = "utf8mb4"
 )
 
 // Create a MySQL client, set the options by mysqlc.WithXxxx(x) setters.
@@ -85,9 +88,10 @@ func OpenWithOptions(opts Options, charset ...string) error {
 		return invar.ErrInvalidConfigs
 	}
 
-	if len(charset) > 0 && charset[0] != "" {
-		opts.Charset = charset[0]
-	}
+	opts.Charset = utils.Variable(charset, opts.Charset)
+	opts.Session = utils.Condition(opts.Session == "", _mysqlDriver, opts.Session)
+	opts.Charset = utils.Condition(opts.Charset == "", _defCharset, opts.Charset)
+
 	client := &MySQL{options: opts}
 	_mysqlClients[opts.Session] = client
 	return client.Connect()

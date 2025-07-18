@@ -42,7 +42,7 @@ type Options struct {
 func DefaultOptions(session string) Options {
 	return Options{
 		Session:     session,
-		Charset:     "utf8mb4",
+		Charset:     _defCharset,
 		MaxIdles:    100,
 		MaxOpens:    100,
 		MaxLifetime: 28740,

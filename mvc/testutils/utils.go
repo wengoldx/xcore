@@ -23,6 +23,8 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"github.com/wengoldx/xcore/logger"
+	"github.com/wengoldx/xcore/mvc/provider/mysql"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -136,4 +138,21 @@ func CheckTestMode(app string) bool {
 		}
 	}
 	return false
+}
+
+// Open database for testing by given options.
+//
+//	opts := mysql.Options{
+//		Host: "localhost:3306", Database: "testdb",
+//		User: "user", Password: "****",
+//	}
+func OpenTestDatabase(opts mysql.Options) {
+	UseDebugLogger()
+
+	if opts.Host == "" {
+		panic("Empty database host !!")
+	} else if err := mysql.OpenWithOptions(opts, "utf8mb4"); err != nil {
+		panic("Failed Open test database: " + err.Error())
+	}
+	logger.I("Opened test database...")
 }
