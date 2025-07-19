@@ -59,9 +59,19 @@ func (v *KValues) Add(key string, value any) *KValues {
 	return v
 }
 
+// Append mutiple key-value into KValues.
+func (v *KValues) Adds(values KValues) *KValues {
+	for key, value := range values {
+		(*v)[key] = value
+	}
+	return v
+}
+
 // Remove target key-value out from KValues.
-func (v *KValues) Remove(key string) *KValues {
-	delete(*v, key)
+func (v *KValues) Remove(keys ...string) *KValues {
+	for _, key := range keys {
+		delete(*v, key)
+	}
 	return v
 }
 
@@ -78,8 +88,18 @@ func (w *Wheres) Add(condition string, arg any) *Wheres {
 	return w
 }
 
+// Append multiple where conditions into Wheres.
+func (w *Wheres) Adds(conditions Wheres) *Wheres {
+	for condition, arg := range conditions {
+		(*w)[condition] = arg
+	}
+	return w
+}
+
 // Remove target where condition out from Wheres.
-func (w *Wheres) Remove(condition string) *Wheres {
-	delete(*w, condition)
+func (w *Wheres) Remove(conditions ...string) *Wheres {
+	for _, condition := range conditions {
+		delete(*w, condition)
+	}
 	return w
 }
