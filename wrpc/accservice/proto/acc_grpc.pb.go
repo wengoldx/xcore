@@ -51,8 +51,6 @@ type AccClient interface {
 	GetProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Profile, error)
 	// Return account contact (contain nickname, phone, email)
 	GetContact(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Contact, error)
-	// Return account address by given uuid
-	GetAddress(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Address, error)
 	// Return account avatars by given uuids
 	GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Avatars, error)
 	// Return account avatars by given uuids and search conditions
@@ -215,15 +213,6 @@ func (c *accClient) GetProfile(ctx context.Context, in *UUID, opts ...grpc.CallO
 func (c *accClient) GetContact(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Contact, error) {
 	out := new(Contact)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetContact", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accClient) GetAddress(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Address, error) {
-	out := new(Address)
-	err := c.cc.Invoke(ctx, "/proto.Acc/GetAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -407,8 +396,6 @@ type AccServer interface {
 	GetProfile(context.Context, *UUID) (*Profile, error)
 	// Return account contact (contain nickname, phone, email)
 	GetContact(context.Context, *UUID) (*Contact, error)
-	// Return account address by given uuid
-	GetAddress(context.Context, *UIDS) (*Address, error)
 	// Return account avatars by given uuids
 	GetAvatars(context.Context, *UIDS) (*Avatars, error)
 	// Return account avatars by given uuids and search conditions
@@ -489,9 +476,6 @@ func (UnimplementedAccServer) GetProfile(context.Context, *UUID) (*Profile, erro
 }
 func (UnimplementedAccServer) GetContact(context.Context, *UUID) (*Contact, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetContact not implemented")
-}
-func (UnimplementedAccServer) GetAddress(context.Context, *UIDS) (*Address, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAddress not implemented")
 }
 func (UnimplementedAccServer) GetAvatars(context.Context, *UIDS) (*Avatars, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvatars not implemented")
@@ -802,24 +786,6 @@ func _Acc_GetContact_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccServer).GetContact(ctx, req.(*UUID))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Acc_GetAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UIDS)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccServer).GetAddress(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.Acc/GetAddress",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).GetAddress(ctx, req.(*UIDS))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1174,10 +1140,6 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetContact",
 			Handler:    _Acc_GetContact_Handler,
-		},
-		{
-			MethodName: "GetAddress",
-			Handler:    _Acc_GetAddress_Handler,
 		},
 		{
 			MethodName: "GetAvatars",
