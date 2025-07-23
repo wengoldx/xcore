@@ -52,6 +52,9 @@ service Acc {
   // Return account contact (contain nickname, phone, email)
   rpc GetContact(UUID) returns (Contact);
 
+  // Return account address by given uuid
+  rpc GetAddress(UIDS) returns (Address);
+
   // Return account avatars by given uuids
   rpc GetAvatars(UIDS) returns (Avatars);
   
@@ -172,6 +175,13 @@ message Profile {
   int64  sex = 4;       // account sex, 0:none, 1:male, 2:female, 3:neutral
   string birthday = 5;  // account birthday, the value set from real-name authentication
   bool   isverify = 6;  // status to indicate account if pass real-name autnenticated
+}
+
+message Address {
+  string email = 1;     // account email
+  string province = 2;  // province of postal address
+  string city = 3;      // city of postal address
+  string address = 4;   // detail street of postal address
 }
 
 message ProfAddr {
