@@ -12,6 +12,7 @@ package utils
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -145,6 +146,11 @@ func JoinLines(values ...string) string {
 		packet += line + "\n"
 	}
 	return packet
+}
+
+// Clamp the number in given range.
+func Clamp[T cmp.Ordered](num T, minmum T, maximum T) T {
+	return min(max(num, minmum), maximum)
 }
 
 // Check the given list whether contain the item value.
