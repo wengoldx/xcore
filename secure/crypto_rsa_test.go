@@ -309,7 +309,7 @@ func TestRSAVerifyASN(t *testing.T) {
 }
 
 // Test RSA2Verify, NewRSA2Keys, RSA2Sign.
-func TestRSA2Verify(t *testing.T) {
+func TestRSA8Verify(t *testing.T) {
 	cases := []struct {
 		Case string
 		Bits int
@@ -320,11 +320,11 @@ func TestRSA2Verify(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
-			if pri, pub, err := NewRSA2Keys(c.Bits); err != nil {
+			if pri, pub, err := NewRSA8Keys(c.Bits); err != nil {
 				t.Fatal("New RSA PKCS8 keys, err:", err)
-			} else if sign, err := RSA2Sign(pri, c.Case); err != nil {
+			} else if sign, err := RSA8Sign(pri, c.Case); err != nil {
 				t.Fatal("RSA PKCS8 sign, err:", err)
-			} else if err := RSA2Verify(pub, c.Case, sign); err != nil {
+			} else if err := RSA8Verify(pub, c.Case, sign); err != nil {
 				t.Fatal("RSA verify (PKCS8), err:", err)
 			}
 		})
@@ -345,7 +345,7 @@ func TestNewRSACert(t *testing.T) {
 	fmt.Println("RSA Cert:", cert)
 }
 
-// Test NewRSA3Keys, RSA3Verify, RSA3Sign.
+// Test NewSerialNumber, NewRSACert, RSASign, RSA8Sign, RSACertVerify.
 func TestRSA3Verify(t *testing.T) {
 	cases := []struct {
 		Case  string
@@ -368,13 +368,22 @@ func TestRSA3Verify(t *testing.T) {
 			prikey, _, err := newRSAKeysByType(pkcs, c.Bits)
 			sno, _ := NewSerialNumber()
 			cert, _ := NewRSACert(prikey, sno, "WENGOLD", 365, !c.PKCS1)
-
 			if cert == "" {
 				t.Fatal("New RSA PKCSX keys, err:", err)
-			} else if sign, err := RSA3Sign(prikey, c.Case, !c.PKCS1); err != nil {
-				t.Fatal("RSA PKCSX sign, err:", err)
-			} else if err := RSA3Verify(cert, c.Case, sign); err != nil {
-				t.Fatal("RSA verify (PKCSX), err:", err)
+			}
+
+			if c.PKCS1 {
+				if sign, err := RSASign(prikey, c.Case); err != nil {
+					t.Fatal("RSA PKCSX sign, err:", err)
+				} else if err := RSACertVerify(cert, c.Case, sign); err != nil {
+					t.Fatal("RSA verify (PKCSX), err:", err)
+				}
+			} else {
+				if sign, err := RSA8Sign(prikey, c.Case); err != nil {
+					t.Fatal("RSA PKCSX sign, err:", err)
+				} else if err := RSACertVerify(cert, c.Case, sign); err != nil {
+					t.Fatal("RSA verify (PKCSX), err:", err)
+				}
 			}
 		})
 	}

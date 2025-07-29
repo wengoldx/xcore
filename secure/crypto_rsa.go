@@ -107,8 +107,9 @@ func LoadRSAKey(filepath string, bits ...int) (string, error) {
 	}
 }
 
-// Parse PKCS#1 or PKCS#8 RSA private key from pem file, default using
-// PKCS#1, set pkcs8 = true to use PKCS#8 parse RSA private key.
+// Parse PKCS#1 or PKCS#8 RSA private key from pem file, set pkcs8
+// param to true for use #PCSC#8, or false as default for use PKCS#1
+// to parse RSA private key.
 func ParsePriKey(prikey string, pkcs8 ...bool) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(prikey))
 	if block == nil {
@@ -121,13 +122,27 @@ func ParsePriKey(prikey string, pkcs8 ...bool) (*rsa.PrivateKey, error) {
 			return nil, err
 		}
 		return priif.(*rsa.PrivateKey), nil
-	} else {
-		pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-		return pri, nil
 	}
+
+	pri, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return pri, nil
+}
+
+// Parse RSA private key from pem file whatever PKSC#1 or PKCS#8 format.
+func ParsePubKey(pubkey string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pubkey))
+	if block == nil {
+		return nil, invar.ErrBadPublicKey
+	}
+
+	pubif, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return pubif.(*rsa.PublicKey), nil
 }
 
 // -------------------------------------------------------------------
@@ -167,16 +182,10 @@ func NewRSAPemFiles(prifile, pubfile string, bits ...int) error {
 //	original, _ := secure.RSADecrypt(prikey, ciphertext)
 //	// original == 'original-content'
 func RSAEncrypt(pubkey, original string) ([]byte, error) {
-	block, _ := pem.Decode([]byte(pubkey))
-	if block == nil {
-		return nil, invar.ErrBadPublicKey
-	}
-
-	pubinterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	pub, err := ParsePubKey(pubkey)
 	if err != nil {
 		return nil, err
 	}
-	pub := pubinterface.(*rsa.PublicKey)
 	return rsa.EncryptPKCS1v15(rand.Reader, pub, []byte(original))
 }
 
@@ -308,16 +317,10 @@ func RSASign4FB64(prifile, original string) (string, error) {
 //	err := secure.RSAVerify(pubkey, original, signature)
 //	// success : err != nil
 func RSAVerify(pubkey, original string, signature []byte) error {
-	block, _ := pem.Decode([]byte(pubkey))
-	if block == nil {
-		return invar.ErrBadPublicKey
-	}
-
-	pubinterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	pub, err := ParsePubKey(pubkey)
 	if err != nil {
 		return err
 	}
-	pub := pubinterface.(*rsa.PublicKey)
 	hashed := HashSHA256([]byte(original))
 	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], signature)
 }
@@ -364,17 +367,11 @@ func RSASignASN(prikey, original string) ([]byte, error) {
 //	err := secure.RSAVerifyASN(pubkey, original, signature)
 //	// success : err != nil
 func RSAVerifyASN(pubkey, original string, signature []byte) error {
-	block, _ := pem.Decode([]byte(pubkey))
-	if block == nil {
-		return invar.ErrBadPublicKey
-	}
-
-	pubinterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	pub, err := ParsePubKey(pubkey)
 	if err != nil {
 		return err
 	}
 
-	pub := pubinterface.(*rsa.PublicKey)
 	hash, digect := crypto.SHA256, HashSHA256([]byte(original))
 	opts := &rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthAuto, Hash: hash}
 	return rsa.VerifyPSS(pub, hash, digect, signature, opts)
@@ -385,13 +382,15 @@ func RSAVerifyASN(pubkey, original string, signature []byte) error {
 // and verify by public key.
 // -------------------------------------------------------------------
 
-func NewRSA2Keys(bits ...int) (string, string, error) {
+// Create RSA private and public keys in PKCS#8, ASN.1 DER format,
+// and limit bits length of key cert.
+func NewRSA8Keys(bits ...int) (string, string, error) {
 	return newRSAKeysByType("PKCS8", bits...)
 }
 
-// Using RSA2 private key to make digital signature,
+// Using RSA private key to make digital signature,
 // the private key in PKCS#8, ASN.1 DER form.
-func RSA2Sign(prikey, original string) ([]byte, error) {
+func RSA8Sign(prikey, original string) ([]byte, error) {
 	pri, err := ParsePriKey(prikey, true)
 	if err != nil {
 		return nil, err
@@ -401,43 +400,43 @@ func RSA2Sign(prikey, original string) ([]byte, error) {
 	return rsa.SignPKCS1v15(rand.Reader, pri, crypto.SHA256, hashed)
 }
 
-// Using RSA2 private key file to make digital signature,
+// Using RSA private key file to make digital signature,
 // then format to base64 form, the private key in PKCS#8, ASN.1 DER form.
-func RSA2SignB64(prikey, original string) (string, error) {
-	buf, err := RSA2Sign(prikey, original)
+func RSA8SignB64(prikey, original string) (string, error) {
+	buf, err := RSA8Sign(prikey, original)
 	if err != nil {
 		return "", err
 	}
 	return ByteToBase64(buf), nil
 }
 
-// Using RSA2 private key file to make digital signature.
+// Using RSA private key file to make digital signature.
 // the private key in PKCS#8, ASN.1 DER form.
-func RSA2Sign4F(prifile, original string) ([]byte, error) {
+func RSA8Sign4F(prifile, original string) ([]byte, error) {
 	prikey, err := LoadRSAKey(prifile)
 	if err != nil {
 		return nil, err
 	}
-	return RSA2Sign(prikey, original)
+	return RSA8Sign(prikey, original)
 }
 
-// Using RSA2 private key file to make digital signature,
+// Using RSA private key file to make digital signature,
 // then format to base64 form, the private key in PKCS#8, ASN.1 DER form.
-func RSA2Sign4FB64(prifile, original string) (string, error) {
-	buf, err := RSA2Sign4F(prifile, original)
+func RSA8Sign4FB64(prifile, original string) (string, error) {
+	buf, err := RSA8Sign4F(prifile, original)
 	if err != nil {
 		return "", err
 	}
 	return ByteToBase64(buf), nil
 }
 
-// Using RSA2 public key to verify PKCS#8, ASN.1 signatured data.
-func RSA2Verify(pubkey, original string, signature []byte) error {
+// Using RSA public key to verify PKCS#8, ASN.1 signatured data.
+func RSA8Verify(pubkey, original string, signature []byte) error {
 	return RSAVerify(pubkey, original, signature)
 }
 
-// Using RSA2 public key to verify PKCS#8, ASN.1 signatured data.
-func RSA2Verify4F(pubfile, original string, signature []byte) error {
+// Using RSA public key to verify PKCS#8, ASN.1 signatured data.
+func RSA8Verify4F(pubfile, original string, signature []byte) error {
 	return RSAVerify4F(pubfile, original, signature)
 }
 
@@ -457,15 +456,24 @@ func NewSerialNumber() (*big.Int, error) {
 // with the target organization and expire days, default using PKCS#1,
 // set pkcs8 = true to use PKCS#8 parse RSA private key.
 //
-//	// For PKSC#1 RSA Private Key.
+//	// USAGE 1: For PKSC#1 RSA Private Key.
 //	prikey, _, _ := secure.NewRSAKeys(1024)
 //	serialnum, _ := secure.NewSerialNumber()
 //	cert, _ := secure.NewRSACert(prikey, serialnum, "Your Organization", 365)
 //
-//	// For PKSC#8 RSA Private Key.
-//	prikey, _, _ := secure.NewRSAKeys(2048)
+//	sign, _ := secure.RSASign(prikey, "original text content")
+//	err := secure.RSACertVerify(cert, "original text content", sign)
+//	// check err if verify success.
+//
+//
+//	// USAGE 2: For PKSC#8 RSA Private Key.
+//	prikey, _, _ := secure.NewRSA8Keys(1024)
 //	serialnum, _ := secure.NewSerialNumber()
 //	cert, _ := secure.NewRSACert(prikey, serialnum, "Your Organization", 365, true)
+//
+//	sign, _ := secure.RSA8Sign(prikey, "original text content")
+//	err := secure.RSACertVerify(cert, "original text content", sign)
+//	// check err if verify success.
 func NewRSACert(prikey string, serialnum *big.Int, organization string, days int, pkcs8 ...bool) (string, error) {
 	if serialnum == nil || organization == "" || days <= 0 {
 		return "", invar.ErrInvalidParams
@@ -497,29 +505,10 @@ func NewRSACert(prikey string, serialnum *big.Int, organization string, days int
 	return string(cert), nil
 }
 
-// Using PKSC#1 or PKCS#8 RSA private key to make digital signature.
-//
-//	// Perpare private key and cert.
-//	prikey, _, _ := secure.NewRSAKeys(1024)
-//	serialnum, _ := secure.NewSerialNumber()
-//	cert, _ := secure.NewRSACert(prikey, serialnum, "Your Organization", 365)
-//
-//	// Sign and verify.
-//	sign, _ := secure.RSA3Sign(prikey, "original text content")
-//	err := secure.RSA3Verify(cert, "original text content", sign)
-//	// check err if verify success.
-func RSA3Sign(prikey, original string, pkcs8 ...bool) ([]byte, error) {
-	pri, err := ParsePriKey(prikey, pkcs8...)
-	if err != nil {
-		return nil, err
-	}
-
-	hashed := HashSHA256([]byte(original))
-	return rsa.SignPKCS1v15(rand.Reader, pri, crypto.SHA256, hashed)
-}
-
-// Using RSA cert to verify RSA signatured data.
-func RSA3Verify(certpem, original string, signature []byte) error {
+// Using RSA cert to verify RSA signatured data, call NewRSACert()
+// to create PKCS#1 or PKCS#8 cert pem data, then sign source by
+// RSASign() for PKCS#1 cert, RSA8Sign() for PKCS#8 cert.
+func RSACertVerify(certpem, original string, signature []byte) error {
 	block, _ := pem.Decode([]byte(certpem))
 	if block == nil {
 		return invar.ErrBadPublicKey
