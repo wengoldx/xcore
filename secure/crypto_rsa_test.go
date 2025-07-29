@@ -11,6 +11,7 @@
 package secure
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -57,7 +58,7 @@ func TestRSAEncryptB64(t *testing.T) {
 		t.Run(c.Case, func(t *testing.T) {
 			if _, pub, err := NewRSAKeys(c.Bits); err != nil {
 				t.Fatal("New RSA keys, err:", err)
-			} else if ciphertext, err := RSAEncryptB64([]byte(pub), []byte(c.Case)); err != nil {
+			} else if ciphertext, err := RSAEncryptB64(pub, c.Case); err != nil {
 				t.Fatal("RSA encrypt, err:", err)
 			} else {
 				t.Log("RSA encrypted:", "\n"+ciphertext)
@@ -80,9 +81,9 @@ func TestRSADecrypt(t *testing.T) {
 		t.Run(c.Case, func(t *testing.T) {
 			if pri, pub, err := NewRSAKeys(c.Bits); err != nil {
 				t.Fatal("New RSA keys, err:", err)
-			} else if ciphertext, err := RSAEncrypt([]byte(pub), []byte(c.Case)); err != nil {
+			} else if ciphertext, err := RSAEncrypt(pub, c.Case); err != nil {
 				t.Fatal("RSA encrypt, err:", err)
-			} else if plaintext, err := RSADecrypt([]byte(pri), ciphertext); err != nil {
+			} else if plaintext, err := RSADecrypt(pri, ciphertext); err != nil {
 				t.Fatal("RSA decrypt, err:", err)
 			} else if string(plaintext) != c.Case {
 				t.Fatal("Failed verifid!")
@@ -105,7 +106,7 @@ func TestRSASignB64(t *testing.T) {
 		t.Run(c.Case, func(t *testing.T) {
 			if pri, _, err := NewRSAKeys(c.Bits); err != nil {
 				t.Fatal("New RSA keys, err:", err)
-			} else if sign, err := RSASignB64([]byte(pri), []byte(c.Case)); err != nil {
+			} else if sign, err := RSASignB64(pri, c.Case); err != nil {
 				t.Fatal("RSA sign, err:", err)
 			} else {
 				t.Log("RSA signed:", "\n"+sign)
@@ -128,9 +129,9 @@ func TestRSAVerify(t *testing.T) {
 		t.Run(c.Case, func(t *testing.T) {
 			if pri, pub, err := NewRSAKeys(c.Bits); err != nil {
 				t.Fatal("New RSA keys, err:", err)
-			} else if sign, err := RSASign([]byte(pri), []byte(c.Case)); err != nil {
+			} else if sign, err := RSASign(pri, c.Case); err != nil {
 				t.Fatal("RSA sign, err:", err)
-			} else if err := RSAVerify([]byte(pub), []byte(c.Case), sign); err != nil {
+			} else if err := RSAVerify(pub, c.Case, sign); err != nil {
 				t.Fatal("RSA verify, err:", err)
 			}
 		})
@@ -210,7 +211,7 @@ func TestRSAEncrypt4FB64(t *testing.T) {
 				t.Fatal("New RSA pem files, err:", err)
 			}
 
-			if ciphertext, err := RSAEncrypt4FB64(c.PubFile, []byte(c.Case)); err != nil {
+			if ciphertext, err := RSAEncrypt4FB64(c.PubFile, c.Case); err != nil {
 				t.Fatal("RSA encrypt from pem file, err:", err)
 			} else {
 				t.Log("RSA encrypted:", "\n"+ciphertext)
@@ -240,7 +241,7 @@ func TestRSADecrypt4F(t *testing.T) {
 				t.Fatal("New RSA pem files, err:", err)
 			}
 
-			if ciphertext, err := RSAEncrypt4F(c.PubFile, []byte(c.Case)); err != nil {
+			if ciphertext, err := RSAEncrypt4F(c.PubFile, c.Case); err != nil {
 				t.Fatal("RSA encrypt from pem file, err:", err)
 			} else if plaintext, err := RSADecrypt4F(c.PriFile, ciphertext); err != nil {
 				t.Fatal("RSA decrypt from pem file, err:", err)
@@ -272,9 +273,9 @@ func TestRSAVerify4F(t *testing.T) {
 				t.Fatal("New RSA pem files, err:", err)
 			}
 
-			if sign, err := RSASign4F(c.PriFile, []byte(c.Case)); err != nil {
+			if sign, err := RSASign4F(c.PriFile, c.Case); err != nil {
 				t.Fatal("RSA sign from pem file, err:", err)
-			} else if err := RSAVerify4F(c.PubFile, []byte(c.Case), sign); err != nil {
+			} else if err := RSAVerify4F(c.PubFile, c.Case, sign); err != nil {
 				t.Fatal("RSA verify from pem file, err:", err)
 			}
 
@@ -298,9 +299,9 @@ func TestRSAVerifyASN(t *testing.T) {
 		t.Run(c.Case, func(t *testing.T) {
 			if pri, pub, err := NewRSAKeys(c.Bits); err != nil {
 				t.Fatal("New RSA keys, err:", err)
-			} else if sign, err := RSASignASN([]byte(pri), []byte(c.Case)); err != nil {
+			} else if sign, err := RSASignASN(pri, c.Case); err != nil {
 				t.Fatal("RSA sign, err:", err)
-			} else if err := RSAVerifyASN([]byte(pub), []byte(c.Case), sign); err != nil {
+			} else if err := RSAVerifyASN(pub, c.Case, sign); err != nil {
 				t.Fatal("RSA verify (ASN), err:", err)
 			}
 		})
@@ -321,10 +322,59 @@ func TestRSA2Verify(t *testing.T) {
 		t.Run(c.Case, func(t *testing.T) {
 			if pri, pub, err := NewRSA2Keys(c.Bits); err != nil {
 				t.Fatal("New RSA PKCS8 keys, err:", err)
-			} else if sign, err := RSA2Sign([]byte(pri), []byte(c.Case)); err != nil {
+			} else if sign, err := RSA2Sign(pri, c.Case); err != nil {
 				t.Fatal("RSA PKCS8 sign, err:", err)
-			} else if err := RSA2Verify([]byte(pub), []byte(c.Case), sign); err != nil {
+			} else if err := RSA2Verify(pub, c.Case, sign); err != nil {
 				t.Fatal("RSA verify (PKCS8), err:", err)
+			}
+		})
+	}
+}
+
+func TestNewRSACert(t *testing.T) {
+	prikey, _, err := NewRSAKeys(1024)
+	if err != nil {
+		t.Fatal("New RSA PriKey, err:", err)
+	}
+
+	sno, _ := NewSerialNumber()
+	cert, err := NewRSACert(prikey, sno, "WENGOLD", 365)
+	if err != nil {
+		t.Fatal("New RSA Cert, err:", err)
+	}
+	fmt.Println("RSA Cert:", cert)
+}
+
+// Test NewRSA3Keys, RSA3Verify, RSA3Sign.
+func TestRSA3Verify(t *testing.T) {
+	cases := []struct {
+		Case  string
+		Bits  int
+		PKCS1 bool // or ASN
+	}{
+		{"RSA verify (PKCS1v15) on 1024 bits", 1024, true},
+		{"RSA verify (PKCS1v15) on 2048 bits", 2048, true},
+		{"RSA verify (PKCS1v15) on 1024 bits", 1024, false},
+		{"RSA verify (PKCS1v15) on 2048 bits", 2048, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Case, func(t *testing.T) {
+			pkcs := "PKCS1"
+			if !c.PKCS1 {
+				pkcs = "PKCS8"
+			}
+
+			prikey, _, err := newRSAKeysByType(pkcs, c.Bits)
+			sno, _ := NewSerialNumber()
+			cert, _ := NewRSACert(prikey, sno, "WENGOLD", 365, !c.PKCS1)
+
+			if cert == "" {
+				t.Fatal("New RSA PKCSX keys, err:", err)
+			} else if sign, err := RSA3Sign(prikey, c.Case, !c.PKCS1); err != nil {
+				t.Fatal("RSA PKCSX sign, err:", err)
+			} else if err := RSA3Verify(cert, c.Case, sign); err != nil {
+				t.Fatal("RSA verify (PKCSX), err:", err)
 			}
 		})
 	}

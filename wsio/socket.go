@@ -60,7 +60,7 @@ type clientOpt struct {
 //			AuthHandler: authHandlerFunc, ConnHandler: connHandlerFunc,
 //			WillHandler: willHandlerFunc, DiscHandler: discHandlerFunc,
 //		}
-//      ctr := &SocketController{}
+//		ctr := &SocketController{}
 //		events := []*wsio.WsioCallback{
 //			{Evt: "evt_msg",    Hander: a.askMessage}),
 //			{Evt: "evt_create", Hander: a.createRoom}),
