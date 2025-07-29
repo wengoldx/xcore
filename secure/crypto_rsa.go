@@ -524,6 +524,16 @@ func RSACertVerify(certpem, original string, signature []byte) error {
 	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], signature)
 }
 
+// Load RSA cert pem data from given file and verify the signatured data,
+// the cert pem data maybe PKSC#1 or PKSC#8 formated.
+func RSACertVerify4F(certfile, original string, signature []byte) error {
+	certpem, err := LoadRSAKey(certfile)
+	if err != nil {
+		return err
+	}
+	return RSACertVerify(certpem, original, signature)
+}
+
 // -------------------------------------------------------------------
 // Private methods define.
 // -------------------------------------------------------------------
