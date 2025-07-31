@@ -360,16 +360,9 @@ func TestRSA3Verify(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
-			pkcs := "PKCS1"
-			if !c.PKCS1 {
-				pkcs = "PKCS8"
-			}
-
-			prikey, _, err := newRSAKeysByType(pkcs, c.Bits)
-			sno, _ := NewSerialNumber()
-			cert, _ := NewRSACert(prikey, sno, "WENGOLD", 365, !c.PKCS1)
+			prikey, cert := genCertPriKey(c.PKCS1, c.Bits)
 			if cert == "" {
-				t.Fatal("New RSA PKCSX keys, err:", err)
+				t.Fatal("Faield new RSA PKCSX keys!!")
 			}
 
 			if c.PKCS1 {
@@ -387,4 +380,52 @@ func TestRSA3Verify(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRSAOAEPEncript(t *testing.T) {
+	cases := []struct {
+		Case  string
+		Bits  int
+		PKCS1 bool // or ASN
+	}{
+		{"RSA verify (PKCS1v15) on 1024 bits", 1024, true},
+		{"RSA verify (PKCS1v15) on 2048 bits", 2048, true},
+		{"RSA verify (PKCS1v15) on 1024 bits", 1024, false},
+		{"RSA verify (PKCS1v15) on 2048 bits", 2048, false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Case, func(t *testing.T) {
+			prikey, cert := genCertPriKey(c.PKCS1, c.Bits)
+			if cert == "" {
+				t.Fatal("Faield new RSA PKCSX keys!!")
+			}
+
+			if cipher, err := OAEPEncrypt(cert, c.Case); err != nil {
+				t.Fatal("RSA-OAEP Encrypt, err:", err)
+			} else if plaintext, err := OAEPDecrypt(prikey, cipher, !c.PKCS1); err != nil {
+				t.Fatal("RSA-OAEP Decrypt, err:", err)
+			} else if c.Case != plaintext {
+				t.Fatal("RSA-OAEP encrypt-decrypt failed!!")
+			}
+		})
+	}
+}
+
+func genCertPriKey(pkcs1 bool, bits int) (string, string) {
+	pkcs := "PKCS1"
+	if !pkcs1 {
+		pkcs = "PKCS8"
+	}
+
+	prikey, _, err := newRSAKeysByType(pkcs, bits)
+	if err != nil {
+		return "", ""
+	}
+	sno, _ := NewSerialNumber()
+	cert, err := NewRSACert(prikey, sno, "WENGOLD", 365, !pkcs1)
+	if err != nil {
+		return "", ""
+	}
+	return prikey, cert
 }

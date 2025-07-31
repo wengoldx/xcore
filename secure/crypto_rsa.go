@@ -15,6 +15,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -39,11 +40,11 @@ import (
 //	prikey, pubkey, _ := secure.NewRSAKeys(1024)
 //	logger.I("public  key:", pubkey, "private key:", prikey)
 //
-//	ciphertext, _ := secure.RSAEncrypt([]byte(pubkey), []byte("original-content"))
+//	ciphertext, _ := secure.RSAEncrypt(pubkey, "original-content")
 //	ciphertextBase64 := secure.EncodeBase64(string(ciphertext))
 //	logger.I("ciphertext base64 string:", ciphertextBase64)
 //
-//	original, _ := secure.RSADecrypt([]byte(prikey), ciphertext)
+//	original, _ := secure.RSADecrypt(prikey, ciphertext)
 //	logger.I("original string:", string(original))	// print 'original-content'
 //
 //
@@ -64,12 +65,12 @@ import (
 //	prikey, pubkey, _ := secure.NewRSAKeys(1024)
 //	logger.I("public  key:", pubkey, "private key:", prikey)
 //
-//	original := []byte("original-content")
-//	signature, _ := secure.RSASign([]byte(prikey), original)
-//	logger.I("original string:", string(original))
-//	logger.I("signature string:", string(signature))
+//	original := "original-content"
+//	signature, _ := secure.RSASign(prikey, original)
+//	logger.I("original string:", original)
+//	logger.I("signature string:", signature)
 //
-//	if err := secure.RSAVerify([]byte(pubkey), original, signature); err != nil {
+//	if err := secure.RSAVerify(pubkey, original, signature); err != nil {
 //		logger.E("Verify failed with err:", err)
 //		return
 //	}
@@ -83,7 +84,7 @@ const (
 
 // Load RSA private or public key content from the given pem file,
 // and the input buffer size of bits must larger than pem file size
-// by call NewRSAKeys to set bits.
+// by call NewRSAKeys() to set bits.
 func LoadRSAKey(filepath string, bits ...int) (string, error) {
 	if len(bits) > 0 && bits[0] > 0 {
 		pemfile, err := os.Open(filepath)
@@ -107,7 +108,7 @@ func LoadRSAKey(filepath string, bits ...int) (string, error) {
 	}
 }
 
-// Parse PKCS#1 or PKCS#8 RSA private key from pem file, set pkcs8
+// Parse PKCS#1 or PKCS#8 RSA private key from pem data, set pkcs8
 // param to true for use #PCSC#8, or false as default for use PKCS#1
 // to parse RSA private key.
 func ParsePriKey(prikey string, pkcs8 ...bool) (*rsa.PrivateKey, error) {
@@ -131,7 +132,7 @@ func ParsePriKey(prikey string, pkcs8 ...bool) (*rsa.PrivateKey, error) {
 	return pri, nil
 }
 
-// Parse RSA private key from pem file whatever PKSC#1 or PKCS#8 format.
+// Parse RSA public key from pem data whatever PKSC#1 or PKCS#8 format.
 func ParsePubKey(pubkey string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pubkey))
 	if block == nil {
@@ -143,6 +144,31 @@ func ParsePubKey(pubkey string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 	return pubif.(*rsa.PublicKey), nil
+}
+
+// Parse RSA public key from cert pem data, the cert can create
+// by NewRSACert() for PKCS#1 or PKCS#8.
+func CertPubKey(certpem string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(certpem))
+	if block == nil {
+		return nil, invar.ErrBadPublicKey
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	pubkey := cert.PublicKey.(*rsa.PublicKey)
+	return pubkey, nil
+}
+
+// Parse RSA public key from cert pem file.
+func CertPubKey4F(certfile string) (*rsa.PublicKey, error) {
+	certpem, err := LoadRSAKey(certfile)
+	if err != nil {
+		return nil, err
+	}
+	return CertPubKey(certpem)
 }
 
 // -------------------------------------------------------------------
@@ -499,27 +525,21 @@ func NewRSACert(prikey string, serialnum *big.Int, organization string, days int
 		return "", err
 	}
 
-	cert := pem.EncodeToMemory(&pem.Block{
+	certpem := pem.EncodeToMemory(&pem.Block{
 		Type: "CERTIFICATE", Bytes: certbytes,
 	})
-	return string(cert), nil
+	return string(certpem), nil
 }
 
 // Using RSA cert to verify RSA signatured data, call NewRSACert()
 // to create PKCS#1 or PKCS#8 cert pem data, then sign source by
 // RSASign() for PKCS#1 cert, RSA8Sign() for PKCS#8 cert.
 func RSACertVerify(certpem, original string, signature []byte) error {
-	block, _ := pem.Decode([]byte(certpem))
-	if block == nil {
-		return invar.ErrBadPublicKey
-	}
-
-	cert, err := x509.ParseCertificate(block.Bytes)
+	pub, err := CertPubKey(certpem)
 	if err != nil {
 		return err
 	}
 
-	pub := cert.PublicKey.(*rsa.PublicKey)
 	hashed := HashSHA256([]byte(original))
 	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, hashed[:], signature)
 }
@@ -532,6 +552,64 @@ func RSACertVerify4F(certfile, original string, signature []byte) error {
 		return err
 	}
 	return RSACertVerify(certpem, original, signature)
+}
+
+// -------------------------------------------------------------------
+// Use RSA-OAEP with RSA cert to encrypt given plaintext, and decrypt
+// ciphertext.
+// -------------------------------------------------------------------
+
+// Encrypts the given text with cert pem data by RSA-OAEP, the cert can
+// create by NewRSACert() for PKCS#1 or PKCS#8, then return ciphertext
+// as base64 formated data.
+func OAEPEncrypt(certpem, text string) (string, error) {
+	pub, err := CertPubKey(certpem)
+	if err != nil {
+		return "", err
+	}
+
+	txtbytes := []byte(text)
+	cipherdata, err := rsa.EncryptOAEP(sha1.New(), rand.Reader, pub, txtbytes, nil)
+	if err != nil {
+		return "", err
+	}
+
+	ciphertext := ByteToBase64(cipherdata)
+	return ciphertext, nil
+}
+
+// Decrypts base64 encoded ciphertext using RSA-OAEP, call NewRSAKeys()
+// to create private key with 1024 bits for PKCS#1, or 2048 bit for PKCS#8.
+func OAEPDecrypt(prikey, ciphertext string, pkcs8 ...bool) (string, error) {
+	pri, err := ParsePriKey(prikey, pkcs8...)
+	if err != nil {
+		return "", err
+	}
+
+	cipherbytes, _ := Base64ToByte(ciphertext)
+	text, err := rsa.DecryptOAEP(sha1.New(), rand.Reader, pri, cipherbytes, nil)
+	if err != nil {
+		return "", err
+	}
+	return string(text), nil
+}
+
+// Encrypts the given text with cert pem file by RSA-OAEP.
+func OAEPEncrypt4F(certfile, text string) (string, error) {
+	certpem, err := LoadRSAKey(certfile)
+	if err != nil {
+		return "", err
+	}
+	return OAEPEncrypt(certpem, text)
+}
+
+// Decrypts base64 encoded ciphertext using RSA-OAEP.
+func OAEPDecrypt4F(prifile, ciphertext string, pkcs8 ...bool) (string, error) {
+	prikey, err := LoadRSAKey(prifile)
+	if err != nil {
+		return "", err
+	}
+	return OAEPDecrypt(prikey, ciphertext, pkcs8...)
 }
 
 // -------------------------------------------------------------------
