@@ -64,6 +64,9 @@ service Acc {
   // Verify bind code of backup email
   rpc ViaBKMail(Code) returns (AEmpty);
 
+  // Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
+  rpc SendMail(Mail) returns (AEmpty);
+
   // ----------------------------------------
   // For Store Module Of IFSCM
   // ----------------------------------------
@@ -100,13 +103,6 @@ service Acc {
 
   // Return uuids and emails
   rpc GetActiveEmails(Emails) returns (Emails);
-
-  // ----------------------------------------
-  // For QKS Send Mail
-  // ----------------------------------------
-
-  // Send custom mail from QKS web page on custom request.
-  rpc SendCustomMail(SugMail) returns (AEmpty);
 }
 
 // Empty response for AccService
@@ -268,13 +264,9 @@ message Search {
   string role = 3;      // target role
 }
 
-message SugMail {
-  string email = 1;     // user input custom email address
-  string content = 2;   // feedback message content
-  string name = 3;      // user input contact name
-  string phone = 4;     // user input phone number
-  string links = 5;     // uploaded image links
-  int32  isbuy = 6;     // 0 for feedback, 1 for custom desing
+message Mail {
+  string cat = 1;       // who request send the email, one of 'qks', 'rainbow'.
+  string content = 2;   // mail content to send, formated as json string.
 }
 
 message Code {

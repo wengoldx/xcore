@@ -13,6 +13,7 @@ package wrpc
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"path"
@@ -357,19 +358,21 @@ func (stub *GrpcStub) SearchAvatars(uids []string, filter bool, key string) (*ac
 	return stub.Acc.SearchAvatars(context.Background(), param)
 }
 
-// Send custom mail.
-func (stub *GrpcStub) SendMail(mail, content, name, phone string, buy int32, links []string) error {
+// Request send mail dispath by given category.
+func (stub *GrpcStub) SendMail(cat string, payload any) error {
 	if stub.Acc == nil {
 		return invar.ErrInvalidClient
-	} else if mail == "" || content == "" || (buy == 1 && name == "") {
+	} else if cat == "" || payload == nil {
 		return invar.ErrInvalidParams
 	}
 
-	param := &acc.SugMail{
-		Email: mail, Content: content, Name: name, Phone: phone,
-		Isbuy: buy, Links: strings.Join(links, ","),
+	content, err := json.Marshal(payload)
+	if err != nil {
+		return invar.ErrCaseException
 	}
-	_, err := stub.Acc.SendCustomMail(context.Background(), param)
+
+	param := &acc.Mail{Cat: cat, Content: string(content)}
+	_, err = stub.Acc.SendMail(context.Background(), param)
 	return err
 }
 

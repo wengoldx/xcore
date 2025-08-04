@@ -59,6 +59,8 @@ type AccClient interface {
 	DeleteAcc(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
 	// Verify bind code of backup email
 	ViaBKMail(ctx context.Context, in *Code, opts ...grpc.CallOption) (*AEmpty, error)
+	// Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
+	SendMail(ctx context.Context, in *Mail, opts ...grpc.CallOption) (*AEmpty, error)
 	// Register store machine account
 	StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error)
 	// Register store composer account
@@ -81,8 +83,6 @@ type AccClient interface {
 	StoreProfiles(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*ProfStores, error)
 	// Return uuids and emails
 	GetActiveEmails(ctx context.Context, in *Emails, opts ...grpc.CallOption) (*Emails, error)
-	// Send custom mail from QKS web page on custom request.
-	SendCustomMail(ctx context.Context, in *SugMail, opts ...grpc.CallOption) (*AEmpty, error)
 }
 
 type accClient struct {
@@ -255,6 +255,15 @@ func (c *accClient) ViaBKMail(ctx context.Context, in *Code, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *accClient) SendMail(ctx context.Context, in *Mail, opts ...grpc.CallOption) (*AEmpty, error) {
+	out := new(AEmpty)
+	err := c.cc.Invoke(ctx, "/proto.Acc/SendMail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accClient) StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error) {
 	out := new(UUID)
 	err := c.cc.Invoke(ctx, "/proto.Acc/StoreAddMach", in, out, opts...)
@@ -354,15 +363,6 @@ func (c *accClient) GetActiveEmails(ctx context.Context, in *Emails, opts ...grp
 	return out, nil
 }
 
-func (c *accClient) SendCustomMail(ctx context.Context, in *SugMail, opts ...grpc.CallOption) (*AEmpty, error) {
-	out := new(AEmpty)
-	err := c.cc.Invoke(ctx, "/proto.Acc/SendCustomMail", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AccServer is the server API for Acc service.
 // All implementations must embed UnimplementedAccServer
 // for forward compatibility
@@ -404,6 +404,8 @@ type AccServer interface {
 	DeleteAcc(context.Context, *UUID) (*AEmpty, error)
 	// Verify bind code of backup email
 	ViaBKMail(context.Context, *Code) (*AEmpty, error)
+	// Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
+	SendMail(context.Context, *Mail) (*AEmpty, error)
 	// Register store machine account
 	StoreAddMach(context.Context, *Email) (*UUID, error)
 	// Register store composer account
@@ -426,8 +428,6 @@ type AccServer interface {
 	StoreProfiles(context.Context, *UIDS) (*ProfStores, error)
 	// Return uuids and emails
 	GetActiveEmails(context.Context, *Emails) (*Emails, error)
-	// Send custom mail from QKS web page on custom request.
-	SendCustomMail(context.Context, *SugMail) (*AEmpty, error)
 	mustEmbedUnimplementedAccServer()
 }
 
@@ -489,6 +489,9 @@ func (UnimplementedAccServer) DeleteAcc(context.Context, *UUID) (*AEmpty, error)
 func (UnimplementedAccServer) ViaBKMail(context.Context, *Code) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ViaBKMail not implemented")
 }
+func (UnimplementedAccServer) SendMail(context.Context, *Mail) (*AEmpty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendMail not implemented")
+}
 func (UnimplementedAccServer) StoreAddMach(context.Context, *Email) (*UUID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreAddMach not implemented")
 }
@@ -521,9 +524,6 @@ func (UnimplementedAccServer) StoreProfiles(context.Context, *UIDS) (*ProfStores
 }
 func (UnimplementedAccServer) GetActiveEmails(context.Context, *Emails) (*Emails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetActiveEmails not implemented")
-}
-func (UnimplementedAccServer) SendCustomMail(context.Context, *SugMail) (*AEmpty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendCustomMail not implemented")
 }
 func (UnimplementedAccServer) mustEmbedUnimplementedAccServer() {}
 
@@ -862,6 +862,24 @@ func _Acc_ViaBKMail_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Acc_SendMail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Mail)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).SendMail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/SendMail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).SendMail(ctx, req.(*Mail))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Acc_StoreAddMach_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Email)
 	if err := dec(in); err != nil {
@@ -1060,24 +1078,6 @@ func _Acc_GetActiveEmails_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Acc_SendCustomMail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SugMail)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccServer).SendCustomMail(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.Acc/SendCustomMail",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).SendCustomMail(ctx, req.(*SugMail))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Acc_ServiceDesc is the grpc.ServiceDesc for Acc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1158,6 +1158,10 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Acc_ViaBKMail_Handler,
 		},
 		{
+			MethodName: "SendMail",
+			Handler:    _Acc_SendMail_Handler,
+		},
+		{
 			MethodName: "StoreAddMach",
 			Handler:    _Acc_StoreAddMach_Handler,
 		},
@@ -1200,10 +1204,6 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetActiveEmails",
 			Handler:    _Acc_GetActiveEmails_Handler,
-		},
-		{
-			MethodName: "SendCustomMail",
-			Handler:    _Acc_SendCustomMail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
