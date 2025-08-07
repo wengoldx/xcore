@@ -22,6 +22,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -34,42 +35,44 @@ import (
 // truncate buffer size for file copy
 const _truncateBufferSize = 1024 * 30
 
-// Check the filepath whether point to a file.
-func IsFile(filepath string) bool {
-	if fileinfo, err := os.Stat(filepath); err == nil {
-		return !fileinfo.IsDir()
+type FileValueTypes interface {
+	string | *os.File
+} 
+
+// Check the file path (or file object) whether point to a file.
+func IsFile[T FileValueTypes](file T) bool {
+	switch ft := any(file).(type) {
+	case string:
+		if fileinfo, err := os.Stat(ft); err == nil {
+			return !fileinfo.IsDir()
+		}
+	case *os.File:
+		if fileinfo, err := ft.Stat(); err == nil {
+			return !fileinfo.IsDir()
+		}
 	}
 	return false
 }
 
-// Check the dirpath whether point to a directory.
-func IsDir(dirpath string) bool {
-	if fileinfo, err := os.Stat(dirpath); err == nil {
-		return fileinfo.IsDir()
-	}
-	return false
-}
-
-// Check the file whether point to a file.
-func IsFile2(file *os.File) bool {
-	if fileinfo, err := file.Stat(); err == nil {
-		return !fileinfo.IsDir()
-	}
-	return false
-}
-
-// Check the file whether point to a directory.
-func IsDir2(file *os.File) bool {
-	if fileinfo, err := file.Stat(); err == nil {
-		return fileinfo.IsDir()
+// Check the dir path (or file object) whether point to a directory.
+func IsDir[T FileValueTypes](dir T) bool {
+	switch pt := any(dir).(type) {
+	case string:
+		if fileinfo, err := os.Stat(pt); err == nil {
+			return fileinfo.IsDir()
+		}
+	case *os.File:
+		if fileinfo, err := pt.Stat(); err == nil {
+			return fileinfo.IsDir()
+		}
 	}
 	return false
 }
 
 // Check the filepath whether point to a exist file or directory.
 //
-//	@See use IsFile(), IsFile2() to check exist file exactly.
-//	@See use IsDir(), IsDir2() to check exist directory exactly.
+//	@See use IsFile() to check exist file exactly.
+//	@See use IsDir()  to check exist directory exactly.
 func IsExistFile(filepath string) bool {
 	fileinfo, err := os.Stat(filepath)
 	if err != nil || fileinfo == nil {
@@ -144,11 +147,11 @@ func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 
 	var err error
 	var tagfile *os.File
-	filepath := fmt.Sprintf("%s/%s", dirpath, filename)
+	fp := filepath.Join(dirpath, filename)
 	if Variable(append, false) {
-		tagfile, err = OpenTruncFile(filepath)
+		tagfile, err = OpenTruncFile(fp)
 	} else {
-		tagfile, err = OpenWriteFile(filepath)
+		tagfile, err = OpenWriteFile(fp)
 	}
 	if err != nil {
 		return err
@@ -221,6 +224,15 @@ func FileAbstract(filepath string) (string, error) {
 //	Data translate result: `filename.pdf` -> `pdf`
 func LowerFileSuffix(filename string) string {
 	return strings.TrimPrefix(strings.ToLower(path.Ext(filename)), ".")
+}
+
+// Normalize the given path, it will remove the '/' of path tails.
+//
+//	path: 1/2//3/../4/./5/ -> 1/2/4/5
+//	path:     1/2//3/      -> 1/2/3
+//	path: /  1 /2\\3\\     -> /  1 /2/3
+func NormalizePath(path string) string {
+	return strings.Trim(filepath.Clean(strings.TrimSpace(path)), "/") 
 }
 
 // -----------------------------------------------------------------

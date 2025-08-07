@@ -87,12 +87,11 @@ func ToAnys[T BuildIn](values []T) []any {
 func ToStrings[T BuildIn](values []T) []string {
 	vs := []string{}
 	for _, value := range values {
-		vt := reflect.TypeOf(value)
-		switch vt.Kind() {
-		case reflect.String:
-			vs = append(vs, fmt.Sprintf("'%v'", value))
+		switch vt := any(value).(type) {
+		case string:
+			vs = append(vs, fmt.Sprintf("'%v'", vt))
 		default:
-			vs = append(vs, fmt.Sprintf("%v", value))
+			vs = append(vs, fmt.Sprintf("%v", values))
 		}
 	}
 	return vs
