@@ -131,6 +131,30 @@ func OpenTruncFile(filepath string, perm ...os.FileMode) (*os.File, error) {
 	return os.OpenFile(filepath, flag, 0666)
 }
 
+// Save the multipart file datas to given local file path.
+func SaveMultipartFile(dirpath, filename string, file multipart.File) (string, error) {
+	if !IsExistFile(dirpath) {
+		if err := MakeDirs(dirpath); err != nil {
+			logger.E("Make paths:", dirpath, "err:", err)
+			return "", err
+		}
+	}
+
+	dstfile := filepath.Join(dirpath, filename)
+	dst, err := OpenTruncFile(dstfile)
+	if err != nil {
+		return "", err 
+	}
+
+	if _, err := io.Copy(dst, file); err != nil {
+		logger.E("Save file:", dstfile, "err:", err)
+		return "", err
+	}
+
+	logger.I("Saved file:", dstfile)
+	return dstfile, nil	
+}
+
 // Save file datas to target file on override or append mode, by default override
 // the datas to file, the function will auto create the unexist directories.
 func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
@@ -340,7 +364,7 @@ func FixPath(input string) string {
 func ReadPropFile(path string) (map[string]string, error) {
 	f, e := os.Open(path)
 	if e == nil {
-		if IsFile2(f) {
+		if IsFile(f) {
 			propMap := make(map[string]string)
 			reader := bufio.NewReader(f)
 			for {
