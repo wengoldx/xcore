@@ -145,6 +145,7 @@ func SaveMultipartFile(dirpath, filename string, file multipart.File) (string, e
 	if err != nil {
 		return "", err 
 	}
+	defer dst.Close()
 
 	if _, err := io.Copy(dst, file); err != nil {
 		logger.E("Save file:", dstfile, "err:", err)
