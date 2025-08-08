@@ -73,12 +73,14 @@ func IsDir[T FileValueTypes](dir T) bool {
 //
 //	@See use IsFile() to check exist file exactly.
 //	@See use IsDir()  to check exist directory exactly.
-func IsExistFile(filepath string) bool {
-	if _, err := os.Stat(filepath); err != nil {
-		if os.IsNotExist(err) {
-			return false
+func IsExistFile(filepath ...string) bool {
+	for _, fp := range filepath {
+		if _, err := os.Stat(fp); err != nil {
+			if os.IsNotExist(err) {
+				return false
+			}
+			logger.E("Stat file:", fp, "err:", err)
 		}
-		logger.E("Stat file:", filepath, "err:", err)
 	}
 	return true
 }
