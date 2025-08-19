@@ -293,7 +293,7 @@ func (mc *MetaConfig) UpdateChineses(descs []*utils.SvrDesc) error {
 // - Nginx proxy vip server need access on http://{svr}:3608/nacos
 func genClientParam(ns, svr string) vo.NacosClientParam {
 	sc := []constant.ServerConfig{
-		{Scheme: "http", ContextPath: "/nacos", IpAddr: svr, Port: 3608},
+		{Scheme: "http", ContextPath: "/nacos", IpAddr: svr, Port: 8848},
 	}
 
 	// logs config
