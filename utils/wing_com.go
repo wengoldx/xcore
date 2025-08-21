@@ -64,6 +64,16 @@ func Condition[T BuildIn](condition bool, postive T, negative T) T {
 //	See utils.BuildIn for more types defined informations.
 func Variable[T BuildIn](src []T, def T) T {
 	if len(src) > 0 {
+		switch v := any(src[0]).(type) {
+		case string:
+			if v == "" {
+				return def
+			}
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+			if v == 0 {
+				return def
+			}
+		}
 		return src[0]
 	}
 	return def
@@ -89,7 +99,7 @@ func ToStrings[T BuildIn](values []T) []string {
 	for _, value := range values {
 		switch vt := any(value).(type) {
 		case string:
-			vs = append(vs, fmt.Sprintf("'%v'", vt))
+			vs = append(vs, "'"+ vt+"'") // as '123abc'
 		default:
 			vs = append(vs, fmt.Sprintf("%v", values))
 		}
