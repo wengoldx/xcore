@@ -74,12 +74,12 @@ func (e TaskHandlerFunc) ExecQueueTask(data any) error {
 
 // Create a new queue task and start as runtime monitor.
 //
-// Set custom interval duration and interrupt flag by call queue.WithInterrupt(),
-// queue.WithInterval() like follow codes:
+// Set custom interval duration and interrupt flag by call utils.WithInterrupt(),
+// utils.WithInterval() like follow codes:
 //
-//	task := queue.NewQueueTask(handler,
-//		queue.WithInterrupt(true),                 // interrupt monitor when case error.
-//		queue.WithInterval(20 * time.Millisecond), // waiting 500ms between two task.
+//	task := utils.NewQueueTask(handler,
+//		utils.WithInterrupt(true),                 // interrupt monitor when case error.
+//		utils.WithInterval(20 * time.Millisecond), // waiting 500ms between two task.
 //	)
 //	task.Post(taskdata)
 func NewQueueTask(handler TaskHandler, opts ...Option) *QueueTask {
