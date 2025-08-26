@@ -51,6 +51,7 @@ const (
 	DID_OTA_BUILDS   = "dunyu.ota.builds"   // Fixed group, data id of all projects OTA infos, get data from mc.OTA maps
 	DID_WX_AGENTS    = "dunyu.wx.agents"    // Fixed group, data id of wechat agents
 	DID_QK_WORDS     = "dunyu.qk.words"     // Fixed group, data id for excel words to parse rules
+	DID_SER_RELEASE  = "dunyu.ser.release"  // Fixed group, data id for master release version and infos
 )
 
 /* -------------------------- */
@@ -168,4 +169,13 @@ type EWords struct {
 	Analysis  map[string]int    `json:"analysis"`  // excel words to analysis types
 	Actions   map[string]int    `json:"actions"`   // excel words to action types
 	StartEnd  map[string]string `json:"startend"`  // excel words to start and end keywords
+}
+
+// Nacos config for build release by using DID_SER_RELEASE data id
+type VRelease struct {
+	Version int64   `json:"version"` // Release build version, as global number and auto increate from 0.
+	Path    string  `json:"path"`    // Release package bucket relative path.
+	Date    string  `json:"date"`    // Release date, as '2006.12.01' formated string.
+	Hash    string  `json:"hash"`    // Package file hash sums.
+	Size    float64 `json:"size"`    // Package file sizes in bytes.
 }

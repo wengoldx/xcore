@@ -151,13 +151,14 @@ type MetaConfig struct {
 	Callbacks map[string]MetaConfigCallback // Meta config changed callback maps, key is dataid
 
 	// Custom datas when project register data ids, see parseXxxx inner functions.
-	Conf    AccConfs                     // DID_ACC_CONFIGS  : Account configs
-	OTA     map[string]*OTAInfo          // DID_OTA_BUILDS   : Projects OTA infos
-	Senders map[string]*DTalkSender      // DID_DTALK_NTFERS : DingTalk senders
-	Agents  map[string]*wechat.WxIFAgent // DID_WX_AGENTS    : Wechat agents
-	Paths   map[string][]*ResPath        // DID_MIO_PATHS    : MinIO export resource paths
-	Users   map[string]string            // DID_MIO_USERS    : MinIO access service users
-	Words   EWords                       // DID_QK_WORDS     : Excel rule words
+	Conf     AccConfs                     // DID_ACC_CONFIGS  : Account configs
+	OTA      map[string]*OTAInfo          // DID_OTA_BUILDS   : Projects OTA infos
+	Senders  map[string]*DTalkSender      // DID_DTALK_NTFERS : DingTalk senders
+	Agents   map[string]*wechat.WxIFAgent // DID_WX_AGENTS    : Wechat agents
+	Paths    map[string][]*ResPath        // DID_MIO_PATHS    : MinIO export resource paths
+	Users    map[string]string            // DID_MIO_USERS    : MinIO access service users
+	Words    EWords                       // DID_QK_WORDS     : Excel rule words
+	Releases map[string]*VRelease         // DID_SER_RELEASE  : Master release version and infos
 }
 
 // Callback to listen server address and port changes
@@ -368,6 +369,8 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 		mc.parseConfigs(data)
 	case DID_OTA_BUILDS:
 		mc.parseOTAInfo(data)
+	case DID_SER_RELEASE:
+		mc.parseReleases(data)
 	case DID_DTALK_NTFERS:
 		mc.parseSenders(data)
 	case DID_WX_AGENTS:
@@ -462,6 +465,17 @@ func (mc *MetaConfig) parseWords(data string) {
 	}
 	mc.Words = words
 	naclog.I("Updated excel rule words!")
+}
+
+// Parse release infos when project register DID_SER_RELEASE change event
+func (mc *MetaConfig) parseReleases(data string) {
+	release := make(map[string]*VRelease)
+	if err := json.Unmarshal([]byte(data), &release); err != nil {
+		naclog.E("Unmarshal excel releases, err:", err)
+		return
+	}
+	mc.Releases = release
+	naclog.I("Updated releases infos!")
 }
 
 // Parse elastic server config and create es client
