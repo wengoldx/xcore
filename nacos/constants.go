@@ -62,9 +62,10 @@ type AccConfs struct {
 
 	// Email sender service
 	Email struct {
-		Host     string `json:"host"`
-		Port     int    `json:"port"`
-		Identity string `json:"identity"`
+		Identity string              `json:"identity"` // Mail proxy server identity.
+		Host     string              `json:"host"`     // Mail proxy server host address.
+		Port     int                 `json:"port"`     // Mail proxy server port.
+		Sender   map[string]*MallAcc `json:"sender"`   // Mail sender account for each backend server.
 	} `json:"email"`
 
 	// SMS sender service
@@ -82,7 +83,7 @@ type AccConfs struct {
 		PageLimits   int    `json:"pageLimits"`   // One times to get list item counts on a page
 	} `json:"secure"`
 
-	// Mall account settings
+	// Deprecated: Mall account settings, use Email.Sender[...] instead it!
 	MallAccs map[string]*MallAcc `json:"mallaccs"`
 }
 
