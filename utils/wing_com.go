@@ -101,7 +101,7 @@ func ToStrings[T BuildIn](values []T) []string {
 		case string:
 			vs = append(vs, "'"+ vt+"'") // as '123abc'
 		default:
-			vs = append(vs, fmt.Sprintf("%v", values))
+			vs = append(vs, fmt.Sprintf("%v", value))
 		}
 	}
 	return vs
