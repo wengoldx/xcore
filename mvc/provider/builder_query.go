@@ -143,9 +143,11 @@ func (b *QueryBuilder) OrderBy(field string, desc ...bool) *QueryBuilder {
 
 // Specify the like condition for query.
 //
-//	builder.Like("acc", "zhang") // => acc LIKE '%%zhang%%'
-func (b *QueryBuilder) Like(field, filter string) *QueryBuilder {
-	b.like = b.FormatLike(field, filter)
+//	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
+//	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
+//	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
+func (b *QueryBuilder) Like(field, filter string, pattern ...string) *QueryBuilder {
+	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
 

@@ -125,12 +125,23 @@ func (b *BaseBuilder) FormatLimit(n int) string {
 	return ""
 }
 
-// Format like condition to string.
+// Format like condition to string, set pattern one of 'perfix', 'suffix', 'center'
+// to make diffrent filter string as follow, by default use 'center' pattern.
 //
-//	- output string: field LIKE '%%filter%%'
-func (b *BaseBuilder) FormatLike(field, filter string) string {
+//	- Perfix pattern: field LIKE 'filter%%'
+//	- Center pattern: field LIKE '%%filter%%'
+//	- Suffix pattern: field LIKE '%%filter'
+func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string {
 	if field != "" && filter != "" {
-		return field + " LIKE '%%" + filter + "%%'"
+		lower := strings.ToLower(utils.Variable(pattern, "center"))
+		switch lower {
+		case "perfix":
+			return field + " LIKE '" + filter + "%%'"
+		case "suffix":
+			return field + " LIKE '%%" + filter + "'"
+		default:
+			return field + " LIKE '%%" + filter + "%%'"
+		}
 	}
 	return ""
 }

@@ -113,9 +113,11 @@ func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
 
 // Specify the like condition for query.
 //
-//	builder.Like("acc", "zhang") // => acc LIKE '%%zhang%%'
-func (b *UpdateBuilder) Like(field, filter string) *UpdateBuilder {
-	b.like = b.FormatLike(field, filter)
+//	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
+//	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
+//	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
+func (b *UpdateBuilder) Like(field, filter string, pattern ...string) *UpdateBuilder {
+	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
 
