@@ -159,6 +159,22 @@ func SaveMultipartFile(dirpath, filename string, file multipart.File) (string, e
 	logger.I("Saved file:", dstfile)
 	return dstfile, nil	
 }
+// Save the multipart file datas to given local file path from files header.
+func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader) (string, error) {
+	partfile, err := header.Open()
+	if err != nil {
+		logger.E("Open multipart file by header, err:", err)
+		return "", err
+	}
+	defer partfile.Close()
+
+	fn := header.Filename
+	dstfile, err := SaveMultipartFile(dirpath, fn, partfile)
+	if err != nil {
+		return "", err
+	}
+	return dstfile, nil
+}
 
 // Save file datas to target file on override or append mode, by default override
 // the datas to file, the function will auto create the unexist directories.
