@@ -159,6 +159,7 @@ func SaveMultipartFile(dirpath, filename string, file multipart.File) (string, e
 	logger.I("Saved file:", dstfile)
 	return dstfile, nil	
 }
+
 // Save the multipart file datas to given local file path from files header.
 func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader) (string, error) {
 	partfile, err := header.Open()
