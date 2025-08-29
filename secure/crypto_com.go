@@ -110,33 +110,35 @@ func NewNano() string {
 }
 
 // Create a code by using current nanosecond, e.g. M25eNdE4rF5
-func NewCode() string {
-	return genCodeFromMapping(time.Now().UnixNano(), radixCodeCharMap)
-}
-
-// Create a code from given int64 data, e.g. M25eNdE4rF5
-func NewCodeFrom(src int64) string {
-	return genCodeFromMapping(src, radixCodeCharMap)
+func NewCode(src ...int64) string {
+	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), radixCodeCharMap)
 }
 
 // Create a code formated only lower chars, e.g. mabendecrfdme
-func NewLowCode() string {
-	return genCodeFromMapping(time.Now().UnixNano(), oauthCodeSeedsLower)
+func NewLowCode(src ...int64) string {
+	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), oauthCodeSeedsLower)
 }
 
 // Create a code formated only upper chars, e.g. MABENDECRFDME
-func NewUpCode() string {
-	return genCodeFromMapping(time.Now().UnixNano(), oauthCodeSeedsUpper)
+func NewUpCode(src ...int64) string {
+	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), oauthCodeSeedsUpper)
 }
 
 // Create a code formated only number and lower chars, e.g. m25ende4rf5m
-func NewLowNum() string {
-	return genCodeFromMapping(time.Now().UnixNano(), radixCodeCharLoNum)
+func NewLowNum(src ...int64) string {
+	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), radixCodeCharLoNum)
 }
 
 // Create a code formated only number and upper chars, e.g. M25ENDE4RF5M
-func NewUpNum() string {
-	return genCodeFromMapping(time.Now().UnixNano(), radixCodeCharUpNum)
+func NewUpNum(src ...int64) string {
+	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), radixCodeCharUpNum)
+}
+
+func getVariable(vs []int64, def int64) int64 {
+	if len(vs) > 0 && vs[0] > 0 {
+		return vs[0]
+	}
+	return def
 }
 
 // Create a code by using current nanosecond and append random suffix, e.g. M25eNdE4rF50987
@@ -156,7 +158,7 @@ func NewRandCode(seednum ...int64) string {
 // Create a code from given int64 data and append random suffix, e.g. M25eNdE4rF50987
 func NewRandCodeFrom(src int64) string {
 	rander.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%s%04d", NewCodeFrom(src), rand.Intn(1000))
+	return fmt.Sprintf("%s%04d", NewCode(src), rand.Intn(1000))
 }
 
 // Convert to lower string and encode by base64 -> md5
