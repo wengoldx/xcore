@@ -136,45 +136,41 @@ func OpenTruncFile(filepath string, perm ...os.FileMode) (*os.File, error) {
 }
 
 // Save the multipart file datas to given local file path.
-func SaveMultipartFile(dirpath, filename string, file multipart.File) (string, error) {
+func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
 	if !IsExistFile(dirpath) {
 		if err := MakeDirs(dirpath); err != nil {
 			logger.E("Make paths:", dirpath, "err:", err)
-			return "", err
+			return  err
 		}
 	}
 
 	dstfile := filepath.Join(dirpath, filename)
 	dst, err := OpenTruncFile(dstfile)
 	if err != nil {
-		return "", err 
+		return  err 
 	}
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, file); err != nil {
 		logger.E("Save file:", dstfile, "err:", err)
-		return "", err
+		return  err
 	}
 
 	logger.I("Saved file:", dstfile)
-	return dstfile, nil	
+	return nil	
 }
 
 // Save the multipart file datas to given local file path from files header.
-func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader) (string, error) {
+func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader)  error {
 	partfile, err := header.Open()
 	if err != nil {
 		logger.E("Open multipart file by header, err:", err)
-		return "", err
+		return  err
 	}
 	defer partfile.Close()
 
 	fn := header.Filename
-	dstfile, err := SaveMultipartFile(dirpath, fn, partfile)
-	if err != nil {
-		return "", err
-	}
-	return dstfile, nil
+	return SaveMultipartFile(dirpath, fn, partfile)
 }
 
 // Save file datas to target file on override or append mode, by default override
