@@ -277,6 +277,13 @@ func NormalizePath(path string) string {
 	return strings.Trim(filepath.Clean(strings.TrimSpace(path)), "/") 
 }
 
+// Split the given file path to dir and base name, the dir called
+// clean to trim the / suffix.
+//
+// Use filepath.Split(), or path.Split() tail / suffix.
+func SplitPath(filepath string) (string, string) {
+	return path.Dir(filepath), path.Base(filepath)
+}
 // -----------------------------------------------------------------
 
 // Deprecated: CopyFile Copy source file to traget file.
