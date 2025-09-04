@@ -73,6 +73,17 @@ func ParseTime(layout, src string) (time.Time, error) {
 	return time.ParseInLocation(layout, src, time.Local)
 }
 
+// Parse the given time string to time with location timezoom.
+//
+// This method is good useful to restore a time object from formated
+// string output by time.Format(utils.TimeLayout) function.
+//
+// See utils.ParseTime() for more format layouts.
+func LocalTime(src string, layout ...string) (time.Time, error) {
+	timelayout := Variable(layout, TimeLayout)
+	return ParseTime(timelayout, src)
+}
+
 // IsToday check the given day string if today, the des time
 // string must format by time.Format() or offseted timezoom
 func IsToday(des string) bool {
