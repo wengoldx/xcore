@@ -272,7 +272,7 @@ func LowerFileSuffix(filename string) string {
 //
 //	path: 1/2//3/../4/./5/ -> 1/2/4/5
 //	path:     1/2//3/      -> 1/2/3
-//	path: /  1 /2\\3\\     -> /  1 /2/3
+//	path: /  1 /2\\3\\     -> 1 /2/3
 func NormalizePath(path string) string {
 	return strings.Trim(filepath.Clean(strings.TrimSpace(path)), "/") 
 }

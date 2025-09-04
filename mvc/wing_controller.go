@@ -13,6 +13,7 @@ package mvc
 import (
 	"encoding/json"
 	"encoding/xml"
+	"reflect"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -404,7 +405,7 @@ func (c *WingController) responCheckState(datatype string, protect, hidelog bool
 	}
 
 	c.Ctx.Output.Status = state
-	if len(data) > 0 {
+	if len(data) > 0 && data[0] != nil {
 		c.Data[datatype] = data[0]
 	}
 
@@ -426,24 +427,21 @@ func (c *WingController) responCheckState(datatype string, protect, hidelog bool
 
 // doAfterValidatedInner do bussiness action after success unmarshal params or
 // validate the unmarshaled json data.
-//	@See validatrParams() for more 400, 404 error code returned.
+//	@See validateParams() for more 400, 404 error code returned.
 func (c *WingController) doAfterValidatedInner(datatype string, ps any, nextFunc NextFunc, validate, protect, hidelog bool) {
-	if !c.validatrParams(datatype, ps, validate) {
+	if !c.validateParams(datatype, ps, validate) {
 		return
 	}
 
 	// execute business function after unmarshal and validated
-	if status, resp := nextFunc(); resp != nil {
-		c.responCheckState(datatype, protect, hidelog, status, resp)
-	} else {
-		c.responCheckState(datatype, protect, hidelog, status)
-	}
+	status, resp := nextFunc()
+	c.responCheckState(datatype, protect, hidelog, status, resp)
 }
 
-// validatrParams do bussiness action after success unmarshal params or validate the unmarshaled json data.
+// validateParams do bussiness action after success unmarshal params or validate the unmarshaled json data.
 //	@Return 400: Invalid input params(Unmarshal error or invalid params value).
 //	@Return 404: Internale server error(not support content type unless json and xml).
-func (c *WingController) validatrParams(datatype string, ps any, validate bool) bool {
+func (c *WingController) validateParams(datatype string, ps any, validate bool) bool {
 	switch datatype {
 	case "json":
 		if err := json.Unmarshal(c.Ctx.Input.RequestBody, ps); err != nil {
@@ -466,6 +464,77 @@ func (c *WingController) validatrParams(datatype string, ps any, validate bool) 
 		if err := Validator.Struct(ps); err != nil {
 			c.E400Validate(ps, err.Error())
 			return false
+		}
+	}
+	return true
+}
+
+// validateParams do bussiness action after success parsed and validate the params.
+//	@Return 400: Invalid url params(Parse error or invalid params value).
+func (c *WingController) validateUrlParams(ps any, validate bool) bool {
+	if !c.parseUrlParams(ps) {
+		c.E400Params("Failed parse url params!")
+		return false
+	}
+
+	// validate input params if need
+	if validate {
+		ensureValidatorGenerated()
+		if err := Validator.Struct(ps); err != nil {
+			c.E400Validate(ps, err.Error())
+			return false
+		}
+	}
+	return true
+}
+
+// Parse and save the input params from http request url for GET method.
+//
+//	`NOTICE`
+//
+// This method only support simple value types of bool, int, float, string
+// for input struct field, and filter out the others value types.
+//
+//	param := &MyStruct{
+//		Name string `json:"name"` // get 'name' value from url and set to Name.
+//		Aga  int                  // none json tag, filter out.
+//	}
+//	parseUrlParams(param)
+//
+// The sample param must create as a struct pointer for this methoed!
+func (c *WingController) parseUrlParams(ps any) bool {
+	rv := reflect.ValueOf(ps)
+	if !rv.IsValid() || rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return false
+	}
+
+	rv = rv.Elem()  // get param struct value
+	rt := rv.Type() // get param struct types
+	for i := 0; i < rt.NumField(); i++ {
+		field := rt.Field(i)
+		name, tag := field.Name, field.Tag.Get("json")
+		if name == "" || tag == "" {
+			continue // filter none json tag fields.
+		}
+
+		v := rv.FieldByName(name)
+		if v.IsValid() && v.CanSet() {
+			switch field.Type.Kind() {
+			case reflect.Bool:
+				pv, _ := c.GetBool(tag, false)
+				v.SetBool(pv)
+			case reflect.String:
+				v.SetString(c.GetString(tag, ""))
+			case reflect.Int, reflect.Int32, reflect.Int64:
+				pv, _ := c.GetInt64(tag, 0)
+				v.SetInt(pv)
+			case reflect.Uint, reflect.Uint32, reflect.Uint64:
+				pv, _ := c.GetUint64(tag, 0)
+				v.SetUint(pv)
+			case reflect.Float32, reflect.Float64:
+				pv, _ := c.GetFloat(tag, 0)
+				v.SetFloat(pv)
+			}
 		}
 	}
 	return true

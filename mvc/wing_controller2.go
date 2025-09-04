@@ -143,6 +143,16 @@ func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 	return uuid
 }
 
+// Parse url params for GET method, then do api action after success parsed.
+//
+//	@Return 400, 401, 404 codes returned on error.
+func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, fs ...bool) {
+	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
+	if uuid := c.AuthRequestHeader(hidelog); uuid != "" {
+		c.doAfterParsedInner("json", ps, nextFunc2, uuid, protect, hidelog)
+	}
+}
+
 // Do bussiness action after success validate the given json data.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
@@ -272,38 +282,44 @@ func (c *WAuthController) innerAuthHeader(hidelog bool) (string, string) {
 	return "", ""
 }
 
-// doAfterValidatedInner do bussiness action after success unmarshal params or
-// validate the unmarshaled json data.
-//
-//	@See validatrParams() for more 400, 404 error code returned.
-func (c *WAuthController) doAfterValidatedInner(datatype string,
-	ps any, nextFunc2 NextFunc2, uuid string, validate, protect, hidelog bool) {
-	if !c.validatrParams(datatype, ps, validate) {
+// Parse url param, validate if need, then call api hander method and response result.
+func (c *WAuthController) doAfterParsedInner(datatype string,
+	ps any, nextFunc2 NextFunc2, uuid string, protect, hidelog bool) {
+	if !c.validateUrlParams(ps, true) {
 		return
 	}
 
-	// execute business function after unmarshal and validated
-	if status, resp := nextFunc2(uuid); resp != nil {
-		c.responCheckState(datatype, protect, hidelog, status, resp)
-	} else {
-		c.responCheckState(datatype, protect, hidelog, status)
+	// execute business function after validated.
+	status, resp := nextFunc2(uuid)
+	c.responCheckState(datatype, protect, hidelog, status, resp)
+}
+
+// doAfterValidatedInner do bussiness action after success unmarshal params or
+// validate the unmarshaled json data.
+//
+//	@See validateParams() for more 400, 404 error code returned.
+func (c *WAuthController) doAfterValidatedInner(datatype string,
+	ps any, nextFunc2 NextFunc2, uuid string, validate, protect, hidelog bool) {
+	if !c.validateParams(datatype, ps, validate) {
+		return
 	}
+
+	// execute business function after validated.
+	status, resp := nextFunc2(uuid)
+	c.responCheckState(datatype, protect, hidelog, status, resp)
 }
 
 // doAfterValidatedInner3 do bussiness action after success unmarshal params or
 // validate the unmarshaled json data.
 //
-//	@See validatrParams() for more 400, 404 error code returned.
+//	@See validateParams() for more 400, 404 error code returned.
 func (c *WAuthController) doAfterValidatedInner3(datatype string,
 	ps any, nextFunc3 NextFunc3, uuid, pwd string, validate, protect, hidelog bool) {
-	if !c.validatrParams(datatype, ps, validate) {
+	if !c.validateParams(datatype, ps, validate) {
 		return
 	}
 
 	// execute business function after unmarshal and validated
-	if status, resp := nextFunc3(uuid, pwd); resp != nil {
-		c.responCheckState(datatype, protect, hidelog, status, resp)
-	} else {
-		c.responCheckState(datatype, protect, hidelog, status)
-	}
+	status, resp := nextFunc3(uuid, pwd)
+	c.responCheckState(datatype, protect, hidelog, status, resp)
 }

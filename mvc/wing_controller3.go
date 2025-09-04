@@ -163,6 +163,20 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 	return nil
 }
 
+// Parse url params for GET method, then do api action after success parsed.
+//
+//	This function only suport 'WENGOLD-V2.0' header with input params.
+//
+//	@return 401: Invalid author header or permission denied.
+//	@Return 400: Failed parse url params.
+//	@Return 404: Case exception in server.
+func (c *WRoleController) DoAfterParsed(ps any, nextHander NextHander, opts ...bool) {
+	silent := utils.Variable(opts, false)
+	if s := c.AuthRequestHeader(silent); s != nil {
+		c.doAfterParsedInner(ps, nextHander, s, silent)
+	}
+}
+
 // Parse and validate input params, then do api action after success validated.
 //
 //	This function only suport 'WENGOLD-V2.0' header with input params.
@@ -171,7 +185,7 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 //	@Return 400: Failed parse input params or validate error.
 //	@Return 404: Case exception in server.
 func (c *WRoleController) DoAfterValidated(ps any, nextHander NextHander, opts ...bool) {
-	silent := len(opts) > 0 && opts[0]
+	silent := utils.Variable(opts, false)
 	if s := c.AuthRequestHeader(silent); s != nil {
 		c.doAfterValidatedInner(ps, nextHander, s, true, silent)
 	}
@@ -185,7 +199,7 @@ func (c *WRoleController) DoAfterValidated(ps any, nextHander NextHander, opts .
 //	@Return 400: Failed parse input params.
 //	@Return 404: Case exception in server.
 func (c *WRoleController) DoAfterUnmarshal(ps any, nextHander NextHander, opts ...bool) {
-	silent := len(opts) > 0 && opts[0]
+	silent := utils.Variable(opts, false)
 	if s := c.AuthRequestHeader(silent); s != nil {
 		c.doAfterValidatedInner(ps, nextHander, s, false, silent)
 	}
@@ -193,15 +207,22 @@ func (c *WRoleController) DoAfterUnmarshal(ps any, nextHander NextHander, opts .
 
 // Parse input param, validate if need, then call api hander method and response result.
 func (c *WRoleController) doAfterValidatedInner(ps any, nextHander NextHander, s *WAuths, validate, silent bool) {
-	datatype := "json"
-	if !c.validatrParams(datatype, ps, validate) {
+	if !c.validateParams("json", ps, validate) {
 		return
 	}
 
-	// execute business function after unmarshal and validated
-	if status, resp := nextHander(s); resp != nil {
-		c.responCheckState(datatype, true, silent, status, resp)
-	} else {
-		c.responCheckState(datatype, true, silent, status)
+	// execute business function after validated.
+	status, resp := nextHander(s)
+	c.responCheckState("json", true, silent, status, resp)
+}
+
+// Parse url param, validate if need, then call api hander method and response result.
+func (c *WRoleController) doAfterParsedInner(ps any, nextHander NextHander, s *WAuths, silent bool) {
+	if !c.validateUrlParams(ps, true) {
+		return
 	}
+
+	// execute business function after validated.
+	status, resp := nextHander(s)
+	c.responCheckState("json", true, silent, status, resp)
 }
