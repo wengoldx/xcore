@@ -420,7 +420,7 @@ func (c *WingController) responCheckState(datatype string, protect, hidelog bool
 		c.ServeYAML()
 	default:
 		// just return blank string to close http connection
-		logger.W("Invalid response data tyep:" + datatype)
+		logger.W("Unsupport response type:" + datatype)
 		c.Ctx.ResponseWriter.Write([]byte(""))
 	}
 }
