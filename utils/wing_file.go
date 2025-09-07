@@ -12,17 +12,13 @@
 package utils
 
 import (
-	"bufio"
-	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -32,8 +28,7 @@ import (
 	"github.com/wengoldx/xcore/secure"
 )
 
-// truncate buffer size for file copy
-const _truncateBufferSize = 1024 * 30
+
 
 type FileValueTypes interface {
 	string | *os.File
@@ -69,12 +64,12 @@ func IsDir[T FileValueTypes](dir T) bool {
 	return false
 }
 
-// Check the filepath whether point to a exist file or directory.
+// Check the file paths whether point to a exist file or directory.
 //
 //	@See use IsFile() to check exist file exactly.
 //	@See use IsDir()  to check exist directory exactly.
-func IsExistFile(filepath ...string) bool {
-	for _, fp := range filepath {
+func IsExistFile(fps ...string) bool {
+	for _, fp := range fps {
 		if _, err := os.Stat(fp); err != nil {
 			if os.IsNotExist(err) {
 				return false
@@ -115,24 +110,24 @@ func MakeDirs(dirpath string, perm ...os.FileMode) error {
 // it will append write datas to file tails.
 //
 //	Warning: The caller must call file.Close() after writing finished.
-func OpenWriteFile(filepath string, perm ...os.FileMode) (*os.File, error) {
+func OpenWriteFile(fp string, perm ...os.FileMode) (*os.File, error) {
 	flag := os.O_CREATE | os.O_WRONLY | os.O_APPEND
 	if len(perm) > 0 && perm[0] != 0 {
-		return os.OpenFile(filepath, flag, perm[0])
+		return os.OpenFile(fp, flag, perm[0])
 	}
-	return os.OpenFile(filepath, flag, 0666)
+	return os.OpenFile(fp, flag, 0666)
 }
 
 // Create a new writonly file with permission bits, by default perm is 0666,
 // it will clear file content and write datas from file start.
 //
 //	Warning: The caller must call file.Close() after writing finished.
-func OpenTruncFile(filepath string, perm ...os.FileMode) (*os.File, error) {
+func OpenTruncFile(fp string, perm ...os.FileMode) (*os.File, error) {
 	flag := syscall.O_CREAT | os.O_WRONLY | syscall.O_TRUNC
 	if len(perm) > 0 && perm[0] != 0 {
-		return os.OpenFile(filepath, flag, perm[0])
+		return os.OpenFile(fp, flag, perm[0])
 	}
-	return os.OpenFile(filepath, flag, 0666)
+	return os.OpenFile(fp, flag, 0666)
 }
 
 // Save the multipart file datas to given local file path.
@@ -144,7 +139,7 @@ func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
 		}
 	}
 
-	dstfile := filepath.Join(dirpath, filename)
+	dstfile := path.Join(dirpath, filename)
 	dst, err := OpenTruncFile(dstfile)
 	if err != nil {
 		return  err 
@@ -176,8 +171,7 @@ func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader)  e
 // Save file datas to target file on override or append mode, by default override
 // the datas to file, the function will auto create the unexist directories.
 func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
-	dirpath = strings.TrimSuffix(dirpath, "/")
-	filename = strings.Trim(filename, "/")
+	dirpath, filename = path.Clean(dirpath), NormalizePath(filename)
 
 	if len(datas) == 0 {
 		return nil // non-need write anything.
@@ -189,7 +183,7 @@ func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 
 	var err error
 	var tagfile *os.File
-	fp := filepath.Join(dirpath, filename)
+	fp := path.Join(dirpath, filename)
 	if Variable(append, false) {
 		tagfile, err = OpenTruncFile(fp)
 	} else {
@@ -214,18 +208,18 @@ func SaveB64File(dirpath, filename string, b64datas string) error {
 	return SaveFile(dirpath, filename, datas)
 }
 
-// Delete the target exist file, it will not do anything when filepath
+// Delete the target exist file, it will not do anything when file path
 // point to a exist directoy, or the file unexist.
 //
 //	@See use DeleteFolder() to delete exist folder and anything it contained.
-func DeleteFile(filepath string) error {
-	if fileinfo, err := os.Stat(filepath); err != nil {
+func DeleteFile(fp string) error {
+	if fileinfo, err := os.Stat(fp); err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
 	} else if !fileinfo.IsDir() {
-		return os.Remove(filepath)
+		return os.Remove(fp)
 	}
 	return nil
 }
@@ -245,9 +239,9 @@ func DeleteFolder(dirpath string) error {
 }
 
 // Read file content and encode datas as md5 abstract string.
-func FileAbstract(filepath string) (string, error) {
+func FileAbstract(fp string) (string, error) {
 	h := md5.New()
-	if file, err := os.Open(filepath); err != nil {
+	if file, err := os.Open(fp); err != nil {
 		return "", err
 	} else {
 		defer file.Close()
@@ -260,31 +254,68 @@ func FileAbstract(filepath string) (string, error) {
 	return hex.EncodeToString(cipher), nil
 }
 
-// Return lower chars file suffix without prefix . char, it maybe return
-// empty if the filename param is '', '.', '..'.
+// Return file suffix without prefix . char, it maybe return empty if
+// the filename param is '', '.', '..', and to lower by default.
 //
 //	Data translate result: `filename.pdf` -> `pdf`
-func LowerFileSuffix(filename string) string {
-	return strings.TrimPrefix(strings.ToLower(path.Ext(filename)), ".")
+func FileSuffix(filename string, orignl ...bool) string {
+	if !Variable(orignl, false) {
+		return strings.ToLower(strings.TrimPrefix(path.Ext(filename), "."))
+	}
+	return strings.TrimPrefix(path.Ext(filename), ".")
+}
+
+// Retrn file simple name without suffix, and trim spaces both start and tails.
+//
+//	path: '   123  .pdf' -> '123'
+//	path: '123.pdf'      -> '123'
+//	path: '123'          -> '123'
+//	path: '.pdf'         -> ''
+//	path: ''             -> ''
+func FileBaseName(filename string) string {
+	fn := strings.TrimSuffix(filename, path.Ext(filename))
+	return strings.TrimSpace(fn)
 }
 
 // Normalize the given path, it will remove the '/' of path tails.
 //
-//	path: 1/2//3/../4/./5/ -> 1/2/4/5
-//	path:     1/2//3/      -> 1/2/3
-//	path: /  1 /2\\3\\     -> 1 /2/3
-func NormalizePath(path string) string {
-	return strings.Trim(filepath.Clean(strings.TrimSpace(path)), "/") 
+//	path: '1/2//3/../4/./5/' -> '1/2/4/5'
+//	path: '    1/2//3/'      -> '1/2/3'
+//	path: '/  1 /2\\3\\'     -> '1 /2/3'
+//	path: ''                 -> '.'
+func NormalizePath(fp string) string {
+	separator := string(os.PathSeparator)
+	normailze := strings.Trim(path.Clean(strings.TrimSpace(fp)), separator)
+	return strings.TrimSpace(normailze) 
 }
 
 // Split the given file path to dir and base name, the dir called
 // clean to trim the / suffix.
 //
+// For File:
+//
+//	path: '/1/2/3.doc' -> ['/1/2', '3.doc']
+//	path: '1/2/3.doc'  -> ['1/2',  '3.doc']
+//	path: '3.doc'      -> ['.',    '3.doc']
+//	path: ''           -> ['.',    '.']
+//
+// For Directory:
+//
+//	path: '/1/2/3_dir' -> ['/1/2', '3_dir']
+//	path: '1/2/3_dir'  -> ['1/2',  '3_dir']
+//	path: '3_doc'      -> ['.',    '3_dir']
+//
 // Use filepath.Split(), or path.Split() tail / suffix.
-func SplitPath(filepath string) (string, string) {
-	return path.Dir(filepath), path.Base(filepath)
+func SplitPath(fp string) (string, string) {
+	return path.Dir(fp), path.Base(fp)
 }
-// -----------------------------------------------------------------
+
+/* ------------------------------------------------------------------- */
+/* Deprecated Methods                                                  */
+/* ------------------------------------------------------------------- */
+
+// truncate buffer size for file copy
+const _truncateBufferSize = 1024 * 30
 
 // Deprecated: CopyFile Copy source file to traget file.
 func CopyFile(src string, dest string) (bool, error) {
@@ -329,8 +360,8 @@ func CopyFileTo(src string, dir string) (bool, error) {
 
 	// create or truncate dest file
 	fileInfo, _ := srcfile.Stat()
-	filepath := FixPath(dir) + string(os.PathSeparator) + fileInfo.Name()
-	destfile, err := OpenTruncFile(filepath)
+	fp := path.Join(dir, fileInfo.Name())
+	destfile, err := OpenTruncFile(fp)
 	if err != nil {
 		return false, err
 	}
@@ -343,107 +374,6 @@ func CopyFileTo(src string, dir string) (bool, error) {
 		return false, invar.ErrCopyFile
 	}
 	return true, nil
-}
-
-// Deprecated: FixPath fix path, example:
-//
-// ---
-//
-//	/aaa/aa\\bb\\cc/d/////     -> /aaa/aa/bb/cc/d
-//	E:/aaa/aa\\bb\\cc/d////e/  -> E:/aaa/aa/bb/cc/d/e
-//	""                         -> .
-//	/                          -> /
-func FixPath(input string) string {
-	input = strings.TrimSpace(input)
-	if len(input) == 0 {
-		return "."
-	}
-
-	// replace windows path separator '\' to '/'
-	replaceMent := strings.Replace(input, "\\", "/", -1)
-	for {
-		if strings.Contains(replaceMent, "//") {
-			replaceMent = strings.Replace(replaceMent, "//", "/", -1)
-			continue
-		}
-
-		if replaceMent == "/" {
-			return replaceMent
-		}
-
-		len := len(replaceMent)
-		if len <= 0 {
-			break
-		}
-
-		if replaceMent[len-1:] == "/" {
-			replaceMent = replaceMent[0 : len-1]
-		} else {
-			break
-		}
-	}
-	return replaceMent
-}
-
-// Deprecated: ReadPropFile read properties file on filesystem.
-func ReadPropFile(path string) (map[string]string, error) {
-	f, e := os.Open(path)
-	if e == nil {
-		if IsFile(f) {
-			propMap := make(map[string]string)
-			reader := bufio.NewReader(f)
-			for {
-				line, e1 := reader.ReadString('\n')
-				if e1 == nil || e1 == io.EOF {
-					line = strings.TrimSpace(line)
-					if len(line) != 0 && line[0] != '#' {
-						// li := strings.Split(line, "=")
-						eIndex := strings.Index(line, "=")
-						if eIndex == -1 {
-							return nil, errors.New("error parameter: '" + line + "'")
-						}
-						li := []string{line[0:eIndex], line[eIndex+1:]}
-						if len(li) > 1 {
-							k := strings.TrimSpace(li[0])
-							v := strings.TrimSpace(joinLeft(li[1:]))
-							propMap[k] = v
-						} else {
-							return nil, errors.New("error parameter: '" + li[0] + "'")
-						}
-					}
-					if e1 == io.EOF {
-						break
-					}
-				} else {
-					// real read error.
-					return nil, errors.New("error read from configuration file")
-				}
-			}
-			return propMap, nil
-		} else {
-			return nil, errors.New("expect file path not directory path")
-		}
-	} else {
-		return nil, e
-	}
-}
-
-// Deprecated: joinLeft only for ReadPropFile()
-func joinLeft(g []string) string {
-	if len(g) == 0 {
-		return ""
-	}
-	var bf bytes.Buffer
-	for i := range g {
-		c := strings.Index(g[i], "#")
-		if c == -1 {
-			bf.WriteString(g[i])
-		} else {
-			bf.WriteString(g[i][0:c])
-			break
-		}
-	}
-	return bf.String()
 }
 
 // HumanReadable format the size number of len.
