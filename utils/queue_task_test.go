@@ -12,6 +12,7 @@
 package utils
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"testing"
 	"time"
@@ -96,9 +97,9 @@ func TestNormalizePath(t *testing.T) {
 	}
 }
 
-func TestFileBaseName(t *testing.T) {
+func TestSplitSuffix(t *testing.T) {
 	cases := []*TestCase{
-		NewCase("Check 1", "123", "   123  .pdf"),
+		NewCase("Check 1", "123", "/1/2/   123  .pdf"),
 		NewCase("Check 1", "123", "123.pdf"),
 		NewCase("Check 2", "123", "123"),
 		NewCase("Check 3", "", ".pdf"),
@@ -106,9 +107,10 @@ func TestFileBaseName(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		rst := FileBaseName(c.Params.(string))
+		rst, suffix := SplitSuffix(c.Params.(string))
 		if want := c.Want.(string); rst != want {
 			t.Fatal("FileBaseName error > want:", want, "but result is", rst)
 		}
+		fmt.Println("suffix:", suffix)
 	}
 }

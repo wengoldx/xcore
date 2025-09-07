@@ -265,18 +265,6 @@ func FileSuffix(filename string, orignl ...bool) string {
 	return strings.TrimPrefix(path.Ext(filename), ".")
 }
 
-// Retrn file simple name without suffix, and trim spaces both start and tails.
-//
-//	path: '   123  .pdf' -> '123'
-//	path: '123.pdf'      -> '123'
-//	path: '123'          -> '123'
-//	path: '.pdf'         -> ''
-//	path: ''             -> ''
-func FileBaseName(filename string) string {
-	fn := strings.TrimSuffix(filename, path.Ext(filename))
-	return strings.TrimSpace(fn)
-}
-
 // Normalize the given path, it will remove the '/' of path tails.
 //
 //	path: '1/2//3/../4/./5/' -> '1/2/4/5'
@@ -308,6 +296,23 @@ func NormalizePath(fp string) string {
 // Use filepath.Split(), or path.Split() tail / suffix.
 func SplitPath(fp string) (string, string) {
 	return path.Dir(fp), path.Base(fp)
+}
+
+// Retrn file simple name without suffix, and trim spaces both start and tails.
+//
+//	path: '/1/2/   123  .pdf' -> ['123', 'pdf']
+//	path: '/1/2/123.pdf'      -> ['123', 'pdf']
+//	path: '123.PDF'           -> ['123', 'pdf']
+//	path: '123'               -> ['123', ''   ]
+//	path: '.pdf'              -> ['',    'pdf']
+//	path: ''                  -> ['',    ''   ]
+func SplitSuffix(fp string) (string, string) {
+	base := path.Base(fp)
+	suffix := path.Ext(base)
+
+	filename := strings.TrimSpace(strings.TrimSuffix(base, suffix))
+	suffix = strings.ToLower(strings.TrimPrefix(suffix, "."))
+	return filename, suffix
 }
 
 /* ------------------------------------------------------------------- */
