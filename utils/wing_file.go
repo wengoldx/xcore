@@ -18,7 +18,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -38,12 +38,12 @@ type FileValueTypes interface {
 func IsFile[T FileValueTypes](file T) bool {
 	switch ft := any(file).(type) {
 	case string:
-		if fileinfo, err := os.Stat(ft); err == nil {
-			return !fileinfo.IsDir()
+		if info, err := os.Stat(ft); err == nil {
+			return !info.IsDir()
 		}
 	case *os.File:
-		if fileinfo, err := ft.Stat(); err == nil {
-			return !fileinfo.IsDir()
+		if info, err := ft.Stat(); err == nil {
+			return !info.IsDir()
 		}
 	}
 	return false
@@ -53,22 +53,25 @@ func IsFile[T FileValueTypes](file T) bool {
 func IsDir[T FileValueTypes](dir T) bool {
 	switch pt := any(dir).(type) {
 	case string:
-		if fileinfo, err := os.Stat(pt); err == nil {
-			return fileinfo.IsDir()
+		if info, err := os.Stat(pt); err == nil {
+			return info.IsDir()
 		}
 	case *os.File:
-		if fileinfo, err := pt.Stat(); err == nil {
-			return fileinfo.IsDir()
+		if info, err := pt.Stat(); err == nil {
+			return info.IsDir()
 		}
 	}
 	return false
 }
 
-// Check the file paths whether point to a exist file or directory.
+// Check the file paths whether point to exist file or directory,
+// and return the false when anyone file path unexist.
+//
+//	`WARNING`: This method mark the path exist when case error except NotExist!
 //
 //	@See use IsFile() to check exist file exactly.
 //	@See use IsDir()  to check exist directory exactly.
-func IsExistFile(fps ...string) bool {
+func IsExistFiles(fps ...string) bool {
 	for _, fp := range fps {
 		if _, err := os.Stat(fp); err != nil {
 			if os.IsNotExist(err) {
@@ -84,12 +87,12 @@ func IsExistFile(fps ...string) bool {
 // create the directories if unexist, it maybe return error when
 // dirpath point to a exist file.
 func EnsurePath(dirpath string) error {
-	if fileinfo, err := os.Stat(dirpath); err != nil {
+	if info, err := os.Stat(dirpath); err != nil {
 		if os.IsNotExist(err) {
 			return MakeDirs(dirpath)
 		}
 		return err
-	} else if !fileinfo.IsDir() {
+	} else if !info.IsDir() {
 		return invar.NewError("Exist file, invalid directory!")
 	}
 	return nil
@@ -139,7 +142,7 @@ func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
 		}
 	}
 
-	dstfile := path.Join(dirpath, filename)
+	dstfile := filepath.Join(dirpath, filename)
 	dst, err := OpenTruncFile(dstfile)
 	if err != nil {
 		return  err 
@@ -171,7 +174,7 @@ func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader)  e
 // Save file datas to target file on override or append mode, by default override
 // the datas to file, the function will auto create the unexist directories.
 func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
-	dirpath, filename = path.Clean(dirpath), NormalizePath(filename)
+	dirpath, filename = filepath.Clean(dirpath), NormalizePath(filename)
 
 	if len(datas) == 0 {
 		return nil // non-need write anything.
@@ -183,7 +186,7 @@ func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 
 	var err error
 	var tagfile *os.File
-	fp := path.Join(dirpath, filename)
+	fp := filepath.Join(dirpath, filename)
 	if Variable(append, false) {
 		tagfile, err = OpenTruncFile(fp)
 	} else {
@@ -213,12 +216,12 @@ func SaveB64File(dirpath, filename string, b64datas string) error {
 //
 //	@See use DeleteFolder() to delete exist folder and anything it contained.
 func DeleteFile(fp string) error {
-	if fileinfo, err := os.Stat(fp); err != nil {
+	if info, err := os.Stat(fp); err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
-	} else if !fileinfo.IsDir() {
+	} else if !info.IsDir() {
 		return os.Remove(fp)
 	}
 	return nil
@@ -227,12 +230,12 @@ func DeleteFile(fp string) error {
 // Delete the target exist folder, it will not do anything when dirpath
 // point to a exist files, or the folder unexist.
 func DeleteFolder(dirpath string) error {
-	if fileinfo, err := os.Stat(dirpath); err != nil {
+	if info, err := os.Stat(dirpath); err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
-	} else if fileinfo.IsDir() {
+	} else if info.IsDir() {
 		return os.RemoveAll(dirpath)
 	}
 	return nil
@@ -260,20 +263,18 @@ func FileAbstract(fp string) (string, error) {
 //	Data translate result: `filename.pdf` -> `pdf`
 func FileSuffix(filename string, orignl ...bool) string {
 	if !Variable(orignl, false) {
-		return strings.ToLower(strings.TrimPrefix(path.Ext(filename), "."))
+		return strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
 	}
-	return strings.TrimPrefix(path.Ext(filename), ".")
+	return strings.TrimPrefix(filepath.Ext(filename), ".")
 }
 
-// Normalize the given path, it will remove the '/' of path tails.
+// Normalize the given path, it will remove the separator both perfix and tail.
 //
-//	path: '1/2//3/../4/./5/' -> '1/2/4/5'
-//	path: '    1/2//3/'      -> '1/2/3'
-//	path: '/  1 /2\\3\\'     -> '1 /2/3'
-//	path: ''                 -> '.'
+//	path: '  /  1//2\\3/..///4/./5/6\\\\' -> '1/2/4/5/6'
+//	path: ''                              -> '.'
 func NormalizePath(fp string) string {
 	separator := string(os.PathSeparator)
-	normailze := strings.Trim(path.Clean(strings.TrimSpace(fp)), separator)
+	normailze := strings.Trim(filepath.Clean(strings.TrimSpace(fp)), separator)
 	return strings.TrimSpace(normailze) 
 }
 
@@ -293,9 +294,9 @@ func NormalizePath(fp string) string {
 //	path: '1/2/3_dir'  -> ['1/2',  '3_dir']
 //	path: '3_doc'      -> ['.',    '3_dir']
 //
-// Use filepath.Split(), or path.Split() tail / suffix.
+// Use filepath.Split() tail / suffix.
 func SplitPath(fp string) (string, string) {
-	return path.Dir(fp), path.Base(fp)
+	return filepath.Dir(fp), filepath.Base(fp)
 }
 
 // Retrn file simple name without suffix, and trim spaces both start and tails.
@@ -307,8 +308,8 @@ func SplitPath(fp string) (string, string) {
 //	path: '.pdf'              -> ['',    'pdf']
 //	path: ''                  -> ['',    ''   ]
 func SplitSuffix(fp string) (string, string) {
-	base := path.Base(fp)
-	suffix := path.Ext(base)
+	base := filepath.Base(fp)
+	suffix := filepath.Ext(base)
 
 	filename := strings.TrimSpace(strings.TrimSuffix(base, suffix))
 	suffix = strings.ToLower(strings.TrimPrefix(suffix, "."))
@@ -364,8 +365,8 @@ func CopyFileTo(src string, dir string) (bool, error) {
 	defer srcfile.Close()
 
 	// create or truncate dest file
-	fileInfo, _ := srcfile.Stat()
-	fp := path.Join(dir, fileInfo.Name())
+	info, _ := srcfile.Stat()
+	fp := filepath.Join(dir, info.Name())
 	destfile, err := OpenTruncFile(fp)
 	if err != nil {
 		return false, err
@@ -374,7 +375,7 @@ func CopyFileTo(src string, dir string) (bool, error) {
 
 	// start copying
 	len, err := io.Copy(destfile, srcfile)
-	if err != nil || len != fileInfo.Size() {
+	if err != nil || len != info.Size() {
 		logger.E("copy file err:", err)
 		return false, invar.ErrCopyFile
 	}
@@ -396,7 +397,7 @@ func HumanReadable(len int64, during int64) string {
 
 // VerifyFile verify upload file and size, it support jpg/jpeg/JPG/JPEG/png/PNG/mp3/mp4 suffix.
 func VerifyFile(fh *multipart.FileHeader, maxBytes ...int64) (string, error) {
-	suffix := path.Ext(fh.Filename)
+	suffix := filepath.Ext(fh.Filename)
 	maxSizeInByte := Variable(maxBytes, 0)
 
 	switch suffix {
@@ -433,7 +434,7 @@ func VerifyFileFormat(fh *multipart.FileHeader, format string, size int64) (stri
 		return "", invar.ErrInvalidParams
 	}
 
-	suffix := path.Ext(fh.Filename)
+	suffix := filepath.Ext(fh.Filename)
 	switch suffix {
 	case format:
 		if fh.Size > int64(size<<20) {

@@ -83,7 +83,7 @@ func ExecCallback(data any) error {
 func TestNormalizePath(t *testing.T) {
 	// FIXME : for windows system want string.
 	cases := []*TestCase{
-		NewCase("Check 1", "1\\2\\4\\5", "1/2//3/../4/./5/"),
+		NewCase("Check 1", "1\\2\\4\\5\\6", "  /  1//2\\3/..///4/./5/6\\\\"),
 		NewCase("Check 2", "1\\2\\3", "    1/2//3/     "),
 		NewCase("Check 3", "1 \\2\\3", "/  1 /2\\3\\    "),
 		NewCase("Check 4", ".", ""),
