@@ -73,13 +73,16 @@ func TxQuery(tx *sql.Tx, query string, cb ScanCallback, args ...any) error {
 func TxInsert(tx *sql.Tx, query string, out *int64, args ...any) error {
 	if rst, err := tx.Exec(query, args...); err != nil {
 		return err
-	} else if rid, err := rst.LastInsertId(); err != nil {
-		return err
 	} else if out != nil {
+		rid, err := rst.LastInsertId()
+		if err != nil {
+			return err
+		} else if rid == 0 {
+			return invar.ErrNotInserted
+		}
 		*out = rid
-		return nil
 	}
-	return invar.ErrNotInserted
+	return nil
 }
 
 // Excute transaction step to insert multiple records.
