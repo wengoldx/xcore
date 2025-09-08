@@ -135,7 +135,7 @@ func OpenTruncFile(fp string, perm ...os.FileMode) (*os.File, error) {
 
 // Save the multipart file datas to given local file path.
 func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
-	if !IsExistFile(dirpath) {
+	if !IsFile(dirpath) {
 		if err := MakeDirs(dirpath); err != nil {
 			logger.E("Make paths:", dirpath, "err:", err)
 			return  err

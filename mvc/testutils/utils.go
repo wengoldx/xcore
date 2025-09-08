@@ -127,7 +127,7 @@ func CheckTestMode(app string) string {
 		if length := len(app); length > 0 {
 			if start := strings.Index(pwd, app); start > 0 {
 				env := pwd[:start+length] + "/conf/.test"
-				if utils.IsExistFile(env) {
+				if utils.IsFile(env) {
 					fmt.Println()
 					fmt.Println("\t+--------------------+")
 					fmt.Println("\t+ LAUNCHED TEST MODE +")
@@ -168,7 +168,7 @@ func OpenTestDatabase(env string) {
 //	Password="****"
 func readTestEnv(env string) mysql.Options {
 	opts := mysql.Options{}
-	if !utils.IsExistFile(env) {
+	if !utils.IsFile(env) {
 		return opts
 	}
 
