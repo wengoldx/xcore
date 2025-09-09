@@ -146,7 +146,7 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 //		return utils.KEEP_FETCHING
 //	})
 //
-// 2. Cancel and fetch all tasks:
+// 2. Cancel found target and continue fetch all tasks:
 //
 //	queuetask.Cancels(func(taskdata any) int {
 //		item, ok := taskdata.(*QueueItem)

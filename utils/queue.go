@@ -127,11 +127,11 @@ func (q *Queue) Fetch(callback func(value any) Result) {
 
 			en := e.Next()
 			switch result {
-			case REMOVE_CONTINUE, REMOVE_INTERUPT:
+			case REMOVE_CONTINUE:
 				q.list.Remove(e)
-				if result == REMOVE_INTERUPT {
-					return
-				}
+			case REMOVE_INTERUPT:
+				q.list.Remove(e)
+				return
 			case REMAIN_INTERUPT:
 				return
 			}
