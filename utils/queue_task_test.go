@@ -47,12 +47,12 @@ func TestQueueTask(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		cid := rand.IntN(40) + 10
 		logger.I("Request cancel:", cid)
-		qtask.Cancels(func(taskdata any) (bool, bool) {
+		qtask.Cancels(func(taskdata any) Result {
 			if cid == taskdata.(int) {
 				logger.I("- Canceled task:", cid)
-				return true, true
+				return REMOVE_INTERUPT
 			}
-			return false, false
+			return KEEP_FETCHING
 		})
 	}
 

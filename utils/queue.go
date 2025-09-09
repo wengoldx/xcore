@@ -91,40 +91,51 @@ func (q *Queue) Len() int {
 	return q.list.Len()
 }
 
+// Fetching result return by callback.
+type Result int
+
+// Fetching result to remove item or interupt.
+const (
+	KEEP_FETCHING   Result = iota // By Default, not remove and keep fetching.
+	REMOVE_CONTINUE               // Remove item and continue fetching.
+	REMOVE_INTERUPT               // Remove item and interupt fetching.
+	REMAIN_INTERUPT               // Found item, interupt fetching.
+)
+
 // Fetch queue nodes, use callback returns to remove node or interupt fetch.
 // Notice that DO NOT do heavy performence codes in callback, exist a lock here!
 //
 // For example caller code like (Events is a Queue object):
 //
 //	// Try fetch waiting requests to send to idle clusters
-//	h.Events.Fetch(func(request any) (bool, bool) {
+//	h.Events.Fetch(func(request any) int {
 //		if clusterid := h.getIdleCluster(); clusterid != "" {
 //			go h.sendRequest(clusterid, request)
-//			return true /* remove */, false /* continue fetch */
+//			return utils.REMOVE_CONTINUE
 //		}
 //
 //		// Remain request node and interupt fetch
-//		return false, true
+//		return utils.REMAIN_INTERUPT
 //	})
-func (q *Queue) Fetch(callback func(value any) (bool, bool)) {
+func (q *Queue) Fetch(callback func(value any) Result) {
 	if callback != nil {
 		q.mutex.Lock()
 		defer q.mutex.Unlock()
 
 		for e := q.list.Front(); e != nil; {
-			remove, interupt := callback(e.Value)
+			result := callback(e.Value)
 
-			// Delete or remain the node
 			en := e.Next()
-			if remove {
+			switch result {
+			case REMOVE_CONTINUE, REMOVE_INTERUPT:
 				q.list.Remove(e)
-			}
-			e = en
-
-			// Interupt fetch or continue
-			if interupt {
+				if result == REMOVE_INTERUPT {
+					return
+				}
+			case REMAIN_INTERUPT:
 				return
 			}
+			e = en
 		}
 	}
 }

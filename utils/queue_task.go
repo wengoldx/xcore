@@ -132,22 +132,30 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	return nil
 }
 
-// Cancels the waiting tasks, the caller maybe cancel one task like:
+// Cancels the waiting tasks, use findFunc callback return
+// utils.REMOVE_INTERUPT to cancel one indicated task, or return
+// utils.REMOVE_CONTINUE to find and fetch all tasks.
 //
-//	queuetask.Cancels(func(taskdata any) (bool, bool) {
+// 1. Cancel one task:
+//
+//	queuetask.Cancels(func(taskdata any) int {
 //		item, ok := taskdata.(*QueueItem)
-//		found := ok && item.FieldValue == targetvalue
-//		return found , found // interupt when found.
+//		if ok && item.FieldValue == targetvalue {
+//			return utils.REMOVE_INTERUPT
+//		}
+//		return utils.KEEP_FETCHING
 //	})
 //
-// Or cancel all target waiting tasks like:
+// 2. Cancel and fetch all tasks:
 //
-//	queuetask.Cancels(func(taskdata any) (bool, bool) {
+//	queuetask.Cancels(func(taskdata any) int {
 //		item, ok := taskdata.(*QueueItem)
-//		found := ok && item.FieldValue == targetvalue
-//		return found , false // continue to search.
+//		if ok && item.FieldValue == targetvalue {
+//			return utils.REMOVE_CONTINUE
+//		}
+//		return utils.KEEP_FETCHING
 //	})
-func (t *QueueTask) Cancels(findFunc func(taskdata any) (bool, bool)) {
+func (t *QueueTask) Cancels(findFunc func(taskdata any) Result) {
 	t.queue.Fetch(findFunc)
 }
 
