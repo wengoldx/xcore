@@ -14,6 +14,7 @@ package utils
 import (
 	"fmt"
 	"math/rand/v2"
+	"strconv"
 	"testing"
 	"time"
 
@@ -39,35 +40,41 @@ func NewCase(label string, want any, param any) *TestCase {
 func TestQueueTask(t *testing.T) {
 	handler := TaskHandlerFunc(ExecCallback)
 	qtask := NewQueueTask(handler, WithInterrupt(false), WithInterval(25*time.Millisecond))
+
+	// prepare cancel ids.
+	logger.I("Prepare cancel ids.")
+	cids := []string{}
+	for i := 0; i < 10; i++ {
+		cids = append(cids, strconv.Itoa(rand.IntN(40)+5))
+	}
+
+	// post 50 task
+	logger.I("Post 50 test tasks...")
 	for i := 0; i < 50; i++ {
 		logger.I("Post task:", i)
-		qtask.Post(i)
+		qtask.Post(strconv.Itoa(i))
 	}
-
-	for i := 0; i < 10; i++ {
-		cid := rand.IntN(40) + 10
-		logger.I("Request cancel:", cid)
-		qtask.Cancels(func(taskdata any) Result {
-			if cid == taskdata.(int) {
-				logger.I("- Canceled task:", cid)
-				return REMOVE_INTERUPT
-			}
-			return KEEP_FETCHING
-		})
-	}
-
 	time.Sleep(1 * time.Second)
+
+	logger.I("Request cancels:", cids)
+	go qtask.Cancels(func(taskdata any) string {
+		if cid, ok := taskdata.(string); ok {
+			// logger.I("Fetch cancel item:", cid)
+			return cid
+		}
+		return ""
+	}, cids...)
 
 	qtask.SetInterval(0)
 	for i := 50; i < 70; i++ {
 		logger.I("Post task:", i)
-		qtask.Post(i)
+		qtask.Post(strconv.Itoa(i))
 	}
 	time.Sleep(5 * time.Second)
 }
 
 func ExecCallback(data any) error {
-	index := data.(int)
+	index := data.(string)
 
 	start := time.Now().UnixNano()
 	time.Sleep(25 * time.Millisecond)

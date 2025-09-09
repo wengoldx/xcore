@@ -30,6 +30,11 @@ func NewSets[T any]() *Sets[T] {
 	return &Sets[T]{sets: make(map[any]EmptyStruct)}
 }
 
+// Return sets counts.
+func (s *Sets[T]) Size() int {
+	return len(s.sets)
+}
+
 // Add the values to sets if not exist.
 //
 //	utils.NewSets().Adds(1, "2", byte(3))

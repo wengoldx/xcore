@@ -155,8 +155,23 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 //		}
 //		return utils.KEEP_FETCHING
 //	})
-func (t *QueueTask) Cancels(findFunc func(taskdata any) Result) {
-	t.queue.Fetch(findFunc)
+func (t *QueueTask) Cancels(getTaskID func(d any) string, tags ...string) {
+	if len(tags) > 0 {
+		ids := NewSets[string]().Add(tags...)
+		cnt := ids.Size()
+
+		t.queue.Fetch(func(d any) Result {
+			if id := getTaskID(d); id != "" && ids.Contain(id) {
+				rst := Condition(cnt == 1, REMOVE_INTERUPT, REMOVE_CONTINUE)
+				logger.I("Canceled task:", id) // "- result", rst, "ids:", ids.Array(), "cnt:", cnt)
+
+				ids.Remove(id) // remove target found item id.
+				cnt--          // decrease the cancel ids count.
+				return rst
+			}
+			return KEEP_FETCHING
+		})
+	}
 }
 
 // Start task monitor to listen tasks pushed into queue, and execute it.
