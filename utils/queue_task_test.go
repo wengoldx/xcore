@@ -59,7 +59,7 @@ func TestQueueTask(t *testing.T) {
 	logger.I("Request cancels:", cids)
 	go qtask.Cancels(func(taskdata any) string {
 		if cid, ok := taskdata.(string); ok {
-			// logger.I("Fetch cancel item:", cid)
+			logger.I("Get task item id:", cid)
 			return cid
 		}
 		return ""
