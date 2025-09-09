@@ -28,11 +28,11 @@ type QueueTask struct {
 	postchan    chan EmptyStruct // Block chan for queue task PIPO.
 	interrupt   bool             // The flag for interrupt task monitor when case error if set true.
 	interval    time.Duration    // The interval between two task to waiting, set 0 for non-waiting.
-	findHandler FindHandler      // Handler function for quere data search.
+	authHandler AuthHandler      // The handler for return task unique id for any fetch actions.
 }
 
-// Typed function to find target item by fetch queue items.
-type FindHandler func(taskdata any) bool
+// Typed function to return target item unique id for fetch actions.
+type AuthHandler func(taskdata any) string
 
 // Typed function to configure a QueueTask.
 type Option func(*QueueTask)
@@ -51,9 +51,9 @@ func WithInterval(interval time.Duration) Option {
 	}
 }
 
-// Set the find handler function for a queue task.
-func WithFindHandler(handler FindHandler) Option {
-	return func(qt *QueueTask) { qt.findHandler = handler }
+// Set the auth handler function for return target task unique id when fetching.
+func WithAuthHandler(handler AuthHandler) Option {
+	return func(qt *QueueTask) { qt.authHandler = handler }
 }
 
 // A interface for create queue task hanlder to execute task callback.
@@ -132,36 +132,26 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	return nil
 }
 
-// Cancels the waiting tasks, use findFunc callback return
-// utils.REMOVE_INTERUPT to cancel one indicated task, or return
-// utils.REMOVE_CONTINUE to find and fetch all tasks.
+// Cancels the waiting tasks, use AuthHandler callback return task
+// unique id to find target cancal task on fetching.
 //
-// 1. Cancel one task:
-//
-//	queuetask.Cancels(func(taskdata any) int {
-//		item, ok := taskdata.(*QueueItem)
-//		if ok && item.FieldValue == targetvalue {
-//			return utils.REMOVE_INTERUPT
+//	queuetask.Cancels(func(taskdata any) string {
+//		if item, ok := taskdata.(*QueueItem); ok {
+//			return item.TaskID
 //		}
-//		return utils.KEEP_FETCHING
-//	})
+//		return ""
+//	}, cancelid)
 //
-// 2. Cancel found target and continue fetch all tasks:
-//
-//	queuetask.Cancels(func(taskdata any) int {
-//		item, ok := taskdata.(*QueueItem)
-//		if ok && item.FieldValue == targetvalue {
-//			return utils.REMOVE_CONTINUE
-//		}
-//		return utils.KEEP_FETCHING
-//	})
-func (t *QueueTask) Cancels(getTaskID func(d any) string, tags ...string) {
+// Or, set the AuthHandler as option by utils.WithAuthHandler() when
+// create QueueTask instance, then call CancelsHandler(cancelids...)
+// to cancel target tasks.
+func (t *QueueTask) Cancels(handler AuthHandler, tags ...string) {
 	if len(tags) > 0 {
 		ids := NewSets[string]().Add(tags...)
 		cnt := ids.Size()
 
 		t.queue.Fetch(func(d any) Result {
-			if id := getTaskID(d); id != "" && ids.Contain(id) {
+			if id := handler(d); id != "" && ids.Contain(id) {
 				rst := Condition(cnt == 1, REMOVE_INTERUPT, REMOVE_CONTINUE)
 				logger.I("Canceled task:", id) // "- result", rst, "ids:", ids.Array(), "cnt:", cnt)
 
@@ -171,6 +161,13 @@ func (t *QueueTask) Cancels(getTaskID func(d any) string, tags ...string) {
 			}
 			return KEEP_FETCHING
 		})
+	}
+}
+
+// Cancels the waiting tasks by the inited AuthHandler.
+func (t *QueueTask) CancelsHandler(tags ...string) {
+	if t.authHandler != nil {
+		t.Cancels(t.authHandler, tags...)
 	}
 }
 
