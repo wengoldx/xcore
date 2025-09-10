@@ -42,35 +42,47 @@ func TestQueueTask(t *testing.T) {
 	qtask := NewQueueTask(handler, WithInterrupt(false), WithInterval(25*time.Millisecond))
 
 	// prepare cancel ids.
-	logger.I("Prepare cancel ids.")
+	logger.I("@@ Prepare cancel ids.")
 	cids := []string{}
-	for i := 0; i < 10; i++ {
-		cids = append(cids, strconv.Itoa(rand.IntN(40)+5))
+	for i := 1; i <= 15; i++ {
+		cids = append(cids, strconv.Itoa(rand.IntN(30)+21))
 	}
 
 	// post 50 task
-	logger.I("Post 50 test tasks...")
-	for i := 0; i < 50; i++ {
+	logger.I("@@ Post 50 test tasks...")
+	for i := 1; i <= 50; i++ {
 		logger.I("Post task:", i)
 		qtask.Post(strconv.Itoa(i))
 	}
+
+	// waiting for executing 1 ~ 20 tasks.
 	time.Sleep(1 * time.Second)
 
-	logger.I("Request cancels:", cids)
+	logger.I("@@ Request cancels...")
 	go qtask.Cancels(func(taskdata any) string {
 		if cid, ok := taskdata.(string); ok {
-			logger.I("Get task item id:", cid)
+			// logger.I("Get task item:", cid)
 			return cid
 		}
+
+		logger.E("!! INVALID TASK DATA !!")
 		return ""
 	}, cids...)
 
+	logger.I("@@ Post 10 test tasks...")
 	qtask.SetInterval(0)
-	for i := 50; i < 70; i++ {
+	for i := 51; i <= 60; i++ {
 		logger.I("Post task:", i)
 		qtask.Post(strconv.Itoa(i))
 	}
-	time.Sleep(5 * time.Second)
+
+	logger.I("@@ Waiting 3 seconds")
+	time.Sleep(3 * time.Second)
+
+	logger.I("@@ Call exit and wait 1 second.")
+	qtask.Exit()
+	time.Sleep(1 * time.Second)
+	logger.I("@@ Finish Test!")
 }
 
 func ExecCallback(data any) error {

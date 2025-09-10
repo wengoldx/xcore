@@ -26,9 +26,10 @@ import (
 type QueueTask struct {
 	queue       *Queue           // Task object queue.
 	postchan    chan EmptyStruct // Block chan for queue task PIPO.
+	exitchan    chan EmptyStruct // Block chan for exit queue task monitor.
 	interrupt   bool             // The flag for interrupt task monitor when case error if set true.
 	interval    time.Duration    // The interval between two task to waiting, set 0 for non-waiting.
-	authHandler AuthHandler      // The handler for return task unique id for any fetch actions.
+	authHandler AuthHandler      // The handler to return task unique id for any fetch actions.
 }
 
 // Typed function to return target item unique id for fetch actions.
@@ -79,13 +80,14 @@ func (e TaskHandlerFunc) ExecQueueTask(data any) error {
 //
 //	task := utils.NewQueueTask(handler,
 //		utils.WithInterrupt(true),                 // interrupt monitor when case error.
-//		utils.WithInterval(20 * time.Millisecond), // waiting 500ms between two task.
+//		utils.WithInterval(20 * time.Millisecond), // waiting 20ms between two task.
 //	)
 //	task.Post(taskdata)
 func NewQueueTask(handler TaskHandler, opts ...Option) *QueueTask {
 	task := &QueueTask{
 		queue:     NewQueue(),
 		postchan:  make(chan EmptyStruct),
+		exitchan:  make(chan EmptyStruct),
 		interrupt: false, // not interrupt by default.
 		interval:  0,     // non-waiting delay.
 	}
@@ -112,7 +114,7 @@ func (t *QueueTask) SetInterval(interval time.Duration) {
 	}
 }
 
-// Push a new task into monitor at queue back.
+// Push a new task to monitor at queue backend.
 func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	if taskdata == nil {
 		return invar.ErrInvalidData
@@ -123,11 +125,13 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 		return invar.ErrPoolFull
 	}
 
+	/*
+	 * FIXME: The task handler will called as PIPO by using chan
+	 * 'postchan' to blocking in gorutine, so it no-need to check
+	 * whether the task callback methods executing toggether when
+	 * multiple post requests comming.
+	 */
 	t.queue.Push(taskdata)
-	//  NOTICE: The task handler will called as PIPO by using
-	//  the 'postchan' to blocking in gorutine, so it no-need
-	//  to check whether the handlers method execute toggether
-	//  when multiple post requst comming.
 	go func() { t.postchan <- E_ }()
 	return nil
 }
@@ -150,10 +154,11 @@ func (t *QueueTask) Cancels(handler AuthHandler, tags ...string) {
 		ids := NewSets[string]().Add(tags...)
 		cnt := ids.Size()
 
+		// logger.I("Fetching and cancel tasks:", ids.Array())
 		t.queue.Fetch(func(d any) Result {
 			if id := handler(d); id != "" && ids.Contain(id) {
 				rst := Condition(cnt == 1, REMOVE_INTERUPT, REMOVE_CONTINUE)
-				logger.I("Canceled task:", id) // "- result", rst, "ids:", ids.Array(), "cnt:", cnt)
+				logger.I("> Canceled task:", id)
 
 				ids.Remove(id) // remove target found item id.
 				cnt--          // decrease the cancel ids count.
@@ -167,8 +172,16 @@ func (t *QueueTask) Cancels(handler AuthHandler, tags ...string) {
 // Cancels the waiting tasks by the inited AuthHandler.
 func (t *QueueTask) CancelsHandler(tags ...string) {
 	if t.authHandler != nil {
-		t.Cancels(t.authHandler, tags...)
+		logger.E("Nil AuthHandler, abort cancels!")
+		return
 	}
+	t.Cancels(t.authHandler, tags...)
+}
+
+// Clear waiting tasks and exit the QueueTask monitor.
+func (t *QueueTask) Exit() {
+	t.queue.Clear() // clear waiting tasks.
+	go func() { t.exitchan <- E_ }()
 }
 
 // Start task monitor to listen tasks pushed into queue, and execute it.
@@ -177,27 +190,43 @@ func (t *QueueTask) startTaskMonitor(handler TaskHandler) {
 		logger.E("Nil handler, exit monitor!")
 		return
 	}
+	// logger.I("Enter monitor loopper...")
+	// cnt := 1 // Only for UnitTest.
 
 	for {
-		<-t.postchan // blocking and waiting task post.
+		select {
+		case <-t.exitchan: // stop task monitor.
+			logger.I("Exist QueueTask monitor!")
+			return
 
-		// popup the topmost task to execte.
-		taskdata, err := t.queue.Pop()
-		if err != nil {
-			break // queue maybe empty.
-		}
+		case <-t.postchan: // blocking and waiting task post.
+			// logger.I("Received task postchan:", cnt)
+			// cnt++ // Only for UnitTest.
 
-		if err := handler.ExecQueueTask(taskdata); err != nil {
-			logger.E("Execute queue task, err:", err)
-			if t.interrupt {
-				logger.I("Interrupted QueueTask monitor!")
-				return
+			// popup the topmost task to execte.
+			taskdata, err := t.queue.Pop()
+			if err != nil {
+				/*
+				 * FIXME: Any tasks maybe removed when user handled cancel
+				 * action, but the postchan requests not removed toggether,
+				 * so HERE MUST filter out the invalid request chans when
+				 * QueueTask is empty!
+				 */
+				continue // queue maybe empty.
 			}
-		}
 
-		// waiting for next if need.
-		if t.interval > 0 {
-			time.Sleep(t.interval)
+			if err := handler.ExecQueueTask(taskdata); err != nil {
+				logger.E("Execute queue task, err:", err)
+				if t.interrupt {
+					logger.I("Interrupted QueueTask monitor!")
+					return
+				}
+			}
+
+			// waiting for next if need.
+			if t.interval > 0 {
+				time.Sleep(t.interval)
+			}
 		}
 	}
 }
