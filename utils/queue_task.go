@@ -128,8 +128,8 @@ func (t *QueueTask) Post(taskdata any, maxlimits ...int) error {
 	/*
 	 * FIXME: The task handler will called as PIPO by using chan
 	 * 'postchan' to blocking in gorutine, so it no-need to check
-	 * whether the task callback methods executing toggether when
-	 * multiple post requests comming.
+	 * whether handler methods executing toggether when multiple
+	 * post requests comming.
 	 */
 	t.queue.Push(taskdata)
 	go func() { t.postchan <- E_ }()
