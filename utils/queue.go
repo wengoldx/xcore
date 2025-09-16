@@ -91,6 +91,10 @@ func (q *Queue) Len() int {
 	return q.list.Len()
 }
 
+/* --------------------------- */
+/* Extention Utils             */
+/* --------------------------- */
+
 // Fetching result return by callback.
 type Result int
 

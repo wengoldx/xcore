@@ -12,30 +12,20 @@ package pd
 
 import (
 	"testing"
+
+	"github.com/wengoldx/xcore/utils/wt"
 )
-
-// Test case datas for multiple testing.
-type TestCase struct {
-	Case   string
-	Params any
-	Want   any
-}
-
-// Return test case object for easy multipe testing.
-func NewCase(label string, want any, param any) *TestCase {
-	return &TestCase{Case: label, Want: want, Params: param}
-}
 
 /* ------------------------------------------------------------------- */
 /* For BaseBuilder Tests                                               */
 /* ------------------------------------------------------------------- */
 
 func TestFormatJoins(t *testing.T) {
-	cases := []*TestCase{
-		NewCase("Check normal datas", "table_a AS a, table_b AS b", Joins{"table_a": "a", "table_b": "b"}),
-		NewCase("Check empty table ", "table_a AS a", Joins{"table_a": "a", "": "b"}),
-		NewCase("Check empty alias ", "table_b AS b", Joins{"table_a": "", "table_b": "b"}),
-		NewCase("Check all emptys  ", "", Joins{"": ""}),
+	cases := []*wt.TestCase{
+		wt.NewCase("Check normal datas", "table_a AS a, table_b AS b", Joins{"table_a": "a", "table_b": "b"}),
+		wt.NewCase("Check empty table ", "table_a AS a", Joins{"table_a": "a", "": "b"}),
+		wt.NewCase("Check empty alias ", "table_b AS b", Joins{"table_a": "", "table_b": "b"}),
+		wt.NewCase("Check all emptys  ", "", Joins{"": ""}),
 	}
 
 	builder := BaseBuilder{}
@@ -58,11 +48,11 @@ func TestFormatLike(t *testing.T) {
 		Filter  string
 		Pattern []string
 	}
-	cases := []*TestCase{
-		NewCase("Check normal", "filed LIKE '%%filter%%'", LikeData{"filed", "filter", []string{}}),
-		NewCase("Check perfix", "filed LIKE 'filter%%'", LikeData{"filed", "filter", []string{"perfix"}}),
-		NewCase("Check suffix", "filed LIKE '%%filter'", LikeData{"filed", "filter", []string{"suffix"}}),
-		NewCase("Check emptys", "", LikeData{"", "", []string{}}),
+	cases := []*wt.TestCase{
+		wt.NewCase("Check normal", "filed LIKE '%%filter%%'", LikeData{"filed", "filter", []string{}}),
+		wt.NewCase("Check perfix", "filed LIKE 'filter%%'", LikeData{"filed", "filter", []string{"perfix"}}),
+		wt.NewCase("Check suffix", "filed LIKE '%%filter'", LikeData{"filed", "filter", []string{"suffix"}}),
+		wt.NewCase("Check emptys", "", LikeData{"", "", []string{}}),
 	}
 
 	builder := BaseBuilder{}

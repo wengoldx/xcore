@@ -9,7 +9,7 @@
 // 00002       2022/03/26   yangping       Using toolbox.Task
 // -------------------------------------------------------------------
 
-package utils
+package tasks
 
 import (
 	"github.com/astaxie/beego"
@@ -17,9 +17,9 @@ import (
 	"github.com/wengoldx/xcore/logger"
 )
 
-/* --------------------------- */
-/* Timer Task Base On toolbox  */
-/* --------------------------- */
+/* ------------------------------------------------------------------- */
+/* For Toolbox Time Task                                               */
+/* ------------------------------------------------------------------- */
 
 // Task datas for multipe generate
 type WTask struct {
