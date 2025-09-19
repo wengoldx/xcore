@@ -185,6 +185,14 @@ func Filters[T any](totals []T, items []T) []T {
 	return NewSets[T]().Add(totals...).Filters(items...)
 }
 
+// Remove the invalid values from totals array.
+func Valids[T any](totals []T, invalids []T) []T {
+	if len(totals) == 0 || len(invalids) == 0 {
+		return totals
+	}
+	return NewSets[T]().Add(totals...).Remove(invalids...).Array()
+}
+
 // Check the given items whether exist anyone in totals.
 func Exists[T any](totals []T, items []T) bool {
 	return NewSets[T]().Add(totals...).Exist(items...)

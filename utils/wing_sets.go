@@ -145,7 +145,7 @@ func (s *Sets[T]) Fetch(scaning func(e T) bool /* true is break */) {
 	}
 }
 
-// Fetch the given values and remove the numbers which not contained in sets.
+// Fetch the given values and remove the items which not contained in sets.
 func (s *Sets[T]) Filters(values ...T) []T {
 	valids := []T{}
 	for _, ov := range values {
