@@ -123,9 +123,12 @@ func GetTabler(opts ...pd.Option) *pd.TableProvider {
 }
 
 // Setup tables with name and provider.
-func SetupTables(tables map[string]pd.TableSetup) {
+func SetupTables(tables map[string]pd.TableSetup, debug ...bool) {
+	isdebug := utils.Variable(debug, false)
 	for name, table := range tables {
-		table.Setup(Select(), pd.WithTable(name))
+		table.Setup(Select(),
+			pd.WithTable(name),
+			pd.WithDebug(isdebug))
 	}
 }
 
