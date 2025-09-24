@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -126,7 +127,7 @@ func (b *UpdateBuilder) Like(field, filter string, pattern ...string) *UpdateBui
 //	UPDATE table
 //		SET v1=?, v2=?, v3=?...
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-func (b *UpdateBuilder) Build() (string, []any) {
+func (b *UpdateBuilder) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 
 	tags, args := b.FormatSets(b.values)                      // SET v1=?,v2=?...
@@ -136,6 +137,9 @@ func (b *UpdateBuilder) Build() (string, []any) {
 	query := "UPDATE %s SET %s %s"
 	query = fmt.Sprintf(query, b.table, tags, where)
 	query = strings.TrimSuffix(query, " ")
+	if utils.Variable(debug, false) {
+		logger.D("[UPDATE] SQL:", query, "|", args)
+	}
 	return query, args
 }
 

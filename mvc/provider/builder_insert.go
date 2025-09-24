@@ -13,6 +13,9 @@ package pd
 import (
 	"fmt"
 	"strings"
+
+	"github.com/wengoldx/xcore/logger"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Build a query string for sql insert.
@@ -95,13 +98,16 @@ func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 // insert, but good for insert nil value as NULL for multiple rows insert.
 //
 // And, it use the first row args key as the column headers.
-func (b *InsertBuilder) Build() (string, []any) {
+func (b *InsertBuilder) Build(debug ...bool) (string, []any) {
 	if cnt := len(b.rows); cnt == 1 {
 		// INSERT table (v1, v2...) VALUES (?,?...)'
 		fields, holders, args := b.FormatInserts(b.rows[0])
 
 		query := "INSERT %s (%s) VALUES (%s)"
 		query = fmt.Sprintf(query, b.table, fields, holders)
+		if utils.Variable(debug, false) {
+			logger.D("[INSERT] SQL:", query, "|", args)
+		}
 		return query, args
 	} else if cnt > 1 {
 		// INSERT table (v1, v2...) VALUES (1,2...),(3,4...)...'
@@ -141,6 +147,9 @@ func (b *InsertBuilder) Build() (string, []any) {
 
 		query := "INSERT %s (%s) VALUES %s"
 		query = fmt.Sprintf(query, b.table, fields, values)
+		if utils.Variable(debug, false) {
+			logger.D("[INSERT-S] SQL:", query)
+		}
 		return query, nil
 	}
 	return "", nil

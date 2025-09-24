@@ -32,6 +32,7 @@ import (
 type TableProvider struct {
 	BaseProvider
 	table string // Table name
+	debug bool   // Debug mode, default false.
 }
 
 var _ TableSetup = (*TableProvider)(nil)
@@ -50,6 +51,13 @@ type Option func(provider *TableProvider)
 func WithTable(table string) Option {
 	return func(provider *TableProvider) {
 		provider.table = table
+	}
+}
+
+// Specify the debug mode.
+func WithDebug(debug bool) Option {
+	return func(provider *TableProvider) {
+		provider.debug = debug
 	}
 }
 
@@ -79,7 +87,7 @@ func (p *TableProvider) Setup(client DBClient, opts ...Option) {
 //
 // Use None() method to check whether unexist.
 func (p *TableProvider) Has(builder *QueryBuilder) (bool, error) {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Has(query, args...)
 }
 
@@ -97,7 +105,7 @@ func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
 //
 // Use BaseProvider.Count() method to direct execute query string.
 func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Count(query, args...)
 }
 
@@ -106,7 +114,7 @@ func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
 //
 // Use BaseProvider.Exec() method to direct execute query string.
 func (p *TableProvider) Exec(builder SQLBuilder) error {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Exec(query, args...)
 }
 
@@ -115,7 +123,7 @@ func (p *TableProvider) Exec(builder SQLBuilder) error {
 //
 // Use BaseProvider.Exec() method to direct execute query string.
 func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.ExecResult(query, args...)
 }
 
@@ -124,7 +132,7 @@ func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
 //
 // Use BaseProvider.One() method to direct execute query string.
 func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.One(query, cb, args...)
 }
 
@@ -142,7 +150,7 @@ func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
 //
 // Use BaseProvider.OneDone() method to direct execute query string.
 func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs ...any) error {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.OneDone(query, outs, done, args...)
 }
 
@@ -151,7 +159,7 @@ func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs .
 //
 // Use BaseProvider.Query() method to direct execute query string.
 func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, cb, args...)
 }
 
@@ -160,7 +168,7 @@ func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 //
 // Use BaseProvider.Insert() method to direct execute query string.
 func (p *TableProvider) Insert(builder *InsertBuilder) (int64, error) {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	if cnt := len(builder.rows); cnt <= 0 {
 		return -1, invar.ErrInvalidData
 	} else if cnt == 1 {
@@ -194,7 +202,7 @@ func (p *TableProvider) InsertUncheck(builder *InsertBuilder) error {
 //
 // Use BaseProvider.Update() method to direct execute query string.
 func (p *TableProvider) Update(builder *UpdateBuilder) error {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Update(query, args...)
 }
 
@@ -203,6 +211,6 @@ func (p *TableProvider) Update(builder *UpdateBuilder) error {
 //
 // Use BaseProvider.Delete() method to direct execute query string.
 func (p *TableProvider) Delete(builder *DeleteBuilder) error {
-	query, args := builder.Build()
+	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Delete(query, args...)
 }

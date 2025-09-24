@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -165,7 +166,7 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
 //		LIMIT limit.
-func (b *QueryBuilder) Build() (string, []any) {
+func (b *QueryBuilder) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 
 	tags := strings.Join(b.tags, ",")                          // out1,out2,out3...
@@ -178,6 +179,9 @@ func (b *QueryBuilder) Build() (string, []any) {
 	query := "SELECT %s FROM %s %s %s %s"
 	query = fmt.Sprintf(query, tags, table, where, b.order, limit)
 	query = strings.TrimSuffix(query, " ")
+	if utils.Variable(debug, false) {
+		logger.D("[QUERY] SQL:", query, "|", args)
+	}
 	return query, args
 }
 

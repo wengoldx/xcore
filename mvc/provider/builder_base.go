@@ -26,7 +26,7 @@ type BaseBuilder struct {
 var _ SQLBuilder = (*BaseBuilder)(nil)
 
 // Empty build method, override by CUDA builders.
-func (b *BaseBuilder) Build() (string, []any) {
+func (b *BaseBuilder) Build(debug ...bool) (string, []any) {
 	return "", []any{} // not implement Build method.
 }
 

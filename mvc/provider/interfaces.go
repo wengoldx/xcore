@@ -22,7 +22,7 @@ type DBClient interface {
 // A interface implement by CUDA builder to build
 // a sql string for database access.
 type SQLBuilder interface {
-	Build() (string, []any) // Build sql string and return args.
+	Build(debug ...bool) (string, []any) // Build sql string and return args.
 }
 
 // A interface for setup TableProvider instance.

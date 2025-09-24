@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -117,7 +118,7 @@ func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
 //	DELETE FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
-func (b *DeleteBuilder) Build() (string, []any) {
+func (b *DeleteBuilder) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	limit := b.FormatLimit(b.limit)                            // LIMIT n
@@ -125,6 +126,10 @@ func (b *DeleteBuilder) Build() (string, []any) {
 	query := "DELETE FROM %s %s %s"
 	query = fmt.Sprintf(query, b.table, where, limit)
 	query = strings.TrimSuffix(query, " ")
+
+	if utils.Variable(debug, false) {
+		logger.D("[DELETE] SQL:", query, "|", args)
+	}
 	return query, args
 }
 
