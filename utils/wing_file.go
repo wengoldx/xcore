@@ -316,71 +316,38 @@ func SplitSuffix(fp string) (string, string) {
 	return filename, suffix
 }
 
+// Copy source file to traget file.
+func CopyFile(src string, dest string) error {
+	srcfile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcfile.Close()
+
+	dstfile, err := OpenTruncFile(dest)
+	if err != nil {
+		return err
+	}
+	defer dstfile.Close()
+
+	// start copying
+	if _, err := io.Copy(dstfile, srcfile); err != nil {
+		logger.E("copy file err:", err)
+		return  invar.ErrCopyFile
+	}
+	return  nil
+}
+
+// Copy source file to given dir.
+func CopyFileTo(src string, dir string) error {
+	_, fn := SplitPath(src)
+	dst := filepath.Join(dir, fn)
+	return CopyFile(src, dst)
+}
+
 /* ------------------------------------------------------------------- */
 /* Deprecated Methods                                                  */
 /* ------------------------------------------------------------------- */
-
-// truncate buffer size for file copy
-const _truncateBufferSize = 1024 * 30
-
-// Deprecated: CopyFile Copy source file to traget file.
-func CopyFile(src string, dest string) (bool, error) {
-	srcfile, err := os.Open(src)
-	if err != nil {
-		return false, err
-	}
-	defer srcfile.Close()
-
-	// create or truncate dest file
-	destfile, err := OpenTruncFile(dest)
-	if err != nil {
-		return false, err
-	}
-	defer destfile.Close()
-
-	// start copying
-	result, err := false, nil
-	Try(func() {
-		buff := make([]byte, _truncateBufferSize)
-		for {
-			len, state := srcfile.Read(buff)
-			if state == io.EOF {
-				break
-			}
-			destfile.Write(buff[0:len])
-		}
-		result = true
-	}, func(execption error) {
-		err = execption
-	})
-	return result, err
-}
-
-// Deprecated: CopyFileTo copy source file to given dir.
-func CopyFileTo(src string, dir string) (bool, error) {
-	srcfile, err := os.Open(src)
-	if err != nil {
-		return false, err
-	}
-	defer srcfile.Close()
-
-	// create or truncate dest file
-	info, _ := srcfile.Stat()
-	fp := filepath.Join(dir, info.Name())
-	destfile, err := OpenTruncFile(fp)
-	if err != nil {
-		return false, err
-	}
-	defer destfile.Close()
-
-	// start copying
-	len, err := io.Copy(destfile, srcfile)
-	if err != nil || len != info.Size() {
-		logger.E("copy file err:", err)
-		return false, invar.ErrCopyFile
-	}
-	return true, nil
-}
 
 // HumanReadable format the size number of len.
 func HumanReadable(len int64, during int64) string {
