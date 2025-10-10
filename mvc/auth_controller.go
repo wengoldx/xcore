@@ -137,6 +137,9 @@ var GRoleHandlerFunc RoleHandlerFunc
 
 // Get authoration and token from http header, than verify it and return account secures.
 //
+//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for 'GET' http method
+//	without any input params.
+//
 //	@Return 401, 403 codes returned on error.
 func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 	uuid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[1])
@@ -145,93 +148,69 @@ func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 
 // Parse url params for GET method, then do api action after success parsed.
 //
+//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for GET http method,
+//	and parse simple input params from url.
+//
 //	@Return 400, 401, 404 codes returned on error.
-func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid := c.AuthRequestHeader(hidelog); uuid != "" {
-		c.doAfterParsedInner("json", ps, nextFunc2, uuid, protect, hidelog)
+func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Option) {
+	opts := parseOptions(true, opt...)
+	if uuid := c.AuthRequestHeader(opts.Silent); uuid != "" {
+		c.doAfterParsedInner(ps, nextFunc2, uuid, opts)
 	}
 }
 
-// Do bussiness action after success validate the given json data.
+// Parse url param, validate if need, then call api hander method and response result.
+//
+//	`WARNING`: This function not check 'WENGOLD-V1.2' header.
+//
+//	@Return 400, 404 codes returned on error.
+func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
+	c.WingController.doAfterParsedInner(ps, nextFunc, parseOptions(true, opt...))
+}
+
+// Do bussiness action after success validate the given json or xml data.
+//
+//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for POST http method.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, _ := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner("json", ps, nextFunc2, uuid, true, protect, hidelog)
+func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...Option) {
+	opts := parseOptions(true, opt...)
+	if uuid, _ := c.innerAuthHeader(opts.Silent); uuid != "" {
+		c.doAfterValidatedInner(ps, nextFunc2, uuid, opts)
 	}
 }
 
-// Do bussiness action after success unmarshaled the given json data.
+// Do bussiness action after success unmarshaled the given json or xml data.
+//
+//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for POST http method.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, _ := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner("json", ps, nextFunc2, uuid, false, protect, hidelog)
-	}
-}
-
-// Do bussiness action after success validate the given xml data.
-//
-//	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterValidatedXml(ps any, nextFunc2 NextFunc2, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, _ := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner("xml", ps, nextFunc2, uuid, true, protect, hidelog)
-	}
-}
-
-// Do bussiness action after success unmarshaled the given xml data.
-//
-//	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterUnmarshalXml(ps any, nextFunc2 NextFunc2, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, _ := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner("xml", ps, nextFunc2, uuid, false, protect, hidelog)
+func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...Option) {
+	opts := parseOptions(false, opt...)
+	if uuid, _ := c.innerAuthHeader(opts.Silent); uuid != "" {
+		c.doAfterValidatedInner(ps, nextFunc2, uuid, opts)
 	}
 }
 
 // ----------------------------------------
 
-// Do bussiness action after success validate the given json data.
+// Do bussiness action after success validate the given json or xml data.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, pwd := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner3("json", ps, nextFunc3, uuid, pwd, true, protect, hidelog)
+func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, opts ...Option) {
+	options := parseOptions(true, opts...)
+	if uuid, pwd := c.innerAuthHeader(options.Silent); uuid != "" {
+		c.doAfterValidatedInner3(ps, nextFunc3, uuid, pwd, options)
 	}
 }
 
-// Do bussiness action after success unmarshaled the given json data.
+// Do bussiness action after success unmarshaled the given json or xml data.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, pwd := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner3("json", ps, nextFunc3, uuid, pwd, false, protect, hidelog)
-	}
-}
-
-// Do bussiness action after success validate the given xml data.
-//
-//	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterAuthValidatedXml(ps any, nextFunc3 NextFunc3, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, pwd := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner3("xml", ps, nextFunc3, uuid, pwd, true, protect, hidelog)
-	}
-}
-
-// Do bussiness action after success unmarshaled the given xml data.
-//
-//	@Return 400, 401, 403, 404 codes returned on error.
-func (c *WAuthController) DoAfterAuthUnmarshalXml(ps any, nextFunc3 NextFunc3, fs ...bool) {
-	protect, hidelog := !(len(fs) > 0 && !fs[0]), (len(fs) > 1 && fs[1])
-	if uuid, pwd := c.innerAuthHeader(hidelog); uuid != "" {
-		c.doAfterValidatedInner3("xml", ps, nextFunc3, uuid, pwd, false, protect, hidelog)
+func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, opts ...Option) {
+	options := parseOptions(false, opts...)
+	if uuid, pwd := c.innerAuthHeader(options.Silent); uuid != "" {
+		c.doAfterValidatedInner3(ps, nextFunc3, uuid, pwd, options)
 	}
 }
 
@@ -241,7 +220,7 @@ func (c *WAuthController) DoAfterAuthUnmarshalXml(ps any, nextFunc3 NextFunc3, f
 //
 //	@return 401: Unsupport author header or auth token failed.
 //	@return 403: Denied permission of user access the rest4 API.
-func (c *WAuthController) innerAuthHeader(hidelog bool) (string, string) {
+func (c *WAuthController) innerAuthHeader(silent bool) (string, string) {
 	if GAuthHandlerFunc == nil || GRoleHandlerFunc == nil {
 		c.E401Unauthed("Controller not set global handlers!")
 		return "", ""
@@ -270,7 +249,7 @@ func (c *WAuthController) innerAuthHeader(hidelog bool) (string, string) {
 				return "", ""
 			}
 
-			if !hidelog {
+			if !silent {
 				logger.D("Authenticated account:", uuid)
 			}
 			return uuid, pwd
@@ -283,43 +262,42 @@ func (c *WAuthController) innerAuthHeader(hidelog bool) (string, string) {
 }
 
 // Parse url param, validate if need, then call api hander method and response result.
-func (c *WAuthController) doAfterParsedInner(datatype string,
-	ps any, nextFunc2 NextFunc2, uuid string, protect, hidelog bool) {
-	if !c.validateUrlParams(ps, true) {
+//
+//	@See validateUrlParams() for more 400 error code returned.
+func (c *WAuthController) doAfterParsedInner(ps any, nextFunc2 NextFunc2, uuid string, opts *Options) {
+	if !c.validateUrlParams(ps, true) { // fixed validate true!
 		return
 	}
 
 	// execute business function after validated.
 	status, resp := nextFunc2(uuid)
-	c.responCheckState(datatype, protect, hidelog, status, resp)
+	c.responCheckState(opts, status, resp)
 }
 
 // doAfterValidatedInner do bussiness action after success unmarshal params or
-// validate the unmarshaled json data.
+// validate the unmarshaled json or xml data.
 //
 //	@See validateParams() for more 400, 404 error code returned.
-func (c *WAuthController) doAfterValidatedInner(datatype string,
-	ps any, nextFunc2 NextFunc2, uuid string, validate, protect, hidelog bool) {
-	if !c.validateParams(datatype, ps, validate) {
+func (c *WAuthController) doAfterValidatedInner(ps any, nextFunc2 NextFunc2, uuid string, opts *Options) {
+	if !c.validateParams(ps, opts) {
 		return
 	}
 
 	// execute business function after validated.
 	status, resp := nextFunc2(uuid)
-	c.responCheckState(datatype, protect, hidelog, status, resp)
+	c.responCheckState(opts, status, resp)
 }
 
 // doAfterValidatedInner3 do bussiness action after success unmarshal params or
-// validate the unmarshaled json data.
+// validate the unmarshaled json or xml data.
 //
 //	@See validateParams() for more 400, 404 error code returned.
-func (c *WAuthController) doAfterValidatedInner3(datatype string,
-	ps any, nextFunc3 NextFunc3, uuid, pwd string, validate, protect, hidelog bool) {
-	if !c.validateParams(datatype, ps, validate) {
+func (c *WAuthController) doAfterValidatedInner3(ps any, nextFunc3 NextFunc3, uuid, pwd string, opts *Options) {
+	if !c.validateParams(ps, opts) {
 		return
 	}
 
 	// execute business function after unmarshal and validated
 	status, resp := nextFunc3(uuid, pwd)
-	c.responCheckState(datatype, protect, hidelog, status, resp)
+	c.responCheckState(opts, status, resp)
 }
