@@ -53,7 +53,7 @@ func newOptions(protect, silent bool) *Options {
 }
 
 func parseOptions(validate bool, options ...Option) *Options {
-	opts := &Options{validate: validate}
+	opts := &Options{validate: validate, Protect: true}
 	for _, optFunc := range options {
 		optFunc(opts)
 	}
