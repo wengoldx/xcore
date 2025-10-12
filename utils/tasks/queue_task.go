@@ -45,9 +45,9 @@ type QueueTask struct {
 	queue *list.List // Tasks queue.
 	mutex sync.Mutex
 
-	postchan chan utils.EmptyStruct // Block chan for queue task PIPO.
-	exitchan chan utils.EmptyStruct // Block chan for exit queue task monitor.
-	opts     Options                // Queue task options.
+	postchan chan utils.TNone // Block chan for queue task PIPO.
+	exitchan chan utils.TNone // Block chan for exit queue task monitor.
+	opts     Options          // Queue task options.
 }
 
 // Create a new queue task and start as runtime monitor.
@@ -63,8 +63,8 @@ type QueueTask struct {
 func NewQueueTask(handler TaskHandler, opts ...Option) *QueueTask {
 	qt := &QueueTask{
 		queue:    list.New(),
-		postchan: make(chan utils.EmptyStruct),
-		exitchan: make(chan utils.EmptyStruct),
+		postchan: make(chan utils.TNone),
+		exitchan: make(chan utils.TNone),
 		opts: Options{
 			interrupt: false, // not interrupt by default.
 			interval:  0,     // non-waiting delay.
@@ -121,7 +121,7 @@ func (t *QueueTask) Post(task *Task) error {
 	 * post requests comming.
 	 */
 	t.push(task)
-	go func() { t.postchan <- utils.E_ }()
+	go func() { t.postchan <- utils.NONE }()
 	return nil
 }
 
@@ -144,7 +144,7 @@ func (t *QueueTask) Switch(from, to string) bool {
 // Clear waiting tasks and exit the QueueTask monitor.
 func (t *QueueTask) Exit() {
 	t.clear() // clear tasks first.
-	go func() { t.exitchan <- utils.E_ }()
+	go func() { t.exitchan <- utils.NONE }()
 }
 
 // Start task monitor to listen tasks pushed into queue, and execute it.

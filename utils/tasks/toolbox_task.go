@@ -32,9 +32,7 @@ type WTask struct {
 // Add a single monitor task to list
 func AddTask(tname, spec string, f toolbox.TaskFunc) {
 	monitor := toolbox.NewTask(tname, spec, f)
-	monitor.ErrLimit = 0
-
-	logger.I("Create task:", tname, "and add to list")
+	monitor.ErrLimit = 0 // not interupt when case error.
 	toolbox.AddTask(tname, monitor)
 }
 
@@ -47,9 +45,7 @@ func StartTasks(monitors []*WTask) {
 		}
 		AddTask(m.Name, m.Spec, m.Func)
 	}
-
 	toolbox.StartTask()
-	logger.I("Started all monitors")
 }
 
 // Return task if exist, or nil when unexist
