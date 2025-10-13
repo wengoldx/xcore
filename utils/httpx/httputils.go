@@ -216,8 +216,11 @@ func GEmit(tagurl string, params ...any) (e error) {
 }
 
 // Handle http POST method without parse any response datas.
-func PEmit(tagurl string, datas any, contentType ...string) (e error) {
-	_, e = handlePost(tagurl, datas, false, contentType...)
+//
+// # WARNING:
+//	- The params must url.Values typed datas when contentType set as ContentTypeForm!
+func PEmit(tagurl string, params any, contentType ...string) (e error) {
+	_, e = handlePost(tagurl, params, false, contentType...)
 	return
 }
 
@@ -256,6 +259,7 @@ func Get[T any](tagurl string, out *T, params ...any) error {
 // # WARNING:
 //	- The method only supput []byte, string, struct, []struct out data types.
 //	- The golang build in types array will case unmarshal error, such as []int, []string.
+//	- The params must url.Values typed datas when contentType set as ContentTypeForm!
 //
 // # USAGE:
 //
@@ -284,9 +288,14 @@ func Post[T any](tagurl string, params any, out *T, contentType ...string) error
 // use the setRequstFunc middleware callback to set request headers, or ignore
 // TLS verfiy of https auth.
 //
+// # WARNING:
+//	- The method only supput []byte, string, struct, []struct out data types.
+//	- The golang build in types array will case unmarshal error, such as []int, []string.
+//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
+//
 // # USAGE:
 //
-//	resp, err := utils.HttpUtils.CGet(tagurl, func(req *http.Request) (bool, error) {
+//	resp, err := httpx.ClientGet(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 //		req.SetBasicAuth("username", "password") // set auther header
 //		return true, nil                         // true is ignore TLS verify of https url.
@@ -312,9 +321,13 @@ func ClientGet[T any](tagurl string, setRequestFunc SetRequest, out *T, params .
 // use the setRequstFunc middleware callback to set request headers, or ignore
 // TLS verfiy of https auth.
 //
+// # WARNING:
+//	- The method only supput []byte, string, struct, []struct out data types.
+//	- The golang build in types array will case unmarshal error, such as []int, []string.
+//
 // # USAGE:
 //
-//	resp, err := utils.HttpUtils.CPost(tagurl, func(req *http.Request) (bool, error) {
+//	resp, err := httpx.ClientPost(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 //		req.SetBasicAuth("username", "password") // set auther header
 //		return true, nil                         // true is ignore TLS verify of https auth.
