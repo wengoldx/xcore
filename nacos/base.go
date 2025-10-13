@@ -25,6 +25,7 @@ import (
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/mqtt"
 	"github.com/wengoldx/xcore/utils"
+	"github.com/wengoldx/xcore/utils/httpx"
 	"github.com/wengoldx/xcore/wechat"
 )
 
@@ -87,13 +88,13 @@ func RegisterServer() *ServerStub {
 	}
 
 	// Namespace id of local server, and parse local ip
-	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV)
 	addr, err := matchProxyIP(idealip)
 	if err != nil {
 		panic("Find proxy local ip, err:" + err.Error())
 	}
 
 	// Create nacos server stub and setup it
+	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV)
 	stub := NewServerStub(ns, svr)
 	if err := stub.Setup(); err != nil {
 		panic(err)
@@ -334,7 +335,7 @@ func matchProxyIP(proxy string) (string, error) {
 		return "", err
 	}
 
-	matchips, err := utils.GetLocalIPs()
+	matchips, err := httpx.GetLocalIPs()
 	if err != nil {
 		return "", err
 	}

@@ -11,7 +11,6 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/secure"
+	"github.com/wengoldx/xcore/utils/httpx"
 )
 
 const (
@@ -241,23 +241,17 @@ func (s *DTalkSender) checkKeyAndURL(content string, isSecure ...bool) (string, 
 
 // send send given message and check response result
 func (s *DTalkSender) send(posturl string, data any) error {
-	resp, err := HttpPost(posturl, data)
-	if err != nil {
+	var resp struct {
+		Errcode int    `json:"errcode"`
+		Errmsg  string `json:"errmsg"`
+	}
+	if err := httpx.Post(posturl, data, &resp); err != nil {
 		logger.E("Failed send text message to DingTalk group chat")
 		return invar.ErrSendFailed
 	}
 
-	result := &struct {
-		Errcode int    `json:"errcode"`
-		Errmsg  string `json:"errmsg"`
-	}{}
-	if err = json.Unmarshal(resp, result); err != nil {
-		logger.E("Failed unmarshal send result:", string(resp))
-		return err
-	}
-
-	logger.I("Send text message result:{code:", result.Errcode, "msg:", result.Errmsg, "}")
-	if strings.ToLower(strings.TrimSpace(result.Errmsg)) != "ok" {
+	logger.I("Send text message result:{code:", resp.Errcode, "msg:", resp.Errmsg, "}")
+	if strings.ToLower(strings.TrimSpace(resp.Errmsg)) != "ok" {
 		return invar.ErrSendFailed
 	}
 	return nil

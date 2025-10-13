@@ -17,6 +17,7 @@ import (
 	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/mvc/provider/mysql"
 	"github.com/wengoldx/xcore/utils"
+	"github.com/wengoldx/xcore/utils/httpx"
 )
 
 // Restful api tester runtime configs.
@@ -84,8 +85,8 @@ func (t *tester) getToken(uid string) string {
 	if token, ok := t.tokens[uid]; ok {
 		return token
 	} else if t.tokenApi != "" {
-		token, err := utils.HttpUtils.GString(t.tokenApi, uid)
-		if err == nil {
+		var token string
+		if err := httpx.Get(t.tokenApi, &token, uid); err == nil {
 			t.tokens[uid] = token
 			return token
 		}
