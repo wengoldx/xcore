@@ -80,14 +80,14 @@ func unmarshalResponse(body []byte, out any) error {
 }
 
 // Post http request with json params.
-func postJson(tagurl string, datas any, parse bool) ([]byte, error) {
-	params, err := json.Marshal(datas)
+func postJson(tagurl string, params any, parse bool) ([]byte, error) {
+	payload, err := json.Marshal(params)
 	if err != nil {
 		logger.E("Marshal post datas, err:", err)
 		return nil, err
 	}
 
-	resp, err := http.Post(tagurl, ContentTypeJson, bytes.NewReader(params))
+	resp, err := http.Post(tagurl, ContentTypeJson, bytes.NewReader(payload))
 	if err != nil {
 		logger.E("Http post, err:", err)
 		return nil, err
@@ -98,8 +98,8 @@ func postJson(tagurl string, datas any, parse bool) ([]byte, error) {
 }
 
 // Post http request with form valus as url.Values.
-func postForm(tagurl string, datas url.Values, parse bool) ([]byte, error) {
-	resp, err := http.PostForm(tagurl, datas)
+func postForm(tagurl string, params url.Values, parse bool) ([]byte, error) {
+	resp, err := http.PostForm(tagurl, params)
 	if err != nil {
 		logger.E("Http post, err:", err)
 		return nil, err
@@ -131,7 +131,7 @@ func handleGet(tagurl string, parse bool, params ...any) ([]byte, error) {
 }
 
 // Handle http POST method request and parse response data if required.
-func handlePost(tagurl string, datas any, parse bool, contentType ...string) ([]byte, error) {
+func handlePost(tagurl string, params any, parse bool, contentType ...string) ([]byte, error) {
 	ct :=ContentTypeJson
 	if len(contentType) > 0 && contentType[0] != "" {
 		ct = contentType[0]
@@ -140,9 +140,9 @@ func handlePost(tagurl string, datas any, parse bool, contentType ...string) ([]
 
 	switch ct {
 	case ContentTypeJson:
-		return postJson(tagurl, datas, parse)
+		return postJson(tagurl, params, parse)
 	case ContentTypeForm:
-		return postForm(tagurl, datas.(url.Values), parse)
+		return postForm(tagurl, params.(url.Values), parse)
 	}
 	return nil, invar.ErrInvalidParams
 }
@@ -182,6 +182,11 @@ func clientDo[T any](req *http.Request, setRequestFunc SetRequest, out *T) error
 	return parseResp(datas, out)
 }
 
+// Parse the bytes response datas to templete out value.
+//
+// # WARNING:
+//	- The method only supput []byte, string, struct, []struct out data types.
+//	- The golang build in types array will case unmarshal error, such as []int, []string.
 func parseResp[T any](resp []byte, out *T) error {
 	if out != nil {
 		switch v := any(out).(type) {
@@ -191,9 +196,9 @@ func parseResp[T any](resp []byte, out *T) error {
 		case *string:
 			*v = strings.Trim(string(resp), "\"")
 			return nil
-		case any:
-			vt := reflect.TypeOf(*out)
-			if vt.Kind() == reflect.Struct {
+		case any: // for struct and struct array!
+			vt := reflect.TypeOf(*out).Kind()
+			if vt == reflect.Struct || vt == reflect.Slice {
 				return unmarshalResponse(resp, out)
 			}
 		}
@@ -219,6 +224,8 @@ func PEmit(tagurl string, datas any, contentType ...string) (e error) {
 // Handle http GET method and return response datas.
 //
 // # WARNING:
+//	- The method only supput []byte, string, struct, []struct out data types.
+//	- The golang build in types array will case unmarshal error, such as []int, []string.
 //	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
 //
 // # USAGE:
@@ -246,21 +253,25 @@ func Get[T any](tagurl string, out *T, params ...any) error {
 // the content-type header can be set as httputil.ContentTypeJson, 
 // httputil.ContentTypeForm, httputil.ContentTypeFile or others which you want.
 //
+// # WARNING:
+//	- The method only supput []byte, string, struct, []struct out data types.
+//	- The golang build in types array will case unmarshal error, such as []int, []string.
+//
 // # USAGE:
 //
-//	// set post datas as json string.
-//	datas := struct {"key": "Value", "id": "123"}
+//	// set post params as json string.
+//	params := struct {"key": "Value", "id": "123"}
 //
 //	var outbytes []byte    // get bytes response.
-//	err := httputil.Post(tagurl, data, &outbytes)
+//	err := httputil.Post(tagurl, params, &outbytes)
 //
 //	var outstring string   // get string response.
-//	err := httputil.Post(tagurl, data, &outstring, comm.ContentTypeForm)
+//	err := httputil.Post(tagurl, params, &outstring, comm.ContentTypeForm)
 //
 //	var outstruct MyStruct // get srtuct response.
-//	err := httputil.Post(tagurl, datas, &outstruct)
-func Post[T any](tagurl string, datas any, out *T, contentType ...string) error {
-	resp, err := handlePost(tagurl, datas, true, contentType...)
+//	err := httputil.Post(tagurl, params, &outstruct)
+func Post[T any](tagurl string, params any, out *T, contentType ...string) error {
+	resp, err := handlePost(tagurl, params, true, contentType...)
 	if err != nil {
 		return err
 	} else if out == nil {
