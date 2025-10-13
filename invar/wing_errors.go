@@ -20,7 +20,9 @@ import (
 //	var err error
 //	err = invar.ErrNotFound
 //
-//	WARNING: DO NOT change the error code and message text anyway!!
+// # WARNING:
+//
+// DO NOT change the error code and message text anyway!!
 type WingErr struct {
 	error     // Simple use WingErr value as error type
 	Code  int // Extend error code, start 0x1000

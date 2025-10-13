@@ -47,9 +47,9 @@ type ServerCallback func(svr, addr string, port int)
 // Register current server to nacos, you must set configs in app.conf
 //	@return - *ServerStub nacos server stub instance
 //
-//	`NOTICE` : nacos config as follows.
+// # NOTICE:
 //
-// ----
+// Nacos config as follows.
 //
 //	; Nacos remote server host
 //	nacossvr = "xx.xxx.40.218"
@@ -167,9 +167,9 @@ type MetaConfigCallback func(dataId, data string)
 // Create meta config client to get or listen configs changes
 //	@return - *MetaConfig nacos config client instance
 //
-//	`NOTICE` : nacos config as follows.
+// # NOTICE:
 //
-// ----
+// Nacos config as follows.
 //
 //	; Nacos remote server host
 //	nacossvr = "xx.xxx.40.218"
@@ -287,11 +287,9 @@ func (mc *MetaConfig) UpdateChineses(descs []*utils.SvrDesc) error {
 // current business servers configs, this client keep alive with
 // 5s pingpong heartbeat and output logs on warn leven.
 //
-//	`NOTICE`
-//
-// - Remote direct nacos server need access on http://{svr}:8848/nacos
-//
-// - Nginx proxy vip server need access on http://{svr}:3608/nacos
+// # NOTICE:
+//	- Remote direct nacos server need access on http://{svr}:8848/nacos
+//	- Nginx proxy vip server need access on http://{svr}:3608/nacos
 func genClientParam(ns, svr string) vo.NacosClientParam {
 	sc := []constant.ServerConfig{
 		{Scheme: "http", ContextPath: "/nacos", IpAddr: svr, Port: 8848},

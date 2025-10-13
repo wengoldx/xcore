@@ -41,9 +41,8 @@ type WillDisconHandler func(sc sio.Socket, cid string)
 //	@param cid client unique id
 //	@param opt client login optional data, maybe nil
 //
-// `NOTICE` :
-//
-// The client already released when call this event function.
+// # NOTICE:
+//	- The client already released when call this event function.
 type DisconnectHandler func(cid, opt string)
 
 // Socket signlaing event function

@@ -23,7 +23,7 @@ import (
 
 // Swagger.json field keywords for version 2.0.0.
 //
-// `NOTICE`
+// # WARNING:
 //
 //	DO NOT CHANGE THEME IF YOU KNOWE HOW TO CHANGE IT!
 const (

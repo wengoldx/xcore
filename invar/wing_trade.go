@@ -74,7 +74,7 @@ const TSRevoked = "REVOKED"
 //
 //	TSPaid		 -> TSClosed : close the trade ticket
 //
-// `WARNING` :
+// # WARNING:
 //
 // the refund action will generate a new trade ticket and set
 // TSInProgress as default.

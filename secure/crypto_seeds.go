@@ -25,7 +25,7 @@ var seedRadix = 0
 
 // Create seeds values and cached as a map, search by index.
 //
-// `WARNING`:
+// # WARNING:
 //
 // The src param string MUST all unique chars:
 //

@@ -33,19 +33,19 @@ import (
  *
  * ---
  *
- * `WARNING`:
+ * WARNING:
  *
  * ECC not best for encript/decript, but better for sign/verify, if you want
  * encript/decript data with high performence, please use RSA to implement them.
  *
- * `USAGE`:
+ * USAGE:
  *
  * 1. Call secure.NewEccPriKey() create a ecc private key.
  * 2. Call secure.EccKeysString(prikey) return private and public keys pem datas to save.
  * 3. Call secure.EccSign(plaintext, prikey) sign plaintext.
  * 4. Call secure.EccVerify(plaintext, signstring, pubkey) to verify valid.
  *
- * `Extend`:
+ * EXTEND:
  *
  * - Call secure.EccPriKey(pripem) return private key from pem data.
  * - Call secure.EccPubKey(pubpem) return public key from pem data.
@@ -271,7 +271,11 @@ func marshalEccSigns(r *big.Int, s *big.Int) []byte {
 // Parse ECC digital signs from signed string by marshalEccSigns() method,
 // to veriry plaintext.
 //
-//	NOTICE: signs length (sign + sb) matched as numbers:
+// # NOTICE:
+//	- The signs length (sign + sb) matched as numbers:
+//
+// ---
+//
 //		 56 for P224
 //		 64 for P256 // maybe 63
 //		 96 for P384

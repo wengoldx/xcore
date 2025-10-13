@@ -38,7 +38,9 @@ func Setup(secure, slat string) {
 // when the given data is empty or encrypt error, and return empty string
 // on invalid status.
 //
-// NOTICE: This method will trim space chars from the input plaintext
+// # NOTICE:
+//
+// This method will trim space chars from the input plaintext
 // both start and end, example " ab c " string will trimed as "ab c".
 func Encrypt(plaintext string) string {
 	if plaintext == "" {

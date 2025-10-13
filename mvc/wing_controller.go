@@ -24,14 +24,12 @@ import (
 
 // WingController the base controller to support bee http functions.
 //
-// `USAGE` :
+// # USAGE:
 //
 // Notice that you should register the field level validator for the input data's struct,
 // then use it in struct describetion label as validate target.
 //
-// ---
-//
-// `types.go`
+//	`types.go`
 //
 //	// define restful api router input param struct
 //	type struct Accout {
@@ -52,9 +50,7 @@ import (
 //		mvc.RegisterFieldValidator("IsVaildUuid", isVaildUuid)
 //	}
 //
-// ---
-//
-// `controller.go`
+//	`controller.go`
 //
 //	//	@Description Restful api bind with /login on POST method
 //	//	@Param data body types.Accout true "input param description"
@@ -462,7 +458,7 @@ func (c *WingController) validateUrlParams(ps any, validate bool) bool {
 
 // Parse and save the input params from http request url for GET method.
 //
-//	`NOTICE`
+// # NOTICE:
 //
 // This method only support simple value types of bool, int, float, string
 // for input struct field, and filter out the others value types.

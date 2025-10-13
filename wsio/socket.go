@@ -33,12 +33,12 @@ type clientOpt struct {
 // Socket.io connecte information, it will generate a socket server
 // and register as http Handler to listen socket signalings.
 //
-// `NOTICE` :
+// # NOTICE:
 //
-// - The request client MUST set header have 'Author' : WENGOLD-V1.2 and
+// (1). The request client MUST set header have 'Author' : WENGOLD-V1.2 and
 // no-empty auth Token as 'Token' : 'plaintext uuid or base64 formated string'.
 //
-// - DO NOT CHANGE THE go-socket.io MODULE VERSION, FIX IT IN 1.0.1 for
+// (2). DO NOT CHANGE THE go-socket.io MODULE VERSION, FIX IT IN 1.0.1 for
 // all UE4/UE5, Nodejs, python3 clients. the go-socket.io version 1.6.2
 // not matche or well support UE4/UE5 (No disconnected notify on server).
 //
@@ -46,7 +46,7 @@ type clientOpt struct {
 //
 // ----
 //
-// `USAGE` :
+// # USAGE:
 //
 //	// routers.go : register socket events
 //	import "github.com/wengoldx/xcore/wsio"
@@ -104,7 +104,7 @@ type wingSIO struct {
 	// only for client authenticate-connect process.
 	options map[uintptr]*clientOpt
 
-	// `WARNING` :
+	// # WARNING:
 	//
 	// the go-socket.io will call onConnect duplicate times when socket.io
 	// client version not matched, so handle the valid first and abort the
@@ -241,7 +241,7 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	}
 
 	/*
-	 * `NOTICE` :
+	 * NOTICE:
 	 *
 	 * (1). Try get Author from http header for Python3 and Unreal client;
 	 *      but React frontend and Wechat App not support auth header as well,

@@ -114,7 +114,7 @@ func (c *client) Rooms() ([]string, error) {
 
 // Broadcast signaling message to rooms that given by input param or all client joined.
 //
-// `NOTICE`
+// # NOTICE:
 //
 // The input param rooms should already joined by client when you want only
 // broadcast event and message to indicate part of joined rooms.

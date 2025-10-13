@@ -13,7 +13,7 @@ package pd
 import (
 	"testing"
 
-	"github.com/wengoldx/xcore/utils/wt"
+	wt "github.com/wengoldx/xcore/utils/testx"
 )
 
 /* ------------------------------------------------------------------- */

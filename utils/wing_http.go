@@ -191,7 +191,7 @@ func (u *httpUtils) log(msgs ...any) {
 
 // Handle http GET method and return original response bytes.
 //
-//	USAGE:
+// # USAGE:
 //
 //	params := "key=Value&id=123"
 //	resp, err := utils.HttpUtils.Get(tagurl, params)
@@ -227,7 +227,7 @@ func (u *httpUtils) GStruct(tagurl string, out any, params ...any) error {
 // the content-type header can be set as utils.ContentTypeJson, utils.ContentTypeForm,
 // utils.ContentTypeFile or others which you want.
 //
-//	USAGE:
+// # USAGE:
 //
 //	// set post datas as json string.
 //	datas := struct {"key": "Value", "id": "123"}
@@ -268,7 +268,7 @@ func (u *httpUtils) PStruct(tagurl string, datas, out any, contentType ...string
 // use the setRequstFunc middleware callback to set request headers, or ignore
 // TLS verfiy of https auth.
 //
-//	USAGE:
+// # USAGE:
 //
 //	resp, err := utils.HttpUtils.CGet(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
@@ -305,7 +305,7 @@ func (u *httpUtils) CGStruct(tagurl string, setRequestFunc SetRequest, out any, 
 // use the setRequstFunc middleware callback to set request headers, or ignore
 // TLS verfiy of https auth.
 //
-//	USAGE:
+// # USAGE:
 //
 //	resp, err := utils.HttpUtils.CPost(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")

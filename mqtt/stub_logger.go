@@ -30,7 +30,7 @@ const (
 
 // Custom logger to output logs by mqtt on single connected client chanel.
 //
-// NOTICE:
+// # NOTICE:
 //	- It will not print out error event logger failed generated!
 //	- The logger just output logs over level of INFO.
 //

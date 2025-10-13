@@ -41,7 +41,8 @@ var SkipInitFileLogger = false
 
 // init initialize app logger
 //
-// `NOTICE` : you must config logger params in /conf/app.config file as:
+// # NOTICE:
+//	- You must config logger params in /conf/app.config file as:
 //
 // ---
 //
@@ -51,11 +52,9 @@ var SkipInitFileLogger = false
 //
 // ---
 //
-// - the level values range in : [debug, info, warn, error], default is info.
-//
-// - maxdays is the max days to hold logs cache, default is 7 days.
-//
-// - see mqtt/stub_logger.go to setup mqtt logger to output logs by mqtt chanel.
+//	- The level values range in : [debug, info, warn, error], default is info.
+//	- The maxdays is maximum days to hold logs cache, default is 7 days.
+//	- See mqtt/stub_logger.go to setup mqtt logger to output logs by mqtt chanel.
 func init() {
 	setupFileLogger()
 	logs.SetLogFuncCall(true) // use the default func depth

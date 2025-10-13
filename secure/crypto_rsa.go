@@ -26,15 +26,13 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
-// ### 1. How to encrypt and decrypt by RSA
+// # 1. How to encrypt and decrypt by RSA
 //
-// - (1). use secure.NewRSAKeys() to generate RSA keys, and set content bits length.
+//	- (1). use secure.NewRSAKeys() to generate RSA keys, and set content bits length.
+//	- (2). use secure.RSAEncrypt() to encrypt original data with given public key.
+//	- (3). use secure.RSADecrypt() to decrypt ciphertext with given private key.
 //
-// - (2). use secure.RSAEncrypt() to encrypt original data with given public key.
-//
-// - (3). use secure.RSADecrypt() to decrypt ciphertext with given private key.
-//
-// `USAGE`
+// USAGE:
 //
 //	// Use the pubkey to encrypt and use the prikey to decrypt
 //	prikey, pubkey, _ := secure.NewRSAKeys(1024)
@@ -47,19 +45,15 @@ import (
 //	original, _ := secure.RSADecrypt(prikey, ciphertext)
 //	logger.I("original string:", string(original))	// print 'original-content'
 //
+// ---
 //
-// ----
+// # 2. How to digital signature and verify by RSA
 //
+//	- (1). use secure.NewRSAKeys() to generate RSA keys, and set content bits length.
+//	- (2). use secure.RSASign() to make digital signature with given private key.`
+//	- (3). use secure.RSAVerify() to verify data's integrity with given public key and digital signature
 //
-// ### 2. How to digital signature and verify by RSA
-//
-// - (1). use secure.NewRSAKeys() to generate RSA keys, and set content bits length.
-//
-// - (2). use secure.RSASign() to make digital signature with given private key.`
-//
-// - (3). use secure.RSAVerify() to verify data's integrity with given public key and digital signature
-//
-// `USAGE`
+// USAGE:
 //
 //	// Use the private key to create digital signature and use pubkey to verify it
 //	prikey, pubkey, _ := secure.NewRSAKeys(1024)

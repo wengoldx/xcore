@@ -62,7 +62,7 @@ const (
 // ParseTime parse time with zoom, the src time string maybe
 // formated from time.Format() return value.
 //
-// `WARNING` :
+// # WARNING:
 //
 // time.Now(), time.Format() are local time with timezoom offset,
 // but time.Parse() parse time string without timezoom just UTC time,

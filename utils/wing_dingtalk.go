@@ -132,14 +132,14 @@ type DTMsgFeedCard struct {
 // DTalkSender message sender for DingTalk custom robot, it just support
 // inited with keywords, secure token functions, but not ips range sets.
 //
-// `WARNING` :
+// # WARNING:
 //
 // Notice that the sender may not success @ anyones of chat's group members
 // when using DingTalk user ids and the target robot have no enterprise ownership,
 // so recommend use DingTalk user phone number to @ anyones or all when you
 // not ensure the robot if have enterprise ownership.
 //
-// `USAGES` :
+// # USAGE:
 //
 // the below only show send text type message's usages, the others as same.
 // see more with link https://developers.dingtalk.com/document/robots/custom-robot-access

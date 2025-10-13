@@ -67,7 +67,9 @@ func IsDir[T FileValueTypes](dir T) bool {
 // Check the file paths whether point to exist file or directory,
 // and return the false when anyone file path unexist.
 //
-//	`WARNING`: This method mark the path exist when case error except NotExist!
+// # WARNING:
+// 
+// This method mark the path exist when case error except NotExist!
 //
 //	@See use IsFile() to check exist file exactly.
 //	@See use IsDir()  to check exist directory exactly.

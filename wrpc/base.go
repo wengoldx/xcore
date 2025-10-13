@@ -79,7 +79,7 @@ func Singleton() *GrpcStub {
 // Start and excute grpc server, you numst setup global grpc
 // register handler first as follow.
 //
-// `USAGE`
+// # USAGE:
 //
 //	// set grpc server register handler
 //	stub := wrpc.Singleton()
@@ -220,7 +220,9 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 
 // Auth header token and return account uuid.
 //
-// `NOTICE` that the returned password fixed as empty string for services
+// # NOTICE:
+//
+// The returned password fixed as empty string for services
 // except backend account server.
 func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 	if stub.Acc == nil || token == "" {

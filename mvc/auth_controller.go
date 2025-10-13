@@ -16,31 +16,25 @@ import (
 	"github.com/wengoldx/xcore/logger"
 )
 
-// Deprecated: This controller deprecated! use WRoleController instead it.
-//
 // WAuthController the extend controller base on WingController to support
 // auth account from http headers, the client caller must append two headers
 // before post request if expect the controller method enable execute token
 // authentication from header.
 //
-// * Author : It must fixed keyword as WENGOLD-V1.2
-//
-// * Token : Authenticate JWT token responsed by login success
+//	- Author : It must fixed keyword as WENGOLD-V1.2
+//	- Token  : Authenticate JWT token responsed by login success
 //
 // `Optional headers` :
 //
-// * Location : Optional value of client indicator, global location
+//	- Location : Optional value of client indicator, global location
+//	- Authoration : The old version keyword for WENGOLD-V1.1
 //
-// * Authoration : The old version keyword for WENGOLD-V1.1
-//
-// `USAGE` :
+// # USAGE:
 //
 // The validator register code of input params struct see WingController description,
 // but the restful auth api of router method as follow usecase 1 and 2.
 //
-// ---
-//
-// `controller.go`
+//	`controller.go`
 //
 //	// define custom controller using header auth function
 //	type AccController struct {
@@ -55,7 +49,7 @@ import (
 //		}
 //	}
 //
-// `USECASE 1. Auth account and Parse input params`
+//	`USECASE 1. Auth account and Parse input params`
 //
 //	//	@Description Restful api bind with /login on POST method
 //	//	@Param Author header string true "WENGOLD-V1.2"
@@ -75,7 +69,7 @@ import (
 //		} , false /* not limit error message even code is 40x */)
 //	}
 //
-// `USECASE 2. Auth account on GET http method`
+//	`USECASE 2. Auth account on GET http method`
 //
 //	//	@Description Restful api bind with /detail on GET method
 //	//	@Param Author header string true "WENGOLD-V1.2"
@@ -89,7 +83,7 @@ import (
 //		}
 //	}
 //
-// `USECASE 3. No-Auth and Use WingController`
+//	`USECASE 3. No-Auth and Use WingController`
 //
 //	//	@Description Restful api bind with /update on POST method
 //	//	@Param data body types.UserInfo true "input param description"
@@ -104,7 +98,7 @@ import (
 //		} , false /* not limit error message even code is 40x */)
 //	}
 //
-// `USECASE 4. No-Auth and Custom code`
+//	`USECASE 4. No-Auth and Custom code`
 //
 //	//	@Description Restful api bind with /list on GET method
 //	//	@Success 200 {object} []types.Account "response data description"
@@ -137,8 +131,10 @@ var GRoleHandlerFunc RoleHandlerFunc
 
 // Get authoration and token from http header, than verify it and return account secures.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for 'GET' http method
-//	without any input params.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V1.2' header for 'GET' http method
+// without any input params.
 //
 //	@Return 401, 403 codes returned on error.
 func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
@@ -148,8 +144,10 @@ func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 
 // Parse url params for GET method, then do api action after success parsed.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for GET http method,
-//	and parse simple input params from url.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V1.2' header for GET http method,
+// and parse simple input params from url.
 //
 //	@Return 400, 401, 404 codes returned on error.
 func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Option) {
@@ -161,7 +159,9 @@ func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Opti
 
 // Parse url param, validate if need, then call api hander method and response result.
 //
-//	`WARNING`: This function not check 'WENGOLD-V1.2' header.
+// # WARNING:
+//
+// This function not check 'WENGOLD-V1.2' header.
 //
 //	@Return 400, 404 codes returned on error.
 func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
@@ -170,7 +170,9 @@ func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 
 // Do bussiness action after success validate the given json or xml data.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for POST http method.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V1.2' header for POST http method.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...Option) {
@@ -182,7 +184,9 @@ func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...O
 
 // Do bussiness action after success unmarshaled the given json or xml data.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V1.2' header for POST http method.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V1.2' header for POST http method.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...Option) {

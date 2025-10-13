@@ -22,18 +22,15 @@ import (
 // before post request if expect the controller method enable execute token
 // authentication from header.
 //
-// * Author : It must fixed keyword as WENGOLD-V2.0
+//	- Author : It must fixed keyword as WENGOLD-V2.0
+//	- Token  : Authenticate JWT token responsed by login success.
 //
-// * Token : Authenticate JWT token responsed by login success
-//
-// `USAGE` :
+// # USAGE:
 //
 // The validator register code of input params struct see WingController description,
 // but the restful auth api of router method as follow usecase 1 and 2.
 //
-// ---
-//
-// `controller.go`
+//	`controller.go`
 //
 //	// define custom controller using header auth function
 //	type AccController struct {
@@ -49,7 +46,7 @@ import (
 //		}
 //	}
 //
-// `USECASE 1. Auth account and Parse input params`
+//	`USECASE 1. Auth account and Parse input params`
 //
 //	//	@Description Restful api bind with /login on POST method
 //	//	@Param Author header string true "WENGOLD-V2.0"
@@ -67,7 +64,7 @@ import (
 //		} , false /* silent flag, true is not output success logs */)
 //	}
 //
-// `USECASE 2. Auth account on GET http method`
+//	`USECASE 2. Auth account on GET http method`
 //
 //	//	@Description Restful api bind with /detail on GET method
 //	//	@Param Author header string true "WENGOLD-V2.0"
@@ -81,7 +78,7 @@ import (
 //		}
 //	}
 //
-// `USECASE 3. No-Auth and Use WingController`
+//	`USECASE 3. No-Auth and Use WingController`
 //
 //	//	@Description Restful api bind with /update on POST method
 //	//	@Param data body types.UserInfo true "input param description"
@@ -96,7 +93,7 @@ import (
 //		} , false /* not limit error message even code is 40x */)
 //	}
 //
-// `USECASE 4. No-Auth and Custom code`
+//	`USECASE 4. No-Auth and Custom code`
 //
 //	//	@Description Restful api bind with /list on GET method
 //	//	@Success 200 {object} []types.Account "response data description"
@@ -128,8 +125,10 @@ var ValidateHandler ValidateHandlerFunc
 
 // Get authoration and token from http header, than verify it and return account secures.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V2.0' header for GET http method
-//	without any input params.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V2.0' header for GET http method
+// without any input params.
 //
 //	@return 401: Invalid author header or permission denied.
 func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
@@ -166,8 +165,10 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 
 // Parse url params for GET method, then do api action after success parsed.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V2.0' header for 'GET' http method,
-//	and parse simple input params from url.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V2.0' header for 'GET' http method,
+// and parse simple input params from url.
 //
 //	@return 401: Invalid author header or permission denied.
 //	@Return 400: Failed parse url params.
@@ -181,7 +182,9 @@ func (c *WRoleController) DoAfterParsed(ps any, nextHander NextHander, opt ...Op
 
 // Parse url param, validate if need, then call api hander method and response result.
 //
-//	`WARNING`: This function not check 'WENGOLD-V2.0' header.
+// # WARNING:
+//
+// This function not check 'WENGOLD-V2.0' header.
 //
 //	@Return 400: Failed parse url params.
 //	@Return 404: Case exception in server.
@@ -191,7 +194,9 @@ func (c *WRoleController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 
 // Parse and validate input params, then do api action after success validated.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V2.0' header for POST http method.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V2.0' header for POST http method.
 //
 //	@return 401: Invalid author header or permission denied.
 //	@Return 400: Failed parse input params or validate error.
@@ -205,7 +210,9 @@ func (c *WRoleController) DoAfterValidated(ps any, nextHander NextHander, opt ..
 
 // Parse input params, then do api action after success unmarshaled.
 //
-//	`WARNING`: This function only suport 'WENGOLD-V2.0' header for POST http method.
+// # WARNING:
+//
+// This function only suport 'WENGOLD-V2.0' header for POST http method.
 //
 //	@return 401: Invalid author header or permission denied.
 //	@Return 400: Failed parse input params.

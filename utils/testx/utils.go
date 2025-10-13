@@ -6,7 +6,6 @@
 // Prismy.No | Date       | Modified by. | Description
 // -------------------------------------------------------------------
 // 00001       2019/05/22   yangping       New version
-// 00002       2022/03/26   yangping       Using toolbox.Task
 // -------------------------------------------------------------------
 
 package wt

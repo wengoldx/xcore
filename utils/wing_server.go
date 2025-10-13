@@ -30,7 +30,7 @@ import (
 // support restful interface not socket.io connection, but you can
 // set allowCredentials as true to on socket.io conect function.
 //
-// `USAGE` :
+// # USAGE:
 //
 //	// use for restful interface server
 //	func main() {}
@@ -61,8 +61,6 @@ func SocketServer() {
 
 // Allow cross domain access for localhost,
 // the port number must config in /conf/app.conf file like :
-//
-// ---
 //
 //	; Server port of HTTP
 //	httpport=3200

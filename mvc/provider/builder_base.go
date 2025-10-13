@@ -56,7 +56,8 @@ func (b *BaseBuilder) FormatJoins(tables Joins) string {
 //	- set OR             : use OR  connector.
 //	- set empty string   : tail connector inside where condition like 'condition AND', 'condition OR'.
 //
-// WARNING: Here will filter out the nil values in wheres.
+// # WARNING:
+//	- Here will filter out the nil values in wheres.
 func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any) {
 	where, args := "", []any{}
 	if len(wheres) > 0 {
@@ -93,7 +94,8 @@ func (b *BaseBuilder) FormatWheres(wheres Wheres, sep ...string) (string, []any)
 //	- float number args: field IN (1.2,2.3,3.45)
 //	- string args      : field IN ('1','2','3')
 //
-// WARNING: Here will filter out the nil values in args.
+// # WARNING:
+//	- Here will filter out the nil values in args.
 func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 	if len(args) > 0 {
 		values := strings.Join(utils.ToStrings(args), ",")
@@ -160,7 +162,9 @@ func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string
 //	// => ?,?,?,?
 //	// => []any{16, true, "ZhangSan", 176.8}
 //
-// WARNING: This method not well support insert nil value by arg, the nil
+// # WARNING:
+//
+// This method not well support insert nil value by arg, the nil
 // value will inserted like '<nil>' string, not NULL value;
 func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
 	fields, holders, args := "", "", []any{}
@@ -197,7 +201,8 @@ func (b *BaseBuilder) FormatInserts(values KValues) (string, string, []any) {
 //	// => Age=?, Male=?, Name=?, Height=?, Secure=NULL
 //	// => []any{16, true, "ZhangSan", 176.8}
 //
-// WARNING: This method support update nil arg as NULL value.
+// # WARNING:
+//	- This method support update nil arg as NULL value.
 func (b *BaseBuilder) FormatSets(values KValues) (string, []any) {
 	fields, args := "", []any{}
 	if cnt := len(values); cnt > 0 {

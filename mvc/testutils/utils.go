@@ -121,7 +121,8 @@ func UseDebugLogger() {
 //	  |    |- .test  // -> Enable test mode, delete it for disable.
 //	  ...
 //
-// WARNING: DO NOT use beego.BConfig.AppName when unexist app.conf!
+// # WARNING:
+//	- DO NOT use beego.BConfig.AppName when unexist app.conf!
 func CheckTestMode(app string) string {
 	if pwd, err := os.Getwd(); err == nil {
 		if length := len(app); length > 0 {

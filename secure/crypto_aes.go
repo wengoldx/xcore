@@ -224,14 +224,12 @@ func pkcs5Unpadding(encrypt []byte) []byte {
 //			- string Nonce string
 //			- error Exception message
 //
-// `NOTICE` :
+// # NOTICE:
 //
 // You can use secure.NewAESKey() to generate a AES-256-GSM secret key
 // to as secretkey input param, or use hex.EncodeToString() encode any
 // secret string, but use hex.DecodeString() decode the encode hash key
 // before call this function.
-//
-// ----
 //
 //	// use secure.NewAESKey() generate a secretkey
 //	secretkey := secure.NewAESKey()
