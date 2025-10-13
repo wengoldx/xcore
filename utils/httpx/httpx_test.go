@@ -53,6 +53,17 @@ func TestGetStruct(t *testing.T) {
 	t.Log("Out struct:", out)
 }
 
+func TestGetNilStruct(t *testing.T) {
+	req := "http://192.168.1.192:3103/accservice/v4/wx/login/unionid?id=%s"
+	params := "oRWA1645rQoiHAkp7CXODTggEpIY" // FIXME: maybe changed!
+
+	out := (*MyStruct)(nil)
+	if err := Get(req, out, params); err != nil {
+		t.Fatal(err)
+	}
+	t.Log("Out struct:", out)
+}
+
 func TestGetStruct2(t *testing.T) {
 	req := "http://192.168.1.192:3103/accservice/v4/wx/login/unionid?id=%s"
 	params := "oRWA1645rQoiHAkp7CXODTggEpIY" // FIXME: maybe changed!

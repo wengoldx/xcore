@@ -243,14 +243,16 @@ func PEmit(tagurl string, params any, contentType ...string) (e error) {
 //
 //	var outstruct MyStruct // get srtuct response.
 //	err := httputil.Get(tagurl, &outstruct)
+//
+// Use GEmit() for execute GET http request without response data.
 func Get[T any](tagurl string, out *T, params ...any) error {
 	resp, err := handleGet(tagurl, true, params...)
 	if err != nil {
 		return err
-	} else if out == nil {
-		return nil
+	} else if out != nil {
+		return parseResp(resp, out)
 	}
-	return parseResp(resp, out)
+	return nil
 }
 
 // Handle http POST method and return original response bytes,
@@ -275,14 +277,17 @@ func Get[T any](tagurl string, out *T, params ...any) error {
 //
 //	var outstruct MyStruct // get srtuct response.
 //	err := httputil.Post(tagurl, params, &outstruct)
+//
+// Use PEmit() for execute GET http request without response data.
 func Post[T any](tagurl string, params any, out *T, contentType ...string) error {
-	resp, err := handlePost(tagurl, params, true, contentType...)
+	isparse := out != nil
+	resp, err := handlePost(tagurl, params, isparse, contentType...)
 	if err != nil {
 		return err
-	} else if out == nil {
-		return nil
+	} else if isparse {
+		return parseResp(resp, out)
 	}
-	return parseResp(resp, out)
+	return nil
 }
 
 // Handle http GET method by http.Client and return original response bytes,
@@ -296,11 +301,21 @@ func Post[T any](tagurl string, params any, out *T, contentType ...string) error
 //
 // # USAGE:
 //
-//	resp, err := httpx.ClientGet(tagurl, func(req *http.Request) (bool, error) {
+//	// USAGE 1. get valid out datas.
+//	var resp MyStruct        
+//	err := httpx.ClientGet(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 //		req.SetBasicAuth("username", "password") // set auther header
 //		return true, nil                         // true is ignore TLS verify of https url.
-//	}, "get-form-params");
+//	}, &resp, "get-form-params");
+//
+//	// USAGE 2. ignore the out datas.
+//	resp := (*MyStruct)(nil)
+//	err := httpx.ClientGet(tagurl, func(req *http.Request) (bool, error) {
+//		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
+//		req.SetBasicAuth("username", "password") // set auther header
+//		return true, nil                         // true is ignore TLS verify of https url.
+//	}, resp, "get-form-params");
 func ClientGet[T any](tagurl string, setRequestFunc SetRequest, out *T, params ...any) error {
 	if len(params) > 0 {
 		tagurl = fmt.Sprintf(tagurl, params...)
@@ -328,11 +343,21 @@ func ClientGet[T any](tagurl string, setRequestFunc SetRequest, out *T, params .
 //
 // # USAGE:
 //
-//	resp, err := httpx.ClientPost(tagurl, func(req *http.Request) (bool, error) {
+//	// USAGE 1. get valid out datas.
+//	var resp MyStruct
+//	err := httpx.ClientPost(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 //		req.SetBasicAuth("username", "password") // set auther header
 //		return true, nil                         // true is ignore TLS verify of https auth.
-//	}, "post-data")
+//	}, &resp, "post-data")
+//
+//	// USAGE 2. ignore the out datas.
+//	resp := (*MyStruct)(nil)
+//	err := httpx.ClientPost(tagurl, func(req *http.Request) (bool, error) {
+//		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
+//		req.SetBasicAuth("username", "password") // set auther header
+//		return true, nil                         // true is ignore TLS verify of https auth.
+//	}, resp, "post-data")
 func ClientPost[T any](tagurl string, setRequestFunc SetRequest, out *T, datas ...any) error {
 	var body io.Reader
 	if len(datas) > 0 {
