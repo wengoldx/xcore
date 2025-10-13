@@ -202,8 +202,9 @@ func parseResp[T any](resp []byte, out *T) error {
 				return unmarshalResponse(resp, out)
 			}
 		}
+		return invar.ErrUnsupportFormat
 	}
-	return invar.ErrUnsupportFormat
+	return nil
 }
 
 // Handle http GET method without parse any response datas.
