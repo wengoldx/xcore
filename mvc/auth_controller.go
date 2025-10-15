@@ -138,7 +138,7 @@ var GRoleHandlerFunc RoleHandlerFunc
 //
 //	@Return 401, 403 codes returned on error.
 func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
-	uuid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[1])
+	uuid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[0])
 	return uuid
 }
 
