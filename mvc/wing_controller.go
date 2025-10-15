@@ -317,14 +317,8 @@ func (c *WingController) OutRole(role string, status int) {
 // # NOTICE:
 //	- This function not check 'WENGOLD-V*' header.
 //	- Use AuthController, RoleController to check header and token.
-func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts *Options) {
-	if !c.validateUrlParams(ps, true) { // fixed validate true!
-		return
-	}
-
-	// execute business function after validated.
-	status, resp := nextFunc()
-	c.responCheckState(opts, status, resp)
+func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts ...Option) {
+	c.doAfterParsedInner(ps, nextFunc, parseOptions(true /* no-use */, opts...))
 }
 
 // Do bussiness action after success validate the given json or xml data.
@@ -401,6 +395,19 @@ func (c *WingController) responCheckState(opts *Options, state int, data ...any)
 		logger.W("Unsupport response type:" + dt)
 		c.Ctx.ResponseWriter.Write([]byte(""))
 	}
+}
+
+// Do bussiness action after success validate the given json or xml data.
+//
+//	@See validateUrlParams() for more 400 error code returned.
+func (c *WingController) doAfterParsedInner(ps any, nextFunc NextFunc, opts *Options) {
+	if !c.validateUrlParams(ps, true) { // fixed validate true!
+		return
+	}
+
+	// execute business function after validated.
+	status, resp := nextFunc()
+	c.responCheckState(opts, status, resp)
 }
 
 // Do bussiness action after success unmarshal params or validate the unmarshaled json or xml data.

@@ -165,7 +165,7 @@ func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Opti
 //
 //	@Return 400, 404 codes returned on error.
 func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
-	c.WingController.DoAfterParsed(ps, nextFunc, parseOptions(true, opt...))
+	c.WingController.DoAfterParsed(ps, nextFunc, opt...)
 }
 
 // Do bussiness action after success validate the given json or xml data.
