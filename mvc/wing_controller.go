@@ -317,6 +317,10 @@ func (c *WingController) OutRole(role string, status int) {
 // # NOTICE:
 //	- This function not check 'WENGOLD-V*' header.
 //	- Use AuthController, RoleController to check header and token.
+//
+// # WARNING:
+//	- The out param must create as a struct pointer for this methoed!
+//	- This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
 func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterParsedInner(ps, nextFunc, parseOptions(true /* no-use */, opts...))
 }
@@ -488,7 +492,9 @@ func (c *WingController) validateUrlParams(ps any, validate bool) bool {
 //	}
 //	parseUrlParams(param)
 //
-// The sample param must create as a struct pointer for this methoed!
+// # WARNING:
+//	- The sample param must create as a struct pointer for this methoed!
+//	- This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
 func (c *WingController) parseUrlParams(ps any) bool {
 	rv := reflect.ValueOf(ps)
 	if !rv.IsValid() || rv.Kind() != reflect.Ptr || rv.IsNil() {
