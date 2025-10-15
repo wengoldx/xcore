@@ -189,7 +189,7 @@ func (c *WRoleController) DoAfterParsed(ps any, nextHander NextHander, opt ...Op
 //	@Return 400: Failed parse url params.
 //	@Return 404: Case exception in server.
 func (c *WRoleController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
-	c.WingController.doAfterParsedInner(ps, nextFunc, parseOptions(true, opt...))
+	c.WingController.DoAfterParsed(ps, nextFunc, parseOptions(true, opt...))
 }
 
 // Parse and validate input params, then do api action after success validated.

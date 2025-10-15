@@ -310,16 +310,41 @@ func (c *WingController) OutRole(role string, status int) {
 
 // ----------------------------------------
 
-// DoAfterValidated do bussiness action after success validate the given json or xml data.
+// Do bussiness action after parsed url params and success validate.
+//
+//	@Return 400 code returned on error.
+//
+// # NOTICE:
+//	- This function not check 'WENGOLD-V*' header.
+//	- Use AuthController, RoleController to check header and token.
+func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts *Options) {
+	if !c.validateUrlParams(ps, true) { // fixed validate true!
+		return
+	}
+
+	// execute business function after validated.
+	status, resp := nextFunc()
+	c.responCheckState(opts, status, resp)
+}
+
+// Do bussiness action after success validate the given json or xml data.
 //
 //	@Return 400, 404 codes returned on error.
+//
+// # NOTICE:
+//	- This function not check 'WENGOLD-V*' header.
+//	- Use AuthController, RoleController to check header and token.
 func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(true, opts...))
 }
 
-// DoAfterUnmarshal do bussiness action after success unmarshaled the given json or xml data.
+// Do bussiness action after success unmarshaled the given json or xml data.
 //
 //	@Return 400, 404 codes returned on error.
+//
+// # NOTICE:
+//	- This function not check 'WENGOLD-V*' header.
+//	- Use AuthController, RoleController to check header and token.
 func (c *WingController) DoAfterUnmarshal(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(false, opts...))
 }
@@ -376,19 +401,6 @@ func (c *WingController) responCheckState(opts *Options, state int, data ...any)
 		logger.W("Unsupport response type:" + dt)
 		c.Ctx.ResponseWriter.Write([]byte(""))
 	}
-}
-
-// Parse url param, validate if need, then call api hander method and response result.
-//
-//	@See validateUrlParams() for more 400 error code returned.
-func (c *WingController) doAfterParsedInner(ps any, nextFunc NextFunc, opts *Options) {
-	if !c.validateUrlParams(ps, true) { // fixed validate true!
-		return
-	}
-
-	// execute business function after validated.
-	status, resp := nextFunc()
-	c.responCheckState(opts, status, resp)
 }
 
 // Do bussiness action after success unmarshal params or validate the unmarshaled json or xml data.
