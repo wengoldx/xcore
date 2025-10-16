@@ -355,7 +355,8 @@ func SplitTrim(src, sub string) []string {
 //	str := "/"                     // or " / ", " // ", " / / ", " /// "
 //	utils.SplitAfterTrim(str, "/") // output []
 //
-// `Warning` : DO NOT contain space chars in the sub string!
+// # WARNING:
+//	- DO NOT contain space chars in the sub string!
 func SplitAfterTrim(src, sub string) []string {
 	src = strings.ReplaceAll(src, " ", "")
 	if !strings.HasSuffix(src, sub) {

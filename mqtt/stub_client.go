@@ -196,7 +196,9 @@ func (stub *MqttStub) Publish(topic string, data any, Qos ...byte) error {
 
 // Publish indicate topic message with input remain flag and Qos options,
 //
-// Notice that the data will encode as json bytes array if value type is Struct,
+// # NOTICE:
+//
+// The data will encode as json bytes array if value type is Struct,
 // Pointer or map, or instead nil data to empty bytes array.
 func (stub *MqttStub) PublishOptions(topic string, data any, remain bool, Qos ...byte) error {
 	if stub.Client == nil {

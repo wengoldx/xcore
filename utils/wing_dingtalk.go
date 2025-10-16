@@ -259,7 +259,7 @@ func (s *DTalkSender) send(posturl string, data any) error {
 
 // SendText send text message, it support at anyones of chat's group members.
 //
-// `Notice` :
+//# NOTICE:
 //
 // You can change the '@anyone-user' text display position in DintTalk message
 // by add '@130xxxxxxxx' user phone in content string as:
@@ -306,7 +306,7 @@ func (s *DTalkSender) SendText(content string, atMobiles, atUserIDs []string, is
 
 // SendLink send link message, it not support at anyone but have a picture and web link.
 //
-// `Notice` :
+// # NOTICE:
 //
 // The title, text, msgURL input params must not empty.
 //
@@ -340,11 +340,12 @@ func (s *DTalkSender) SendLink(title, text, picURL, msgURL string, isSecure ...b
 
 // SendMarkdown send markdown type message, it support anyone and pick, message link urls.
 //
-// `Notice` :
+// # NOTICE:
 //
 // You MUST add '@130xxxxxxxx' user phone in content string when want to at anyones
 // of chat's group members, and enable change the '@anyone-user' text display position
 // in DintTalk message by move '@130xxxxxxxx' position in content string as:
+//
 //	"text": "### the weather is nice today, '@130xxxxxxxx' is that? \n > yes"
 //	-> `the weather is nice today, {@UserX} is that?
 //		yes`
@@ -383,7 +384,7 @@ func (s *DTalkSender) SendMarkdown(title, text string, atMobiles, atUserIds []st
 
 // SendActionCard send action card type message, it not support at anyone but has a single link.
 //
-// `Notice` :
+// # NOTICE:
 //
 // The title, text, singleTitle, singleURL input params must not empty.
 //
@@ -418,7 +419,7 @@ func (s *DTalkSender) SendActionCard(title, text, singleTitle, singleURL string,
 
 // SendActionCard2 send action card type message with multiple buttons.
 //
-// `Notice` :
+// # NOTICE:
 //
 // The title, text, btns input params must not empty.
 //
@@ -467,7 +468,7 @@ func (s *DTalkSender) SendActionCard2(title, text string, btns []DTButton, isVer
 
 // SendFeedCard send feed card type message, it not support at anyone.
 //
-// `Notice` :
+// # NOTICE:
 //
 // The all links input params must not empty.
 //

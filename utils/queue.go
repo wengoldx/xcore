@@ -107,7 +107,11 @@ const (
 )
 
 // Fetch queue nodes, use callback returns to remove node or interupt fetch.
-// Notice that DO NOT do heavy performence codes in callback, exist a lock here!
+//
+// # WARNING:
+//	- DO NOT do heavy performence codes in callback, exist a lock here!
+//
+// # USAGE:
 //
 // For example caller code like (Events is a Queue object):
 //

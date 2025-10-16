@@ -14,6 +14,7 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -27,8 +28,6 @@ import (
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/secure"
 )
-
-
 
 type FileValueTypes interface {
 	string | *os.File
@@ -102,8 +101,9 @@ func EnsurePath(dirpath string) error {
 
 // Create a new directories with permission bits, by default perm is 0777.
 //
-//	Warning: This function not validate dirpath, please ensure it valid.
-//	@See use EnsurePath() to check and create directories.
+// # WARNING:
+//	- This function not validate dirpath, please ensure it valid.
+//	- Use EnsurePath() to check and create directories.
 func MakeDirs(dirpath string, perm ...os.FileMode) error {
 	if len(perm) > 0 && perm[0] != 0 {
 		return os.MkdirAll(dirpath, perm[0])
@@ -114,7 +114,8 @@ func MakeDirs(dirpath string, perm ...os.FileMode) error {
 // Create a new writeonly file with permission bits, by default perm is 0666,
 // it will append write datas to file tails.
 //
-//	Warning: The caller must call file.Close() after writing finished.
+// # WARNING:
+// - The caller must call file.Close() after writing finished.
 func OpenWriteFile(fp string, perm ...os.FileMode) (*os.File, error) {
 	flag := os.O_CREATE | os.O_WRONLY | os.O_APPEND
 	if len(perm) > 0 && perm[0] != 0 {
@@ -126,7 +127,8 @@ func OpenWriteFile(fp string, perm ...os.FileMode) (*os.File, error) {
 // Create a new writonly file with permission bits, by default perm is 0666,
 // it will clear file content and write datas from file start.
 //
-//	Warning: The caller must call file.Close() after writing finished.
+// # WARNING:
+//	- The caller must call file.Close() after writing finished.
 func OpenTruncFile(fp string, perm ...os.FileMode) (*os.File, error) {
 	flag := syscall.O_CREAT | os.O_WRONLY | syscall.O_TRUNC
 	if len(perm) > 0 && perm[0] != 0 {
@@ -334,7 +336,7 @@ func CopyFile(src string, dest string) error {
 
 	// start copying
 	if _, err := io.Copy(dstfile, srcfile); err != nil {
-		logger.E("copy file err:", err)
+		logger.E("Copy file err:", err)
 		return  invar.ErrCopyFile
 	}
 	return  nil
@@ -347,11 +349,43 @@ func CopyFileTo(src string, dir string) error {
 	return CopyFile(src, dst)
 }
 
+// Read json file content and unmarshal to json object.
+func ReadJsonFile(jsonfile string, out any) error {
+	if !IsFile(jsonfile) {
+		return invar.ErrFileNotFound
+	}
+
+	buf, err := os.ReadFile(jsonfile)
+	if err != nil {
+		logger.E("Read", jsonfile, "err:", err)
+		return err
+	} else if err := json.Unmarshal(buf, out); err != nil {
+		logger.E("Unmarshal err:", err)
+		return err
+	}
+	return nil
+}
+
+// Read file content and output as string.
+func ReadFileString(txtfile string) string {
+	if IsFile(txtfile) {
+		buf, err := os.ReadFile(txtfile);
+		if err != nil {
+			logger.E("Read", txtfile, "err:", err)
+			return ""
+		}
+
+		content := strings.Trim(string(buf), "\n")
+		return strings.TrimSpace(content)
+	}
+	return ""
+}
+
 /* ------------------------------------------------------------------- */
 /* Deprecated Methods                                                  */
 /* ------------------------------------------------------------------- */
 
-// HumanReadable format the size number of len.
+// Deprecated: format the size number of len.
 func HumanReadable(len int64, during int64) string {
 	if len < 1024 {
 		return strconv.FormatInt(len*1000/during, 10) + "B       "
@@ -364,7 +398,7 @@ func HumanReadable(len int64, during int64) string {
 	}
 }
 
-// VerifyFile verify upload file and size, it support jpg/jpeg/JPG/JPEG/png/PNG/mp3/mp4 suffix.
+// Deprecated: verify upload file and size, it support jpg/jpeg/JPG/JPEG/png/PNG/mp3/mp4 suffix.
 func VerifyFile(fh *multipart.FileHeader, maxBytes ...int64) (string, error) {
 	suffix := filepath.Ext(fh.Filename)
 	maxSizeInByte := Variable(maxBytes, 0)
@@ -397,7 +431,7 @@ func VerifyFile(fh *multipart.FileHeader, maxBytes ...int64) (string, error) {
 	return suffix, nil
 }
 
-// VerifyFileFormat verify upload file and size in MB.
+// Deprecated: verify upload file and size in MB.
 func VerifyFileFormat(fh *multipart.FileHeader, format string, size int64) (string, error) {
 	if len(format) == 0 || size <= 0 {
 		return "", invar.ErrInvalidParams
