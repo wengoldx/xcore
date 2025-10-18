@@ -1,6 +1,6 @@
 module github.com/wengoldx/xcore
 
-go 1.24.2
+go 1.24.4
 
 require (
 	github.com/astaxie/beego v1.12.3
