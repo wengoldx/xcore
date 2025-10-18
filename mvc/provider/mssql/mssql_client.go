@@ -48,18 +48,18 @@ const (
 	_mssqlDsn = "server=%s;port=%d;database=%s;user id=%s;password=%s;connection timeout=%d;dial timeout=%d;"
 )
 
-// Create a MSSQL client, set the options by mssqlc.WithXxxx(x) setters.
+// Create a MSSQL client, set the options by mssql.WithXxxx(x) setters.
 //
-//	client := mssqlc.NewMSSQL(
-//		mssqlc.WithSession("mssql"),
-//		mssqlc.WithHost("127.0.0.1"),
-//		mssqlc.WithPort(1433),
-//		mssqlc.WithUser("sa"),
-//		mssqlc.WithPassword("123456"),
-//		mssqlc.WithDatabase("TestDB"),
-//		mssqlc.WithTimeout(30),
-//		mssqlc.WithMaxIdles(100),
-//		mssqlc.WithMaxOpens(100),
+//	client := mssql.NewMSSQL(
+//		mssql.WithSession("mssql"),
+//		mssql.WithHost("127.0.0.1"),
+//		mssql.WithPort(1433),
+//		mssql.WithUser("sa"),
+//		mssql.WithPassword("123456"),
+//		mssql.WithDatabase("TestDB"),
+//		mssql.WithTimeout(30),
+//		mssql.WithMaxIdles(100),
+//		mssql.WithMaxOpens(100),
 //	)
 func New(opts ...Option) *MSSQL {
 	client := &MSSQL{options: DefaultOptions(_mssqlDriver)}
@@ -115,9 +115,12 @@ func GetTabler(opts ...pd.Option) *pd.TableProvider {
 }
 
 // Setup tables with name and provider.
-func SetupTables(tables map[string]pd.TableSetup) {
+func SetupTables(tables map[string]pd.TableSetup, debug ...bool) {
+	isdebug := utils.Variable(debug, false)
 	for name, table := range tables {
-		table.Setup(Select(), pd.WithTable(name))
+		table.Setup(Select(),
+			pd.WithTable(name),
+			pd.WithDebug(isdebug))
 	}
 }
 

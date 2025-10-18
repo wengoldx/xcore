@@ -54,18 +54,18 @@ const (
 	_defCharset = "utf8mb4"
 )
 
-// Create a MySQL client, set the options by mysqlc.WithXxxx(x) setters.
+// Create a MySQL client, set the options by mysql.WithXxxx(x) setters.
 //
-//	client := mysqlc.New(
-//		mysqlc.WithSession("mysql"),
-//		mysqlc.WithHost("127.0.0.1:3306"), // maybe empty for localhost.
-//		mysqlc.WithUser("user"),
-//		mysqlc.WithPassword("123456"),
-//		mysqlc.WithDatabase("testdb"),
-//		mysqlc.WithCharset("utf8mb4"),
-//		mysqlc.WithMaxIdles(100),
-//		mysqlc.WithMaxOpens(100),
-//		mysqlc.WithMaxLifetime(28740),
+//	client := mysql.New(
+//		mysql.WithSession("mysql"),
+//		mysql.WithHost("127.0.0.1:3306"), // maybe empty for localhost.
+//		mysql.WithUser("user"),
+//		mysql.WithPassword("123456"),
+//		mysql.WithDatabase("testdb"),
+//		mysql.WithCharset("utf8mb4"),
+//		mysql.WithMaxIdles(100),
+//		mysql.WithMaxOpens(100),
+//		mysql.WithMaxLifetime(28740),
 //	)
 func New(opts ...Option) *MySQL {
 	client := &MySQL{options: DefaultOptions(_mysqlDriver)}
