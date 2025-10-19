@@ -23,12 +23,12 @@ import (
 //	type SampleProvider struct {
 //		provider.TableProvider
 //	}
-//	s := &SampleProvider{*mysqlc.GetTabler(
+//	s := &SampleProvider{*mysql.GetTabler(
 //		provider.WithTable("sample"), //set table name.
 //	)}
 //
-// Use mysqlc.GetTabler(), mysqlc.GetTabler() to create TableProvider with
-// connected mysql or mssql database client.
+// Use mysql.GetTabler(), mysql.GetTabler() of mvc inner packages to create
+// TableProvider with connected mysql or mssql database client.
 type TableProvider struct {
 	BaseProvider
 	table string // Table name

@@ -101,7 +101,7 @@ func Select(session ...string) pd.DBClient {
 // Close and remove the target Sqlite client.
 func Close(session ...string) error {
 	s := utils.Variable(session, _sqliteDefSession)
-	if client := Select(s); client != nil {
+	if client := _sqliteClients[s]; client != nil {
 		defer delete(_sqliteClients, s)
 		return client.Close()
 	}
@@ -109,8 +109,8 @@ func Close(session ...string) error {
 }
 
 // Create and return BaseProvider instance with Sqlite client.
-func GetProvider() *pd.BaseProvider {
-	return pd.NewProvider(Select())
+func GetProvider(session ...string) *pd.BaseProvider {
+	return pd.NewProvider(Select(session...))
 }
 
 // Create and return BaseProvider instance with Sqlite client.
@@ -152,6 +152,21 @@ func (m *Sqlite) Connect() error {
 	conn.SetMaxIdleConns(1)
 	conn.SetMaxOpenConns(1)
 	m.conn = conn
+	return nil
+}
+
+// Create the given tables for sqlite database if not exist.
+func (m *Sqlite) CreateTables(tables []string) error {
+	if m.conn == nil {
+		return invar.ErrBadDBConnect
+	}
+
+	for index, stmt := range tables {
+		if _, err := m.conn.Exec(stmt); err != nil {
+			logger.E("Create table at", index, "err:", err)
+			return err
+		}
+	}
 	return nil
 }
 
