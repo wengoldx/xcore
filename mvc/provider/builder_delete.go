@@ -25,11 +25,6 @@ import (
 //		LIMIT limit.
 //
 // See QueryBuilder, InsertBuilder, UpdateBuilder.
-//
-// # WARNING:
-//	- Call NewDelete() to create DeleteBuilder instance is a good way to init 'driver'.
-//	- This builder build sql string for MySQL or MSSQL as default or 'driver' set 'sql'.
-//	- This builder build sql string for Sqlite when 'driver' set 'sqlite'.
 type DeleteBuilder struct {
 	BaseBuilder
 
@@ -44,8 +39,8 @@ type DeleteBuilder struct {
 var _ SQLBuilder = (*DeleteBuilder)(nil)
 
 // Create a DeleteBuilder instance to build a query string.
-func NewDelete(table string, driver ...string) *DeleteBuilder {
-	return &DeleteBuilder{BaseBuilder: *newBuilder(driver...), table: table}
+func NewDelete(table string) *DeleteBuilder {
+	return &DeleteBuilder{table: table}
 }
 
 /* ------------------------------------------------------------------- */

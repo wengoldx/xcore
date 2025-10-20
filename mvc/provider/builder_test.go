@@ -28,7 +28,7 @@ func TestFormatJoins(t *testing.T) {
 		wt.NewCase("Check all emptys  ", "", Joins{"": ""}),
 	}
 
-	builder := newBuilder()
+	builder := &BaseBuilder{}
 	for _, c := range cases {
 		rst := builder.FormatJoins(c.Params.(Joins))
 		if want := c.Want.(string); rst != want {
@@ -55,7 +55,7 @@ func TestFormatLike(t *testing.T) {
 		wt.NewCase("Check emptys", "", LikeData{"", "", []string{}}),
 	}
 
-	builder := newBuilder()
+	builder := &BaseBuilder{}
 	for _, c := range cases {
 		param := c.Params.(LikeData)
 		rst := builder.FormatLike(param.Field, param.Filter, param.Pattern...)

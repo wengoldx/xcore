@@ -25,11 +25,6 @@ import (
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //
 // See QueryBuilder, InsertBuilder, DeleteBuilder.
-//
-// # WARNING:
-//	- Call NewUpdate() to create UpdateBuilder instance is a good way to init 'driver'.
-//	- This builder build sql string for MySQL or MSSQL as default or 'driver' set 'sql'.
-//	- This builder build sql string for Sqlite when 'driver' set 'sqlite'.
 type UpdateBuilder struct {
 	BaseBuilder
 
@@ -44,8 +39,8 @@ type UpdateBuilder struct {
 var _ SQLBuilder = (*UpdateBuilder)(nil)
 
 // Create a UpdateBuilder instance to build a query string.
-func NewUpdate(table string, driver ...string) *UpdateBuilder {
-	return &UpdateBuilder{BaseBuilder: *newBuilder(driver...), table: table}
+func NewUpdate(table string) *UpdateBuilder {
+	return &UpdateBuilder{table: table}
 }
 
 /* ------------------------------------------------------------------- */

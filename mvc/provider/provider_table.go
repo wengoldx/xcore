@@ -25,7 +25,6 @@ import (
 //	}
 //	s := &SampleProvider{*mysql.GetTabler(
 //		provider.WithTable("sample"),  //set table name.
-//		provider.WithDriver("sqlite"), //set builder driver, default 'sql'.
 //	)}
 //
 // Use mysql.GetTabler(), mysql.GetTabler() sqlite.GetTabler() of mvc inner packages
@@ -62,23 +61,14 @@ func WithDebug(debug bool) Option {
 	}
 }
 
-// Specify the builder sql driver, one of 'sql', 'sqlite'.
-func WithDriver(driver string) Option {
-	return func(provider *TableProvider) {
-		if provider.Builder != nil {
-			provider.Builder.driver = driver
-		}
-	}
-}
-
 /* ------------------------------------------------------------------- */
 /* Create and Return Builder Instance FOR QIUD Actions                 */
 /* ------------------------------------------------------------------- */
 
-func (p *TableProvider) Q() *QueryBuilder  { return NewQuery(p.table, p.Builder.driver).Master(p) }
-func (p *TableProvider) I() *InsertBuilder { return NewInsert(p.table, p.Builder.driver).Master(p) }
-func (p *TableProvider) U() *UpdateBuilder { return NewUpdate(p.table, p.Builder.driver).Master(p) }
-func (p *TableProvider) D() *DeleteBuilder { return NewDelete(p.table, p.Builder.driver).Master(p) }
+func (p *TableProvider) Querier() *QueryBuilder   { return NewQuery(p.table).Master(p) }
+func (p *TableProvider) Inserter() *InsertBuilder { return NewInsert(p.table).Master(p) }
+func (p *TableProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table).Master(p) }
+func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Master(p) }
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */

@@ -28,8 +28,8 @@ type BaseProvider struct {
 }
 
 // Create a BaseProvider with given database client.
-func NewProvider(client DBClient, driver ...string) *BaseProvider {
-	return &BaseProvider{client, newBuilder(driver...)}
+func NewProvider(client DBClient) *BaseProvider {
+	return &BaseProvider{client, &BaseBuilder{}}
 }
 
 /* ------------------------------------------------------------------- */

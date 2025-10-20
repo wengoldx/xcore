@@ -130,8 +130,8 @@ func Close(session ...string) error {
 }
 
 // Create and return BaseProvider instance with MSSQL client.
-func GetProvider(driver string, session ...string) *pd.BaseProvider {
-	return pd.NewProvider(Select(session...), driver)
+func GetProvider(session ...string) *pd.BaseProvider {
+	return pd.NewProvider(Select(session...))
 }
 
 // Create and return TableProvider instance with MSSQL client.
@@ -148,7 +148,7 @@ func SetupTables(tables map[string]pd.TableSetup, driver string, debug ...bool) 
 	isdebug := utils.Variable(debug, false)
 	for name, table := range tables {
 		table.Setup(Select(), pd.WithTable(name),
-			pd.WithDriver(driver), pd.WithDebug(isdebug))
+			pd.WithDebug(isdebug))
 	}
 }
 

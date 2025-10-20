@@ -59,10 +59,10 @@ func Tester() *tester { return _t }
 /* SQL Querier, Inserter, Updater, Deleter                             */
 /* ------------------------------------------------------------------- */
 
-func Querier(t ...string) *pd.QueryBuilder   { return _t.tabler.Q().Table(utils.Variable(t, "")) }
-func Inserter(t ...string) *pd.InsertBuilder { return _t.tabler.I().Table(utils.Variable(t, "")) }
-func Updater(t ...string) *pd.UpdateBuilder  { return _t.tabler.U().Table(utils.Variable(t, "")) }
-func Deleter(t ...string) *pd.DeleteBuilder  { return _t.tabler.D().Table(utils.Variable(t, "")) }
+func Querier(t ...string) *pd.QueryBuilder   { return _t.tabler.Querier().Table(utils.Variable(t, "")) }
+func Inserter(t ...string) *pd.InsertBuilder { return _t.tabler.Inserter().Table(utils.Variable(t, "")) }
+func Updater(t ...string) *pd.UpdateBuilder  { return _t.tabler.Updater().Table(utils.Variable(t, "")) }
+func Deleter(t ...string) *pd.DeleteBuilder  { return _t.tabler.Deleter().Table(utils.Variable(t, "")) }
 
 /* ------------------------------------------------------------------- */
 /* Env datas getter and setter                                         */
