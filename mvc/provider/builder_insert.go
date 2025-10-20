@@ -20,8 +20,8 @@ import (
 
 // Build a query string for sql insert.
 //
-//	MySQL & MSSQL: INSERT table (tags) VALUES (?, ?, ?)...
-//	SQLITE       : INSERT INTO table (tags) VALUES (?, ?, ?)...
+//	`MySQL & MSSQL`: INSERT table (tags) VALUES (?, ?, ?)...
+//	`SQLITE`       : INSERT INTO table (tags) VALUES (?, ?, ?)...
 //
 // See QueryBuilder, UpdateBuilder, DeleteBuilder.
 //
@@ -98,25 +98,29 @@ func (b *InsertBuilder) Values(row ...KValues) *InsertBuilder {
 
 // Build the insert action sql string and args for provider to insert datas.
 //
-//	INSERT table (tags) VALUES (?, ?, ?)...
+//	`MySQL & MSSQL`: INSERT table (tags) VALUES (?, ?, ?)...
+//	`SQLITE`       : INSERT INTO table (tags) VALUES (?, ?, ?)...
 //
-// WARNNG: The InsertBuild not well insert nil value by arg for single row
+// # WARNING:
+//
+// The InsertBuild not well insert nil value by arg for single row
 // insert, but good for insert nil value as NULL for multiple rows insert.
 //
 // And, it use the first row args key as the column headers.
 func (b *InsertBuilder) Build(debug ...bool) (string, []any) {
+	// diff := utils.Condition(b.driver == "sqlite", "INTO ", "")
 	if cnt := len(b.rows); cnt == 1 {
-		// INSERT table (v1, v2...) VALUES (?,?...)'
+		// INSERT INTO table (v1, v2...) VALUES (?,?...)'
 		fields, holders, args := b.FormatInserts(b.rows[0])
 
-		query := "INSERT %s (%s) VALUES (%s)"
+		query := "INSERT INTO %s (%s) VALUES (%s)"
 		query = fmt.Sprintf(query, b.table, fields, holders)
 		if utils.Variable(debug, false) {
 			logger.D("[INSERT] SQL:", query, "|", args)
 		}
 		return query, args
 	} else if cnt > 1 {
-		// INSERT table (v1, v2...) VALUES (1,2...),(3,4...)...'
+		// INSERT [INTO] table (v1, v2...) VALUES (1,2...),(3,4...)...'
 		headers := []string{}
 		for key := range b.rows[0] {
 			if key != "" { //fetch valid headers.
@@ -151,7 +155,7 @@ func (b *InsertBuilder) Build(debug ...bool) (string, []any) {
 		fields := strings.Join(headers, ", ")
 		values := strings.Join(rows, ", ")
 
-		query := "INSERT %s (%s) VALUES %s"
+		query := "INSERT INTO %s (%s) VALUES %s"
 		query = fmt.Sprintf(query, b.table, fields, values)
 		if utils.Variable(debug, false) {
 			logger.D("[INSERT-S] SQL:", query)
