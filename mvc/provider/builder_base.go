@@ -18,14 +18,25 @@ import (
 )
 
 // The base builder to support util methods to simple build a
-// sql string for database CUDA actions.
+// sql string for database QIUD actions.
+//
+// # WARNING:
+//	- The BaseBuilder instance used as build utils, not implement Build().
+//	- Use QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder to build whole sql string.
+//	- The 'driver' must set to 'sql' or 'sqlite' for sql string build, default empty as 'sql'.
 type BaseBuilder struct {
 	master *TableProvider // Table provider for execute sql actions.
+	driver string         // SQL driver, oneof 'sql': for MySQL and MSSQL, 'sqlite': for Sqlite3.
 }
 
 var _ SQLBuilder = (*BaseBuilder)(nil)
 
-// Empty build method, override by CUDA builders.
+// Create a BaseBuilder instance as build utils.
+func newBuilder(driver ...string) *BaseBuilder {
+	return &BaseBuilder{driver: utils.Variable(driver, "sql")}
+}
+
+// Empty build method, override by QIUD builders.
 func (b *BaseBuilder) Build(debug ...bool) (string, []any) {
 	return "", []any{} // not implement Build method.
 }

@@ -20,9 +20,15 @@ import (
 
 // Build a query string for sql insert.
 //
-//	INSERT table (tags) VALUES (?, ?, ?)...
+//	MySQL & MSSQL: INSERT table (tags) VALUES (?, ?, ?)...
+//	SQLITE       : INSERT INTO table (tags) VALUES (?, ?, ?)...
 //
 // See QueryBuilder, UpdateBuilder, DeleteBuilder.
+//
+// # WARNING:
+//	- Call NewInsert() to create InsertBuilder instance is a good way to init 'driver'.
+//	- This builder build sql string for MySQL or MSSQL as default or 'driver' set 'sql'.
+//	- This builder build sql string for Sqlite when 'driver' set 'sqlite'.
 type InsertBuilder struct {
 	BaseBuilder
 
@@ -33,8 +39,8 @@ type InsertBuilder struct {
 var _ SQLBuilder = (*InsertBuilder)(nil)
 
 // Create a InsertBuilder instance to build a query string.
-func NewInsert(table string) *InsertBuilder {
-	return &InsertBuilder{table: table}
+func NewInsert(table string, driver ...string) *InsertBuilder {
+	return &InsertBuilder{BaseBuilder: *newBuilder(driver...), table: table}
 }
 
 /* ------------------------------------------------------------------- */

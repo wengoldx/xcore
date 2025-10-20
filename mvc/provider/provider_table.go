@@ -24,11 +24,12 @@ import (
 //		provider.TableProvider
 //	}
 //	s := &SampleProvider{*mysql.GetTabler(
-//		provider.WithTable("sample"), //set table name.
+//		provider.WithTable("sample"),  //set table name.
+//		provider.WithDriver("sqlite"), //set builder driver, default 'sql'.
 //	)}
 //
-// Use mysql.GetTabler(), mysql.GetTabler() of mvc inner packages to create
-// TableProvider with connected mysql or mssql database client.
+// Use mysql.GetTabler(), mysql.GetTabler() sqlite.GetTabler() of mvc inner packages
+// to create TableProvider with connected mysql, mssql, sqlite database client.
 type TableProvider struct {
 	BaseProvider
 	table string // Table name
@@ -61,14 +62,23 @@ func WithDebug(debug bool) Option {
 	}
 }
 
+// Specify the builder sql driver, one of 'sql', 'sqlite'.
+func WithDriver(driver string) Option {
+	return func(provider *TableProvider) {
+		if provider.Builder != nil {
+			provider.Builder.driver = driver
+		}
+	}
+}
+
 /* ------------------------------------------------------------------- */
-/* Create and Return Builder Instance                                  */
+/* Create and Return Builder Instance FOR QIUD Actions                 */
 /* ------------------------------------------------------------------- */
 
-func (p *TableProvider) Querier() *QueryBuilder   { return NewQuery(p.table).Master(p) }
-func (p *TableProvider) Inserter() *InsertBuilder { return NewInsert(p.table).Master(p) }
-func (p *TableProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table).Master(p) }
-func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Master(p) }
+func (p *TableProvider) Q() *QueryBuilder  { return NewQuery(p.table, p.Builder.driver).Master(p) }
+func (p *TableProvider) I() *InsertBuilder { return NewInsert(p.table, p.Builder.driver).Master(p) }
+func (p *TableProvider) U() *UpdateBuilder { return NewUpdate(p.table, p.Builder.driver).Master(p) }
+func (p *TableProvider) D() *DeleteBuilder { return NewDelete(p.table, p.Builder.driver).Master(p) }
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
@@ -76,7 +86,7 @@ func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Ma
 
 // Setup TableProvider with database client and options.
 func (p *TableProvider) Setup(client DBClient, opts ...Option) {
-	p.BaseProvider = BaseProvider{client, &BaseBuilder{}}
+	p.BaseProvider = *NewProvider(client)
 	for _, optFunc := range opts {
 		optFunc(p)
 	}

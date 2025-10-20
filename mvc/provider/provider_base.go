@@ -22,12 +22,14 @@ import (
 // Base provider for simple access database datas.
 type BaseProvider struct {
 	client  DBClient     // Database conncet client.
+
+	/* Only for BaseProvider as build utils! */
 	Builder *BaseBuilder // Base builder as utils tools.
 }
 
 // Create a BaseProvider with given database client.
-func NewProvider(client DBClient) *BaseProvider {
-	return &BaseProvider{client, &BaseBuilder{}}
+func NewProvider(client DBClient, driver ...string) *BaseProvider {
+	return &BaseProvider{client, newBuilder(driver...)}
 }
 
 /* ------------------------------------------------------------------- */

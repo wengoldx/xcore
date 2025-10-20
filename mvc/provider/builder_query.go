@@ -26,6 +26,11 @@ import (
 //		LIMIT limit.
 //
 // See InsertBuilder, UpdateBuilder, DeleteBuilder.
+//
+// # WARNING:
+//	- Call NewQuery() to create QueryBuilder instance is a good way to init 'driver'.
+//	- This builder build sql string for MySQL or MSSQL as default or 'driver' set 'sql'.
+//	- This builder build sql string for Sqlite when 'driver' set 'sqlite'.
 type QueryBuilder struct {
 	BaseBuilder
 
@@ -44,8 +49,8 @@ type QueryBuilder struct {
 var _ SQLBuilder = (*QueryBuilder)(nil)
 
 // Create a QueryBuilder instance to build a query string.
-func NewQuery(table string) *QueryBuilder {
-	return &QueryBuilder{table: table}
+func NewQuery(table string, driver ...string) *QueryBuilder {
+	return &QueryBuilder{BaseBuilder: *newBuilder(driver...), table: table}
 }
 
 /* ------------------------------------------------------------------- */
