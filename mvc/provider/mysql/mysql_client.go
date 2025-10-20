@@ -67,17 +67,40 @@ const (
 //		mysql.WithMaxOpens(100),
 //		mysql.WithMaxLifetime(28740),
 //	)
+//
+// # NOTICE:
+//
+// 1. This method create a Sqlite instance by WithXxxx(x) options setters,
+// not load from ./conf/app.conf file.
+//
+// 2. The created MySQL instance must call Connect() to connect the target
+// database before use query, insert, update and delete methods. it will
+// cache the instance to clients map, so use Select() to get the default
+// or target instance by given session is safly.
 func New(opts ...Option) *MySQL {
 	client := &MySQL{options: DefaultOptions(_mysqlDriver)}
 	for _, optFunc := range opts {
 		optFunc(client)
 	}
+
+	session := client.options.Session
+	if _, ok := _mysqlClients[session]; ok {
+		logger.W("Override exist MySQL client:", session)
+	}
+	_mysqlClients[session] = client
 	return client
 }
 
 // Create a MySQL client and connect with options which loaded from app.conf file.
 //
-// This method useful for beego project easy to connect a mysql database.
+//	[mysql]
+//	host = "192.168.100.102:3306"
+//	name = "sampledb"
+//	user = "root"
+//	pwd  = "123456"
+//
+// # NOTICE:
+//	- This method useful for beego project easy to connect a mysql database.
 func Open(charset string, session ...string) error {
 	return OpenWithOptions(LoadOptions(session...), charset)
 }

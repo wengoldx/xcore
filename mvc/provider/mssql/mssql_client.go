@@ -61,17 +61,42 @@ const (
 //		mssql.WithMaxIdles(100),
 //		mssql.WithMaxOpens(100),
 //	)
+//
+// # NOTICE:
+//
+// 1. This method create a Sqlite instance by WithXxxx(x) options setters,
+// not load from ./conf/app.conf file.
+//
+// 2. The created MSSQL instance must call Connect() to connect the target
+// database before use query, insert, update and delete methods. it will
+// cache the instance to clients map, so use Select() to get the default
+// or target instance by given session is safly.
 func New(opts ...Option) *MSSQL {
 	client := &MSSQL{options: DefaultOptions(_mssqlDriver)}
 	for _, optFunc := range opts {
 		optFunc(client)
 	}
+
+	session := client.options.Session
+	if _, ok := _mssqlClients[session]; ok {
+		logger.W("Override exist MSSQL client:", session)
+	}
+	_mssqlClients[session] = client
 	return client
 }
 
 // Create a MSSQL client and connect with options which loaded from app.conf file.
 //
-// This method useful for beego project easy to connect a mssql database.
+//	[mssql]
+//	host    = "192.168.100.102"
+//	port    = 1433
+//	name    = "sampledb"
+//	user    = "sa"
+//	pwd     = "123456"
+//	timeout = 30
+//
+// # NOTICE:
+//	- This method useful for beego project easy to connect a mssql database.
 func Open(session ...string) error {
 	return OpenWithOptions(LoadOptions(session...))
 }

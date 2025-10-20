@@ -67,17 +67,38 @@ const (
 //		sqlite.WithSession("mysqlite"),
 //		sqlite.WithIsMemory(true),
 //	)
+//
+// # NOTICE:
+//
+// 1. This method create a Sqlite instance by WithXxxx(x) options setters,
+// not load from ./conf/app.conf file.
+//
+// 2. The created Sqlite instance must call Connect() to connect the target
+// database before use query, insert, update and delete methods. it will
+// cache the instance to clients map, so use Select() to get the default
+// or target instance by given session is safly.
 func New(opts ...Option) *Sqlite {
 	client := &Sqlite{options: DefaultOptions()}
 	for _, optFunc := range opts {
 		optFunc(client)
 	}
+
+	session := client.options.Session
+	if _, ok := _sqliteClients[session]; ok {
+		logger.W("Override exist Sqlite client:", session)
+	}
+	_sqliteClients[session] = client
 	return client
 }
 
 // Create a Sqlite client and connect with options which loaded from app.conf file.
 //
-// This method useful for beego project easy to connect a Sqlite database.
+//	[sqlite]
+//	database = "sample.db"  ; only for file database.
+//	memory = false          ; set true for memory sqlite database.
+//
+// # NOTICE:
+//	- This method useful for beego project easy to connect a Sqlite database.
 func Open(session ...string) error {
 	return OpenWithOptions(LoadOptions(session...))
 }
@@ -118,6 +139,23 @@ func GetTabler(opts ...pd.Option) *pd.TableProvider {
 	return pd.NewTabler(Select(), opts...)
 }
 
+// Create the given tables for sqlite database if not exist.
+func CreateTables(tables []string, session ...string) error {
+	client := Select(session...)
+	if client == nil || client.DB() == nil {
+		return invar.ErrBadDBConnect
+	}
+
+	conn := client.DB()
+	for index, stmt := range tables {
+		if _, err := conn.Exec(stmt); err != nil {
+			logger.E("Create table at", index, "err:", err)
+			return err
+		}
+	}
+	return nil
+}
+
 // Setup tables with name and provider.
 func SetupTables(tables map[string]pd.TableSetup, debug ...bool) {
 	isdebug := utils.Variable(debug, false)
@@ -152,21 +190,6 @@ func (m *Sqlite) Connect() error {
 	conn.SetMaxIdleConns(1)
 	conn.SetMaxOpenConns(1)
 	m.conn = conn
-	return nil
-}
-
-// Create the given tables for sqlite database if not exist.
-func (m *Sqlite) CreateTables(tables []string) error {
-	if m.conn == nil {
-		return invar.ErrBadDBConnect
-	}
-
-	for index, stmt := range tables {
-		if _, err := m.conn.Exec(stmt); err != nil {
-			logger.E("Create table at", index, "err:", err)
-			return err
-		}
-	}
 	return nil
 }
 
