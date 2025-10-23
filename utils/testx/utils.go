@@ -10,7 +10,10 @@
 
 package wt
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 // Test case datas for multiple testing.
 type TestCase struct {
@@ -42,6 +45,7 @@ func NewCase(label string, want any, param any) *TestCase {
 func TestMults(t *testing.T, cases []*TestCase, callback TestHandler) {
 	t.Helper()
 	for _, c := range cases {
+		fmt.Println("> TEST CASE:", c.Case)
 		if want := callback(c.Params); want != c.Want {
 			t.Fatal("Failed, want:", c.Want, "but result", want)
 		}
