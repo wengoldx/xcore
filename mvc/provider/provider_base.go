@@ -535,29 +535,27 @@ func printHeader(header int, ps [6]int) {
 /* ------------------------------------------------------------------- */
 
 // Query the target column values and return array by callback.
-func QueryColumn[T any](builder *QueryBuilder, cb func([]T)) error {
-	if cb == nil || builder == nil || builder.master == nil || !builder.master.prepared(){
+//
+// # USAGE:
+//
+//	// case 1: new a builder and set exist provider.
+//	files := []string{}
+//	builder := pd.NewQuery("mytable").Master(myprovider)
+//	err := pd.QueryColumn(builder.Tags("file").Wheres(pd.Wheres{"uid": uid}), &files)
+//	
+//	// case 2: or, use exist provider get builder.
+//	builder = myprovider.Querier()
+func QueryColumn[T any](builder *QueryBuilder, outs *[]T) error {
+	if outs == nil || builder == nil || builder.master == nil{
 		return invar.ErrBadDBConnect
 	}
 
-	query, args := builder.Build()
-	db := builder.master.client.DB()
-	rows, err := db.Query(query, args...)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	outs := []T{}
-	for rows.Next() {
-		rows.Columns()
-
+	return builder.Query(func(rows *sql.Rows) error {
 		var v T
 		if err := rows.Scan(&v); err != nil {
 			return err
 		}
-		outs = append(outs, v)
-	}
-	cb(outs)
-	return nil
+		*outs = append(*outs, v)
+		return nil
+	})
 }
