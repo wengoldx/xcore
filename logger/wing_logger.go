@@ -121,33 +121,24 @@ func logFormatString(n int, opts ...string) string {
 	return strings.Repeat("%v ", n)
 }
 
-// SetOutputLogger close console logger on prod mode and only remain file logger.
+// Close console logger on prod mode and only remain file logger.
 func SetOutputLogger() {
-	if beego.BConfig.RunMode != "dev" && GetLevel() != LevelDebug {
+	if beego.BConfig.RunMode == "prod" && GetLevel() != LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
-		ShowWarningLogs()
+		if !SkipInitFileLogger {
+			logfile := "./logs/" + beego.BConfig.AppName + ".log"
+			fmt.Println("@@ Outlogs to", logfile)
+		} else {
+			fmt.Println("@@ Silent loggers !!")
+		}
 	}
 }
 
-// Remove console and file loggers as silent status, it usefull for unit test.
+// Remove console and file loggers as silent status.
 func SilentLoggers() {
 	beego.BeeLogger.DelLogger(logs.AdapterFile)
 	beego.BeeLogger.DelLogger(logs.AdapterConsole)
-
-	fmt.Println()
-	fmt.Println("\t+===============================+")
-	fmt.Println("\t+ SILENT CONSOLE & FILE LOGGERS +")
-	fmt.Println("\t+===============================+")
-	fmt.Println()
-}
-
-// Show warning when output logs to files.
-func ShowWarningLogs() {
-	fmt.Println()
-	fmt.Println("\t+=====================================+")
-	fmt.Println("\t+ OUTPUT LOGS TO FILES: ~/logs/*.logs +")
-	fmt.Println("\t+=====================================+")
-	fmt.Println()
+	logs.SetLevel(beego.LevelError)
 }
 
 // GetLevel return current logger output level

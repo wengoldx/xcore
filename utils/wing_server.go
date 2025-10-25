@@ -17,7 +17,6 @@ import (
 	"syscall"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/plugins/cors"
 	"github.com/wengoldx/xcore/logger"
 )
@@ -47,10 +46,7 @@ func HttpServer(allowCredentials ...bool) {
 	accessAllowOriginBy(beego.BeforeStatic, "*", allow)
 
 	// just output log to file on prod mode
-	if beego.BConfig.RunMode != "dev" && logger.GetLevel() != logger.LevelDebug {
-		beego.BeeLogger.DelLogger(logs.AdapterConsole)
-		logger.ShowWarningLogs()
-	}
+	logger.SetOutputLogger()
 	beego.Run()
 }
 
