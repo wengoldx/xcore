@@ -37,7 +37,7 @@ const (
 )
 
 // Skip init file logger when init functions called.
-var _skip_file = false
+var SkipFileLogs = false
 
 // init initialize app logger
 //
@@ -78,7 +78,7 @@ func init() {
 // setupFileLogger init and set logger output to file
 func setupFileLogger() {
 	app := beego.BConfig.AppName
-	if _skip_file || app == "" || app == "beego" {
+	if SkipFileLogs || app == "" || app == "beego" {
 		return
 	}
 
@@ -126,7 +126,7 @@ func SetOutputLogger() {
 	if beego.BConfig.RunMode == "prod" && GetLevel() != LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
 		app := beego.BConfig.AppName
-		if !_skip_file {
+		if !SkipFileLogs {
 			fmt.Println("Outlogs to", "./logs/"+app+".log")
 		} else {
 			fmt.Println("Silent", app, "logs...")
@@ -140,10 +140,6 @@ func SilentLoggers() {
 	beego.BeeLogger.DelLogger(logs.AdapterConsole)
 	logs.SetLevel(beego.LevelError)
 }
-
-// Abort setup file logger when logger module init.
-// this method need called before any logger.D/I/W/E... call!
-func SkipFileLogger() { _skip_file = true }
 
 // GetLevel return current logger output level
 func GetLevel() string {
