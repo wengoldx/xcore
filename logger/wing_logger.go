@@ -125,11 +125,11 @@ func logFormatString(n int, opts ...string) string {
 func SetOutputLogger() {
 	if beego.BConfig.RunMode == "prod" && GetLevel() != LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
+		app := beego.BConfig.AppName
 		if !_skip_file {
-			logfile := "./logs/" + beego.BConfig.AppName + ".log"
-			fmt.Println("@@ Outlogs to", logfile)
+			fmt.Println("Outlogs to", "./logs/"+app+".log")
 		} else {
-			fmt.Println("@@ Silent loggers !!")
+			fmt.Println("Silent", app, "logs...")
 		}
 	}
 }
