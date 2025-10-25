@@ -12,6 +12,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 
@@ -21,6 +22,7 @@ import (
 
 const (
 	logConfigLevel   = "logger::level"   // configs key of logger level
+	logConfigFLogs   = "logger::flogs"   // configs key of file logger flag.
 	logConfigMaxDays = "logger::maxdays" // configs key of logger max days
 
 	// LevelDebug debug level of logger
@@ -37,7 +39,7 @@ const (
 )
 
 // Skip init file logger when init functions called.
-var SkipFileLogs = false
+var _none_flogger = false
 
 // init initialize app logger
 //
@@ -75,10 +77,18 @@ func init() {
 	}
 }
 
-// setupFileLogger init and set logger output to file
+// Setup file logger if config file exist and not set 'skip' status.
 func setupFileLogger() {
+	_, err := os.Stat("./conf/app.conf")
+	if err != nil && os.IsNotExist(err) {
+		_none_flogger = true
+		return // unexist config file, abort init flogger.
+	}
+
 	app := beego.BConfig.AppName
-	if SkipFileLogs || app == "" || app == "beego" {
+	flogs := beego.AppConfig.String(logConfigFLogs)
+	if flogs == "skip" || app == "" || app == "beego" {
+		_none_flogger = true
 		return
 	}
 
@@ -126,7 +136,7 @@ func SetOutputLogger() {
 	if beego.BConfig.RunMode == "prod" && GetLevel() != LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
 		app := beego.BConfig.AppName
-		if !SkipFileLogs {
+		if !_none_flogger {
 			fmt.Println("Outlogs to", "./logs/"+app+".log")
 		} else {
 			fmt.Println("Silent", app, "logs...")
