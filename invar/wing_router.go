@@ -12,16 +12,13 @@ package invar
 
 // RBAC role string
 const (
-	WRoleSuper     = "super-admin"   // Super admin, auto add
-	WRoleAdmin     = "admin"         // Normal admin, same time as super admin permissions
-	WRoleUser      = "user"          // Default normal user
-	WRoleMComp     = "mall-comp"     // Mall composer account
-	WRoleMDesigner = "mall-designer" // Mall designer account
-	WRoleSComp     = "store-comp"    // Store composer account
-	WRoleSMachine  = "store-machine" // Store machine account
-	WRoleQKPartner = "qk-partner"    // QKS partner account
-	WRoleQKComp    = "qk-comp"       // QKS composer account
-	WRoleQKMachine = "qk-machine"    // QKS machine account
+	WRoleSuper = "super-admin"   // Super admin, auto add.
+	WRoleAdmin = "admin"         // Normal admin, same time as super admin permissions.
+	WRoleUser  = "user"          // Default normal user.
+	WRoleMComp = "mall-comp"     // Access role of Mall  on 'comp' api router.
+	WRoleSComp = "store-comp"    // Access role of Store on 'comp' api router.
+	WRoleSMach = "store-machine" // Access role of Store on 'mach' api router.
+	WRoleQKS   = "qk-partner"    // Access role of QKS   on 'part' api router.
 
 	/* FIXME :
 	 *
@@ -32,12 +29,11 @@ const (
 
 // RBAC role router keyword
 const (
-	WRGroupUser     = "user"
-	WRGroupAdmin    = "admin"
-	WRGroupComp     = "comp"
-	WRGroupDesigner = "design"
-	WRGroupMachine  = "mach"
-	WRGroupPartner  = "part"
+	WRGroupUser    = "user"
+	WRGroupAdmin   = "admin"
+	WRGroupComp    = "comp"
+	WRGroupMachine = "mach"
+	WRGroupPartner = "part"
 )
 
 // Return role router key by given role, it maybe just return
@@ -48,13 +44,11 @@ func GetRouterKey(role string) string {
 		return WRGroupAdmin
 	case WRoleUser:
 		return WRGroupUser
-	case WRoleMComp, WRoleSComp, WRoleQKComp:
+	case WRoleMComp, WRoleSComp:
 		return WRGroupComp
-	case WRoleMDesigner:
-		return WRGroupDesigner
-	case WRoleSMachine, WRoleQKMachine:
+	case WRoleSMach:
 		return WRGroupMachine
-	case WRoleQKPartner:
+	case WRoleQKS:
 		return WRGroupPartner
 	}
 	return role
@@ -68,7 +62,5 @@ func IsValidAdmin(role string) bool {
 // Check given role if normal user, not admins
 func IsValidUser(role string) bool {
 	return role != "" && (role == WRoleUser || role == WRoleMComp ||
-		role == WRoleMDesigner || role == WRoleSComp ||
-		role == WRoleSMachine || role == WRoleQKPartner ||
-		role == WRoleQKComp || role == WRoleQKMachine)
+		role == WRoleSComp || role == WRoleSMach || role == WRoleQKS)
 }
