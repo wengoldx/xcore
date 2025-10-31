@@ -66,13 +66,11 @@ func init() {
 	switch beego.AppConfig.String(logConfigLevel) {
 	case LevelDebug:
 		logs.SetLevel(beego.LevelDebug)
-	case LevelInfo:
-		logs.SetLevel(beego.LevelInformational)
 	case LevelWarn:
 		logs.SetLevel(beego.LevelWarning)
 	case LevelError:
 		logs.SetLevel(beego.LevelError)
-	default: // Info level as default
+	default: // LevelInfo : as default
 		logs.SetLevel(beego.LevelInformational)
 	}
 }

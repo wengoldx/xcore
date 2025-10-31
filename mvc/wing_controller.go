@@ -13,6 +13,7 @@ package mvc
 import (
 	"encoding/json"
 	"encoding/xml"
+	"mime/multipart"
 	"reflect"
 	"strings"
 
@@ -71,6 +72,9 @@ type WingController struct {
 
 // NextFunc do action after input params validated.
 type NextFunc func() (int, any)
+
+// FileNextFunc do action after input params validated.
+type FileNextFunc func(file multipart.File, header *multipart.FileHeader) (int, any)
 
 // Validator use for verify the input params on struct level
 var Validator *validator.Validate
@@ -273,25 +277,29 @@ func (c *WingController) BindValue(key string, dest any) error {
 	return nil
 }
 
-// GetFloatDef get float value from url params with default value that enbale
-// to use as error value to check get result.
-func (c *WingController) GetFloatDef(key string, def float64) float64 {
-	rst, _ := c.GetFloat(key, def)
-	return rst
-}
-
-// GetFloatDef get int value from url params with default value that enbale
-// to use as error value to check get result.
-func (c *WingController) GetIntDef(key string, def int) int {
-	rst, _ := c.GetInt(key, def)
-	return rst
-}
-
-// GetFloatDef get int64 value from url params with default value that enbale
-// to use as error value to check get result.
-func (c *WingController) GetInt64Def(key string, def int64) int64 {
-	rst, _ := c.GetInt64(key, def)
-	return rst
+// Get number value by target key from url params with default value, it
+// will just return default value when target key value not a [int], [int64],
+// [float64] number type.
+//
+//	See c.GetString() to get a string value.
+func GetParam[T any](c *beego.Controller, key string, def T) T {
+	switch v := (any(def)).(type) {
+	case int:
+		if val, err := c.GetInt(key, v); err == nil {
+			return (any(val)).(T)
+		}
+	case int64:
+		if val, err := c.GetInt64(key, v); err == nil {
+			return (any(val)).(T)
+		}
+	case float64:
+		if val, err := c.GetFloat(key, v); err == nil {
+			return (any(val)).(T)
+		}
+	default:
+		logger.E("Unspport url params key:", key)
+	}
+	return def
 }
 
 // OutHeader set none-empty response header as key:value to frontend.
@@ -518,10 +526,10 @@ func (c *WingController) parseUrlParams(ps any) bool {
 				v.SetBool(pv)
 			case reflect.String:
 				v.SetString(c.GetString(tag, ""))
-			case reflect.Int, reflect.Int32, reflect.Int64:
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				pv, _ := c.GetInt64(tag, 0)
 				v.SetInt(pv)
-			case reflect.Uint, reflect.Uint32, reflect.Uint64:
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				pv, _ := c.GetUint64(tag, 0)
 				v.SetUint(pv)
 			case reflect.Float32, reflect.Float64:
