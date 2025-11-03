@@ -123,6 +123,10 @@ type ValidateHandlerFunc func(token, router, method string) *WAuths
 // Global handler function to verify token and role from http header
 var ValidateHandler ValidateHandlerFunc
 
+/* ------------------------------------------------------------------- */
+/* For Swagger Rest4 API Utils                                         */
+/* ------------------------------------------------------------------- */
+
 // Get authoration and token from http header, than verify it and return account secures.
 //
 // # WARNING:
@@ -223,6 +227,10 @@ func (c *WRoleController) DoAfterUnmarshal(ps any, nextHander NextHander, opt ..
 		c.doAfterValidatedInner(ps, nextHander, s, opts)
 	}
 }
+
+/* ------------------------------------------------------------------- */
+/* For Internal Utils Methods                                          */
+/* ------------------------------------------------------------------- */
 
 // Parse input param, validate if need, then call api hander method and response result.
 func (c *WRoleController) doAfterValidatedInner(ps any, nextHander NextHander, s *WAuths, opts *Options) {

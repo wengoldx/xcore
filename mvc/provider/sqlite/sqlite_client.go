@@ -190,7 +190,7 @@ func (m *Sqlite) Connect() error {
 	}
 
 	conn.SetMaxIdleConns(1)
-	conn.SetMaxOpenConns(1)
+	conn.SetMaxOpenConns(20)
 	m.conn = conn
 	return nil
 }

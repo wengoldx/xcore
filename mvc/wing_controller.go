@@ -76,6 +76,10 @@ type NextFunc func() (int, any)
 // FileNextFunc do action after input params validated.
 type FileNextFunc func(file multipart.File, header *multipart.FileHeader) (int, any)
 
+/* ------------------------------------------------------------------- */
+/* For Validator                                                       */
+/* ------------------------------------------------------------------- */
+
 // Validator use for verify the input params on struct level
 var Validator *validator.Validate
 
@@ -102,7 +106,9 @@ func RegisterFieldValidator(tag string, valfunc validator.Func) {
 	}
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Response Status & Datas                                         */
+/* ------------------------------------------------------------------- */
 
 // Sends a json response to client on status check mode.
 func (c *WingController) ResponJSON(state int, data ...any) {
@@ -190,6 +196,10 @@ func (c *WingController) ResponExErr(errmsg invar.WExErr) {
 	c.ServeJSON()
 }
 
+/* ------------------------------------------------------------------- */
+/* For Response Errors                                                 */
+/* ------------------------------------------------------------------- */
+
 // ErrorState response error state to client
 func (c *WingController) ErrorState(state int, err ...string) {
 	ctl, act := c.GetControllerAndAction()
@@ -263,19 +273,9 @@ func (c *WingController) E426UpgradeRequired(err ...string) {
 	c.ErrorState(invar.E426UpgradeRequired, err...)
 }
 
-// ClientFrom return client ip from who requested
-func (c *WingController) ClientFrom() string {
-	return c.Ctx.Request.RemoteAddr
-}
-
-// BindValue bind value with key from url, the dest container must pointer
-func (c *WingController) BindValue(key string, dest any) error {
-	if err := c.Ctx.Input.Bind(dest, key); err != nil {
-		logger.E("Parse", key, "from url, err:", err)
-		return invar.ErrInvalidData
-	}
-	return nil
-}
+/* ------------------------------------------------------------------- */
+/* For Export Utils Methods                                            */
+/* ------------------------------------------------------------------- */
 
 // Get number value by target key from url params with default value, it
 // will just return default value when target key value not a [int], [int64],
@@ -302,6 +302,15 @@ func GetParam[T any](c *beego.Controller, key string, def T) T {
 	return def
 }
 
+// BindValue bind value with key from url, the dest container must pointer
+func (c *WingController) BindValue(key string, dest any) error {
+	if err := c.Ctx.Input.Bind(dest, key); err != nil {
+		logger.E("Parse", key, "from url, err:", err)
+		return invar.ErrInvalidData
+	}
+	return nil
+}
+
 // OutHeader set none-empty response header as key:value to frontend.
 func (c *WingController) OutHeader(key, value string) {
 	if key != "" && value != "" {
@@ -316,7 +325,23 @@ func (c *WingController) OutRole(role string, status int) {
 	}
 }
 
-// ----------------------------------------
+// ClientFrom return client ip from who requested
+func (c *WingController) ClientFrom() string {
+	return c.Ctx.Request.RemoteAddr
+}
+
+/* ------------------------------------------------------------------- */
+/* For Swagger Rest4 API Utils                                         */
+/* ------------------------------------------------------------------- */
+
+// Do next action on 'dev' runmode.
+func (c *WingController) DoDevMode(next func()) {
+	if beego.BConfig.RunMode != "dev" {
+		c.E403Denind("Only For Debug!")
+		return
+	}
+	next()
+}
 
 // Do bussiness action after parsed url params and success validate.
 //
@@ -355,7 +380,9 @@ func (c *WingController) DoAfterUnmarshal(ps any, nextFunc NextFunc, opts ...Opt
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(false, opts...))
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Internal Utils Methods                                          */
+/* ------------------------------------------------------------------- */
 
 // Check respon state and print out log, the datatype must range in
 // ['json', 'jsonp', 'xml', 'yaml'], if out of range current controller

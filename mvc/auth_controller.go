@@ -129,6 +129,10 @@ var GAuthHandlerFunc AuthHandlerFunc
 // Global handler function to verify role from http header.
 var GRoleHandlerFunc RoleHandlerFunc
 
+/* ------------------------------------------------------------------- */
+/* For Swagger Rest4 API Utils                                         */
+/* ------------------------------------------------------------------- */
+
 // Get authoration and token from http header, than verify it and return account secures.
 //
 // # WARNING:
@@ -196,8 +200,6 @@ func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...O
 	}
 }
 
-// ----------------------------------------
-
 // Do bussiness action after success validate the given json or xml data.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
@@ -218,7 +220,9 @@ func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, opts
 	}
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Internal Utils Methods                                          */
+/* ------------------------------------------------------------------- */
 
 // Get authoration and token from http header, than verify it and return account secures.
 //
