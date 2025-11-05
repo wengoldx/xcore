@@ -192,9 +192,9 @@ func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 	var tagfile *os.File
 	fp := filepath.Join(dirpath, filename)
 	if Variable(append, false) {
-		tagfile, err = OpenTruncFile(fp)
-	} else {
 		tagfile, err = OpenWriteFile(fp)
+	} else {
+		tagfile, err = OpenTruncFile(fp)
 	}
 	if err != nil {
 		return err
