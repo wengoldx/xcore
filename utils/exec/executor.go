@@ -27,11 +27,28 @@ import (
 // to read console output (by 'echo' command print in shell script), or
 // run command silent without any handlers sets.
 //
-//
 // # NOTICE:
 //	- The Executor enable execute system command like 'find', 'grep'...
 //	- The command enable execute shell script file as './sample.sh argx'
+type Executor struct {
+	command    string
+	outHandler ConsoleHandler
+	errHandler ConsoleHandler
+}
+
+// Callback handler for read console output line by line.
 //
+// # WARING:
+//	- The 'line' string will tirm '\n' end of line.
+type ConsoleHandler func(line string)
+
+// Read console outputs as string.
+type ConsoleReader struct {
+	io.ReadCloser      // Console outputs reader.
+	isStderr      bool // Indicate this reader whetcher stdout or stderr.
+}
+
+// Create a command executor to execute command.
 //
 // # USAGE:
 //
@@ -55,25 +72,6 @@ import (
 //
 //	// 3. User exec.WithOutHandler(), exec.WithErrHandler() to
 //	// set both output and error handlers.
-type Executor struct {
-	command    string
-	outHandler ConsoleHandler
-	errHandler ConsoleHandler
-}
-
-// Callback handler for read console output line by line.
-//
-// # WARING:
-//	- The 'line' string will tirm '\n' end of line.
-type ConsoleHandler func(line string)
-
-// Read console outputs as string.
-type ConsoleReader struct {
-	io.ReadCloser      // Console outputs reader.
-	isStderr      bool // Indicate this reader whetcher stdout or stderr.
-}
-
-// Create a command executor to execute command.
 func NewExecutor(cmd string, opts ...Option) *Executor {
 	executor := &Executor{command: cmd}
 	for _, optfunc := range opts {
