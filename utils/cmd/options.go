@@ -8,7 +8,7 @@
 // 00001       2025/05/06   youhei         New version
 // -------------------------------------------------------------------
 
-package exec
+package cmd
 
 // Typed function to configure a Executor.
 type Option func(*Executor)

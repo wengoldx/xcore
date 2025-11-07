@@ -74,7 +74,7 @@ type WingController struct {
 type NextFunc func() (int, any)
 
 // FileNextFunc do action after input params validated.
-type FileNextFunc func(file multipart.File, header *multipart.FileHeader) (int, any)
+type FileNextFunc func(file multipart.File, header *multipart.FileHeader)
 
 /* ------------------------------------------------------------------- */
 /* For Validator                                                       */
@@ -335,12 +335,24 @@ func (c *WingController) ClientFrom() string {
 /* ------------------------------------------------------------------- */
 
 // Do next action on 'dev' runmode.
-func (c *WingController) DoDevMode(next func()) {
+func (c *WingController) RunDevMode(next func()) {
 	if beego.BConfig.RunMode != "dev" {
 		c.E403Denind("Only For Debug!")
 		return
 	}
 	next()
+}
+
+// Do next action after got the opened multipart file, and close it when exit method.
+func (c *WingController) GetMultipartFile(key string, next FileNextFunc) {
+	file, header, err := c.GetFile(key)
+	if err != nil {
+		logger.E("Get file by:", key, "err:", err)
+		c.E400Params()
+		return
+	}
+	defer file.Close()
+	next(file, header)
 }
 
 // Do bussiness action after parsed url params and success validate.

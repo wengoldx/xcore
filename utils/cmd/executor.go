@@ -8,7 +8,7 @@
 // 00001       2025/05/06   youhei         New version
 // -------------------------------------------------------------------
 
-package exec
+package cmd
 
 import (
 	"bufio"
@@ -54,14 +54,14 @@ type ConsoleReader struct {
 //
 //	// 1. Without any output handlers.
 //	command := "./sample.sh arg1 arg2"
-//	executor := exec.NewExecutor(command)
+//	executor := cmd.NewExecutor(command)
 //	err := executor.Exec(context.Background())
 //	// check err for execute success status.
 //
 //	// 2. With output handler.
 //	command := "./sample.sh arg1 arg2"
-//	executor := exec.NewExecutor(command,
-//		exec.WithOutHandler(func(line string) {
+//	executor := cmd.NewExecutor(command,
+//		cmd.WithOutHandler(func(line string) {
 //			// parse line string, and do samething...
 //		}),
 //	)
@@ -70,7 +70,7 @@ type ConsoleReader struct {
 //	// check err for execute result, or call 'cancel' callback
 //	// to cancel and stop executor all pipes.
 //
-//	// 3. User exec.WithOutHandler(), exec.WithErrHandler() to
+//	// 3. User cmd.WithOutHandler(), cmd.WithErrHandler() to
 //	// set both output and error handlers.
 func NewExecutor(cmd string, opts ...Option) *Executor {
 	executor := &Executor{command: cmd}
