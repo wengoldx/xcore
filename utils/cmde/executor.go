@@ -8,7 +8,7 @@
 // 00001       2025/05/06   youhei         New version
 // -------------------------------------------------------------------
 
-package cmd
+package cmde
 
 import (
 	"bufio"
