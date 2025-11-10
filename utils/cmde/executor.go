@@ -16,7 +16,6 @@ import (
 	"io"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/wengoldx/xcore/logger"
 )
@@ -52,13 +51,15 @@ type ConsoleReader struct {
 //
 // # USAGE:
 //
-//	// 1. Without any output handlers.
+// 1. Without any output handlers.
+//
 //	command := "./sample.sh arg1 arg2"
 //	executor := cmd.NewExecutor(command)
 //	err := executor.Exec(context.Background())
 //	// check err for execute success status.
 //
-//	// 2. With output handler.
+// 2. With output handler.
+//
 //	command := "./sample.sh arg1 arg2"
 //	executor := cmd.NewExecutor(command,
 //		cmd.WithOutHandler(func(line string) {
@@ -70,8 +71,18 @@ type ConsoleReader struct {
 //	// check err for execute result, or call 'cancel' callback
 //	// to cancel and stop executor all pipes.
 //
-//	// 3. User cmd.WithOutHandler(), cmd.WithErrHandler() to
-//	// set both output and error handlers.
+// 3. Async execute command.
+//
+//	done := make(chan error, 1)
+//	command := "./sample.sh arg1 arg2"
+//	executor := cmd.NewExecutor(command) // enable set handlers.
+//	err := executor.Async(context.Background(), done)
+//	// check err, do anythins here!
+//	// ...
+//	err = <-done // Wait command finished!
+//
+// 4. User cmd.WithOutHandler(), cmd.WithErrHandler() to
+// set both output and error handlers.
 func NewExecutor(cmd string, opts ...Option) *Executor {
 	executor := &Executor{command: cmd}
 	for _, optfunc := range opts {
@@ -80,15 +91,62 @@ func NewExecutor(cmd string, opts ...Option) *Executor {
 	return executor
 }
 
-// Execute the given command and output logs from streaming hander.
+// Execute the command and output logs from pipe handers.
+//
+// # NOTICE:
+//
+// This method will sync execute command until finished.
+//
+//	See cmde.Async() to execute command on async way.
 func (ex *Executor) Exec(ctx context.Context) error {
 	c := exec.CommandContext(ctx, "/bin/sh", "-c", ex.command)
+	readers, err := ex.setupReaders(c)
+	if err != nil || readers == nil {
+		return err
+	}
 
+	// execute and read console outputs.
+	for _, reader := range readers {
+		go ex.readOutputs(ctx, reader)
+	}
+	return c.Run() // wait finished.
+}
+
+// Async execute the command and output logs from pipe handers.
+//
+// # WARNING:
+//
+// This method will async execute command not wait it finished, so request
+// the caller must blocking to wait 'notify' return if set any handlers.
+//
+//	See cmde.Exec() to execute command on sync way.
+func (ex *Executor) Async(ctx context.Context, notify chan error) error {
+	c := exec.CommandContext(ctx, "/bin/sh", "-c", ex.command)
+	if notify != nil {
+		readers, err := ex.setupReaders(c)
+		if err != nil || readers == nil {
+			return err
+		}
+
+		// execute and read console outputs.
+		for _, reader := range readers {
+			go ex.readOutputs(ctx, reader)
+		}
+
+		err = c.Start()
+		go func() { notify <- c.Wait() }()
+		return err
+	}
+	return c.Start() // not wait finished!
+}
+
+// Set stdout or stderr pipe outputs readers when user set the handler options.
+func (ex *Executor) setupReaders(cmd *exec.Cmd) ([]*ConsoleReader, error) {
 	// set stdout pipe if exist read handler.
 	readers := []*ConsoleReader{}
 	if ex.outHandler != nil {
-		if so, err := c.StdoutPipe(); err != nil {
-			return err
+		if so, err := cmd.StdoutPipe(); err != nil {
+			return nil, err
 		} else {
 			r := &ConsoleReader{so, false}
 			readers = append(readers, r)
@@ -97,33 +155,20 @@ func (ex *Executor) Exec(ctx context.Context) error {
 
 	// set stderr pipe if exist read handler.
 	if ex.errHandler != nil {
-		if se, err := c.StderrPipe(); err != nil {
-			return err
+		if se, err := cmd.StderrPipe(); err != nil {
+			return nil, err
 		} else {
 			r := &ConsoleReader{se, true}
 			readers = append(readers, r)
 		}
 	}
-
-	// execute command and read console outputs.
-	if pipes := len(readers); pipes > 0 {
-		var wg sync.WaitGroup
-		wg.Add(pipes)
-		for _, reader := range readers {
-			go ex.readOutputs(ctx, &wg, reader)
-		}
-		err := c.Start()
-		wg.Wait()
-		return err
-	}
-	return c.Run()
+	return readers, nil
 }
 
 // Read output logs line by line and streaming by given handler function.
-func (ex *Executor) readOutputs(ctx context.Context, wg *sync.WaitGroup, pipe *ConsoleReader) {
+func (ex *Executor) readOutputs(ctx context.Context, pipe *ConsoleReader) {
 	// prepare pipe reader.
 	reader := bufio.NewReader(pipe)
-	defer wg.Done() // release lock when done.
 
 	// read console output as line by line.
 	for {
