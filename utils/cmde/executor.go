@@ -106,10 +106,13 @@ func (ex *Executor) Exec(ctx context.Context) error {
 	}
 
 	// execute and read console outputs.
+	close := make(chan struct{}, 1)
 	for _, reader := range readers {
-		go ex.readOutputs(ctx, reader)
+		go ex.readOutputs(ctx, reader, close)
 	}
-	return c.Run() // wait finished.
+	err = c.Run()       // wait finished.
+	close <- struct{}{} // close pipes.
+	return err
 }
 
 // Async execute the command and output logs from pipe handers.
@@ -129,12 +132,16 @@ func (ex *Executor) Async(ctx context.Context, notify chan error) error {
 		}
 
 		// execute and read console outputs.
+		close := make(chan struct{}, 1)
 		for _, reader := range readers {
-			go ex.readOutputs(ctx, reader)
+			go ex.readOutputs(ctx, reader, close)
 		}
 
 		err = c.Start()
-		go func() { notify <- c.Wait() }()
+		go func() {
+			notify <- c.Wait()  // wait finished.
+			close <- struct{}{} // close pipes.
+		}()
 		return err
 	}
 	return c.Start() // not wait finished!
@@ -166,7 +173,7 @@ func (ex *Executor) setupReaders(cmd *exec.Cmd) ([]*ConsoleReader, error) {
 }
 
 // Read output logs line by line and streaming by given handler function.
-func (ex *Executor) readOutputs(ctx context.Context, pipe *ConsoleReader) {
+func (ex *Executor) readOutputs(ctx context.Context, pipe *ConsoleReader, close chan struct{}) {
 	// prepare pipe reader.
 	reader := bufio.NewReader(pipe)
 
@@ -175,11 +182,15 @@ func (ex *Executor) readOutputs(ctx context.Context, pipe *ConsoleReader) {
 		select {
 		case <-ctx.Done(): // interupt by cancel.
 			return
+		case <-close: // close when command finished.
+			logger.D("Exist pipe reader.")
+			return
 
 		default: // read current line outputs.
 			output, err := reader.ReadString('\n')
 			if err != nil {
-				if err != io.EOF {
+				isclosed := strings.Contains(err.Error(), "file already closed")
+				if err != io.EOF && !isclosed {
 					logger.E("Read line, err:", err)
 				}
 				return
