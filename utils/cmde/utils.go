@@ -33,7 +33,7 @@ func Reboot() bool {
 //
 // # WARNING:
 //	- This method only for linux.
-func Shutdown(err ConsoleHandler) bool {
+func Shutdown() bool {
 	cmd := exec.Command("shutdown", "-h", "now")
 	if err := cmd.Run(); err != nil {
 		logger.E("Shutdown, err:", err.Error())
