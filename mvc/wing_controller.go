@@ -305,6 +305,20 @@ func GetParam[T any](c *beego.Controller, key string, def T) T {
 	return def
 }
 
+// Read multipart file content and return buffer datas.
+func ReadFile(header multipart.FileHeader) ([]byte, error) {
+	buf := make([]byte, header.Size)
+	if tf, err := header.Open(); err != nil {
+		return nil, err
+	} else {
+		defer tf.Close()
+		if _, err = tf.Read(buf); err != nil {
+			return nil, err
+		}
+		return buf, nil
+	}
+}
+
 // BindValue bind value with key from url, the dest container must pointer
 func (c *WingController) BindValue(key string, dest any) error {
 	if err := c.Ctx.Input.Bind(dest, key); err != nil {
@@ -367,20 +381,6 @@ func (c *WingController) GetMultiFiles(key string, next FilesFunc) {
 		return
 	}
 	next(headers)
-}
-
-// Read multipart file content and return buffer datas.
-func (c *WingController) ReadFile(header multipart.FileHeader) ([]byte, error) {
-	buf := make([]byte, header.Size)
-	if tf, err := header.Open(); err != nil {
-		return nil, err
-	} else {
-		defer tf.Close()
-		if _, err = tf.Read(buf); err != nil {
-			return nil, err
-		}
-		return buf, nil
-	}
 }
 
 // Do bussiness action after parsed url params and success validate.
