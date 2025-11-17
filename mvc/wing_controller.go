@@ -77,7 +77,10 @@ type NextFunc func() (int, any)
 type FileFunc func(file multipart.File, header *multipart.FileHeader)
 
 // FilesFunc do action after get multipart files param.
-type FilesFunc func(header []*multipart.FileHeader)
+type FilesFunc func(headers []*multipart.FileHeader)
+
+// BufferFunc do action after get multipart files buffer.
+type BufferFunc func(filename string, buff []byte)
 
 /* ------------------------------------------------------------------- */
 /* For Validator                                                       */
@@ -367,6 +370,20 @@ func (c *WingController) GetMultiFiles(key string, next FilesFunc) {
 		return
 	}
 	next(headers)
+}
+
+// Read multipart file content and return buffer datas.
+func (c *WingController) ReadFile(header multipart.FileHeader) ([]byte, error) {
+	buf := make([]byte, header.Size)
+	if tf, err := header.Open(); err != nil {
+		return nil, err
+	} else {
+		defer tf.Close()
+		if _, err = tf.Read(buf); err != nil {
+			return nil, err
+		}
+		return buf, nil
+	}
 }
 
 // Do bussiness action after parsed url params and success validate.
