@@ -22,3 +22,8 @@ func WithOutHandler(out ConsoleHandler) Option {
 func WithErrHandler(err ConsoleHandler) Option {
 	return func(ex *Executor) { ex.errHandler = err }
 }
+
+// Set the out and error hanlder for Executor to read all outputs.
+func WithHandlers(cb ConsoleHandler) Option {
+	return func(ex *Executor) { ex.outHandler, ex.errHandler = cb, cb }
+}
