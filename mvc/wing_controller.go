@@ -79,9 +79,6 @@ type FileFunc func(file multipart.File, header *multipart.FileHeader)
 // FilesFunc do action after get multipart files param.
 type FilesFunc func(headers []*multipart.FileHeader)
 
-// BufferFunc do action after get multipart files buffer.
-type BufferFunc func(filename string, buff []byte)
-
 /* ------------------------------------------------------------------- */
 /* For Validator                                                       */
 /* ------------------------------------------------------------------- */
