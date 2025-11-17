@@ -218,21 +218,6 @@ func TrimEmpty(src []string) []string {
 // Translate
 // ----------------------------------------
 
-// To2Digits fill zero if input digit not enough 2
-func To2Digits(input any) string {
-	return fmt.Sprintf("%02d", input)
-}
-
-// To2Digits fill zero if input digit not enough 3
-func To3Digits(input any) string {
-	return fmt.Sprintf("%03d", input)
-}
-
-// ToNDigits fill zero if input digit not enough N
-func ToNDigits(input any, n int) string {
-	return fmt.Sprintf("%0"+strconv.Itoa(n)+"d", input)
-}
-
 // ToMap transform given struct data to map data, the transform struct
 // feilds must using json tag to mark the map key.
 //
