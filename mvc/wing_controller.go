@@ -73,8 +73,11 @@ type WingController struct {
 // NextFunc do action after input params validated.
 type NextFunc func() (int, any)
 
-// FileNextFunc do action after input params validated.
-type FileNextFunc func(file multipart.File, header *multipart.FileHeader)
+// FileFunc do action after get multipart file param.
+type FileFunc func(file multipart.File, header *multipart.FileHeader)
+
+// FilesFunc do action after get multipart files param.
+type FilesFunc func(header []*multipart.FileHeader)
 
 /* ------------------------------------------------------------------- */
 /* For Validator                                                       */
@@ -344,7 +347,7 @@ func (c *WingController) RunDevMode(next func()) {
 }
 
 // Do next action after got the opened multipart file, and close it when exit method.
-func (c *WingController) GetMultipartFile(key string, next FileNextFunc) {
+func (c *WingController) GetSingleFile(key string, next FileFunc) {
 	file, header, err := c.GetFile(key)
 	if err != nil {
 		logger.E("Get file by:", key, "err:", err)
@@ -353,6 +356,17 @@ func (c *WingController) GetMultipartFile(key string, next FileNextFunc) {
 	}
 	defer file.Close()
 	next(file, header)
+}
+
+// Do next action after got the multipart files header.
+func (c *WingController) GetMultiFiles(key string, next FilesFunc) {
+	headers, err := c.GetFiles(key)
+	if err != nil {
+		logger.E("Get files by:", key, "err:", err)
+		c.E400Params()
+		return
+	}
+	next(headers)
 }
 
 // Do bussiness action after parsed url params and success validate.
