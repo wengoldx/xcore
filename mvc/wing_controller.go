@@ -306,7 +306,7 @@ func GetParam[T any](c *beego.Controller, key string, def T) T {
 }
 
 // Read multipart file content and return buffer datas.
-func ReadFile(header multipart.FileHeader) ([]byte, error) {
+func ReadFile(header *multipart.FileHeader) ([]byte, error) {
 	buf := make([]byte, header.Size)
 	if tf, err := header.Open(); err != nil {
 		return nil, err
