@@ -307,15 +307,37 @@ func GetParam[T any](c *beego.Controller, key string, def T) T {
 
 // Read multipart file content and return buffer datas.
 func ReadFile(header *multipart.FileHeader) ([]byte, error) {
+	fn := header.Filename
 	buf := make([]byte, header.Size)
 	if tf, err := header.Open(); err != nil {
+		logger.E("Open file:", fn, "err:", err)
 		return nil, err
 	} else {
 		defer tf.Close()
 		if _, err = tf.Read(buf); err != nil {
+			logger.E("Read file:", fn, "err:", err)
 			return nil, err
 		}
 		return buf, nil
+	}
+}
+
+// Read multipart file content and parse to json object.
+//
+// # USAGE:
+//
+//	out := &Sample{} // out must be struct pointer.
+//	err := mvc.ReadJson(header, out)
+func ReadJson(header *multipart.FileHeader, out any) error {
+	if buf, err := ReadFile(header); err != nil {
+		return err
+	} else {
+		fn := header.Filename
+		if err := json.Unmarshal(buf, out); err != nil {
+			logger.E("Unmarshal file:", fn, "err:", err)
+			return err
+		}
+		return nil
 	}
 }
 
