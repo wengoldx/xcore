@@ -381,6 +381,15 @@ func ReadFileString(txtfile string) string {
 	return ""
 }
 
+// Write struct data to json file.
+func WriteJsonFile(jsonfile string, data any) error {
+	buf, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(jsonfile, buf, 0755)
+}
+
 /* ------------------------------------------------------------------- */
 /* Deprecated Methods                                                  */
 /* ------------------------------------------------------------------- */
