@@ -21,20 +21,44 @@ import (
 
 // Base provider for simple access database datas.
 type BaseProvider struct {
-	client  DBClient     // Database conncet client.
+	client DBClient // Database conncet client.
 
 	/* Only for BaseProvider as build utils! */
 	Builder *BaseBuilder // Base builder as utils tools.
+
+	// Sql stmt string for create the table if it unexist.
+	stmt  string 
 }
 
 // Create a BaseProvider with given database client.
-func NewProvider(client DBClient) *BaseProvider {
-	return &BaseProvider{client, &BaseBuilder{}}
+func NewBaseProvider(client DBClient) *BaseProvider {
+	return &BaseProvider{client, &BaseBuilder{}, ""}
 }
 
 /* ------------------------------------------------------------------- */
 /* Direct Use Query String To Access Database                          */
 /* ------------------------------------------------------------------- */
+
+// Execute stmt string to create table for connecte databse if unexist,
+// the table stmt sting like follow (sqlite3 driver): 
+//
+//	const _table_stmt_settings = `CREATE TABLE IF NOT EXISTS settings (
+//	    name    varchar (64)    PRIMARY KEY,    -- settings name.
+//	    value   text                            -- settings value.
+//	);`
+//
+// # NOTICE
+//	- The stmt string init on TableProvider object create.
+//
+// See NewTableProvider(), WithStmt() set more info.
+func (p *BaseProvider) Create() error {
+	if !p.prepared() || p.stmt == "" {
+		return invar.ErrBadDBConnect
+	}
+
+	_, err := p.client.DB().Exec(p.stmt)
+	return err
+}
 
 // Execute query string to check target record whether exist, it will
 // auto append 'LIMIT 1' at query tail if not specified.

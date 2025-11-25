@@ -129,49 +129,28 @@ func Close(session ...string) error {
 	return nil
 }
 
-// Create and return BaseProvider instance with Sqlite client.
-func GetProvider(session ...string) *pd.BaseProvider {
-	return pd.NewProvider(Select(session...))
+// Create and return a BaseProvider instance with Sqlite client.
+func NewBase(session ...string) *pd.BaseProvider {
+	return pd.NewBaseProvider(Select(session...))
 }
 
-// Create and return BaseProvider instance with Sqlite client.
-//
-// # WARNING:
-//	- This method only reference the default session DBClient.
-func GetTabler(opts ...pd.Option) *pd.TableProvider {
-	return pd.NewTabler(Select(), opts...)
+// Create and return a TableProvider instance with Sqlite client.
+func NewTable(table, stmt string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithStmt(stmt), pd.WithDebug(debug))
 }
 
 // Create the given tables for sqlite database if not exist.
-func CreateTables(tables []string, session ...string) error {
-	client := Select(session...)
-	if client == nil || client.DB() == nil {
-		return invar.ErrBadDBConnect
-	}
-
-	conn := client.DB()
-	for index, stmt := range tables {
-		if _, err := conn.Exec(stmt); err != nil {
-			logger.E("Create table at", index, "err:", err)
+func CreateTables(tables ...*pd.TableProvider) error {
+	for _, table := range tables {
+		if err := table.Create(); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// Setup tables with name and provider.
-func SetupTables(tables map[string]pd.TableSetup, debug ...bool) {
-	isdebug := utils.Variable(debug, false)
-	for name, table := range tables {
-		table.Setup(Select(), pd.WithTable(name),
-			pd.WithDebug(isdebug))
-	}
-}
-
 // Return Sqlite database client, maybe nil when not call Connect() before.
-func (m *Sqlite) DB() *sql.DB {
-	return m.conn
-}
+func (m *Sqlite) DB() *sql.DB { return m.conn }
 
 // Connect sqlite database and cache the client to Sqlite clients pool.
 func (m *Sqlite) Connect() error {

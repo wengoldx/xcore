@@ -23,24 +23,32 @@ import (
 //	type SampleProvider struct {
 //		provider.TableProvider
 //	}
-//	s := &SampleProvider{*mysql.GetTabler(
+//	s := &SampleProvider{*mysql.NewTable(
 //		provider.WithTable("sample"),  //set table name.
 //	)}
 //
-// Use mysql.GetTabler(), mysql.GetTabler() sqlite.GetTabler() of mvc inner packages
+// Use mysql.NewTable(), mysql.NewTable() sqlite.NewTable() of mvc inner packages
 // to create TableProvider with connected mysql, mssql, sqlite database client.
 type TableProvider struct {
 	BaseProvider
-	table string // Table name
-	debug bool   // Debug mode, default false.
+	table string // Table name.
+	debug bool   // Debug mode for show builded query string, default false.
 }
 
-var _ TableSetup = (*TableProvider)(nil)
+// var _ TableSetup = (*TableProvider)(nil)
 
 // Create a TableProvider with given database client.
-func NewTabler(client DBClient, opts ...Option) *TableProvider {
+//
+// # WARNING:
+//
+// This method call by 'sqlite3', 'mysql', 'mssql' module called to create
+// target table and bind with connected database client instance.
+func NewTableProvider(client DBClient, opts ...Option) *TableProvider {
 	tp := &TableProvider{}
-	tp.Setup(client, opts...)
+	tp.BaseProvider = *NewBaseProvider(client)
+	for _, optFunc := range opts {
+		optFunc(tp)
+	}
 	return tp
 }
 
@@ -49,16 +57,17 @@ type Option func(provider *TableProvider)
 
 // Specify the table name.
 func WithTable(table string) Option {
-	return func(provider *TableProvider) {
-		provider.table = table
-	}
+	return func(provider *TableProvider) { provider.table = table }
 }
 
 // Specify the debug mode.
 func WithDebug(debug bool) Option {
-	return func(provider *TableProvider) {
-		provider.debug = debug
-	}
+	return func(provider *TableProvider) { provider.debug = debug }
+}
+
+// Specify the stmt string for create table.
+func WithStmt(stmt string) Option {
+	return func(provider *TableProvider) { provider.stmt = stmt }
 }
 
 /* ------------------------------------------------------------------- */
@@ -73,14 +82,6 @@ func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Ma
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
 /* ------------------------------------------------------------------- */
-
-// Setup TableProvider with database client and options.
-func (p *TableProvider) Setup(client DBClient, opts ...Option) {
-	p.BaseProvider = *NewProvider(client)
-	for _, optFunc := range opts {
-		optFunc(p)
-	}
-}
 
 // Check the target record whether exist by the given QueryBuilder to
 // build query string.

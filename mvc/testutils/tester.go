@@ -45,11 +45,8 @@ var _t = &tester{
 }
 
 // Setup tester instance with options and table provider.
-func SetupTester(opts ...Option) {
-	_t.tabler = mysql.GetTabler()
-	for _, optFunc := range opts {
-		optFunc(_t)
-	}
+func SetupTester(table, stmt string, session ...string) {
+	_t.tabler = mysql.NewTable(table, stmt, true, session...)
 }
 
 // Return tester instance.

@@ -135,32 +135,18 @@ func Close(session ...string) error {
 	return nil
 }
 
-// Create and return BaseProvider instance with MySQL client.
-func GetProvider(session ...string) *pd.BaseProvider {
-	return pd.NewProvider(Select(session...))
+// Create and return a BaseProvider instance with MySQL client.
+func NewBase(session ...string) *pd.BaseProvider {
+	return pd.NewBaseProvider(Select(session...))
 }
 
-// Create and return BaseProvider instance with MySQL client.
-//
-// # WARNING:
-//	- This method only reference the default session DBClient.
-func GetTabler(opts ...pd.Option) *pd.TableProvider {
-	return pd.NewTabler(Select(), opts...)
-}
-
-// Setup tables with name and provider.
-func SetupTables(tables map[string]pd.TableSetup, debug ...bool) {
-	isdebug := utils.Variable(debug, false)
-	for name, table := range tables {
-		table.Setup(Select(), pd.WithTable(name),
-			pd.WithDebug(isdebug))
-	}
+// Create and return a TableProvider instance with MySQL client.
+func NewTable(table, stmt string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithStmt(stmt), pd.WithDebug(debug))
 }
 
 // Return MySQL database client, maybe nil when not call Connect() before.
-func (m *MySQL) DB() *sql.DB {
-	return m.conn
-}
+func (m *MySQL) DB() *sql.DB { return m.conn }
 
 // Connect mysql database and cache the client to MySQL clients pool.
 func (m *MySQL) Connect() error {
