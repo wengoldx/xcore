@@ -45,8 +45,8 @@ var _t = &tester{
 }
 
 // Setup tester instance with options and table provider.
-func SetupTester(table, stmt string, session ...string) {
-	_t.tabler = mysql.NewTable(table, stmt, true, session...)
+func SetupTester(table string, session ...string) {
+	_t.tabler = mysql.NewTable(table, true, session...)
 }
 
 // Return tester instance.

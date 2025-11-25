@@ -35,8 +35,6 @@ type TableProvider struct {
 	debug bool   // Debug mode for show builded query string, default false.
 }
 
-// var _ TableSetup = (*TableProvider)(nil)
-
 // Create a TableProvider with given database client.
 //
 // # WARNING:
@@ -63,11 +61,6 @@ func WithTable(table string) Option {
 // Specify the debug mode.
 func WithDebug(debug bool) Option {
 	return func(provider *TableProvider) { provider.debug = debug }
-}
-
-// Specify the stmt string for create table.
-func WithStmt(stmt string) Option {
-	return func(provider *TableProvider) { provider.stmt = stmt }
 }
 
 /* ------------------------------------------------------------------- */

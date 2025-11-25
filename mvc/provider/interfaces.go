@@ -24,8 +24,3 @@ type DBClient interface {
 type SQLBuilder interface {
 	Build(debug ...bool) (string, []any) // Build sql string and return args.
 }
-
-// A interface for setup TableProvider instance.
-type TableSetup interface {
-	Setup(client DBClient, opts ...Option)
-}

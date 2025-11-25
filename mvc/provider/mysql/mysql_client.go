@@ -141,8 +141,8 @@ func NewBase(session ...string) *pd.BaseProvider {
 }
 
 // Create and return a TableProvider instance with MySQL client.
-func NewTable(table, stmt string, debug bool, session ...string) *pd.TableProvider {
-	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithStmt(stmt), pd.WithDebug(debug))
+func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
 }
 
 // Return MySQL database client, maybe nil when not call Connect() before.

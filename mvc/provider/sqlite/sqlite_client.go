@@ -135,18 +135,8 @@ func NewBase(session ...string) *pd.BaseProvider {
 }
 
 // Create and return a TableProvider instance with Sqlite client.
-func NewTable(table, stmt string, debug bool, session ...string) *pd.TableProvider {
-	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithStmt(stmt), pd.WithDebug(debug))
-}
-
-// Create the given tables for sqlite database if not exist.
-func CreateTables(tables ...*pd.TableProvider) error {
-	for _, table := range tables {
-		if err := table.Create(); err != nil {
-			return err
-		}
-	}
-	return nil
+func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
 }
 
 // Return Sqlite database client, maybe nil when not call Connect() before.
@@ -186,6 +176,26 @@ func (m *Sqlite) Close() error {
 	// remove the cached Sqlite instance.
 	if o := m.options; o.Session != "" {
 		delete(_sqliteClients, o.Session)
+	}
+	return nil
+}
+
+// Execute tables stmt string to create tables for database on connecte status
+// if unexist, the stmt string like follow (sqlite3 driver):
+//
+//	const _table_stmt_settings = `CREATE TABLE IF NOT EXISTS settings (
+//	    name    varchar (64)    PRIMARY KEY,    -- settings name.
+//	    value   text                            -- settings value.
+//	);`
+func (m *Sqlite) CreateTables(tables ...string) error {
+	if m.conn == nil {
+		return invar.ErrBadDBConnect
+	}
+
+	for _, stmt := range tables {
+		if _, err := m.conn.Exec(stmt); err != nil {
+			return err
+		}
 	}
 	return nil
 }
