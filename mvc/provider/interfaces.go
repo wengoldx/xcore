@@ -32,7 +32,7 @@ type SQLBuilder interface {
 
 // A interface implement by SQL model struct to return
 // columns names and bind values pointers.
-type SQLModel interface {
+type SQLModelOuts interface {
 
 	// Return model columns and values pointers.
 	//	@return KValues Target columns and bind values pointers.
@@ -44,6 +44,11 @@ type SQLModel interface {
 	//		return pd.KValues{"name": &m.Name}  // out pointer!
 	//	}
 	MapOuts() KValues
+}
+
+// A interface implement by SQL model struct to return
+// columns names and bind values pointers.
+type SQLModelValues interface {
 
 	// Return model columns and values.
 	//	@return KValues Target columns and bind values.

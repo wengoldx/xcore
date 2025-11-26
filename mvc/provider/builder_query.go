@@ -70,9 +70,9 @@ func (b *QueryBuilder) Querys(cb AddCallback) error { return b.master.Querys(b, 
 //
 // # NOTICE
 //
-// This method also used to query one record of SQLModel data, as follow:
+// This method also used to query one record of SQLModelOuts data.
 //
-//	// Define MyAcc and implement pd.SQLModel interface.
+//	// Define MyAcc and implement pd.SQLModelOuts interface.
 //	type MyAcc struct { Name string }
 //	func (c *MyAcc) MapValues() { return map[string]any{"name": &c.Name} }
 //
@@ -80,7 +80,7 @@ func (b *QueryBuilder) Querys(cb AddCallback) error { return b.master.Querys(b, 
 //	h.Querier().Model(acc).Wheres(pd.Wheres{"role=?": "admin"}).OneOuts()
 //	// the query result filled into acc object.
 //
-//	See `SQLModel` interface for model data define.
+//	See `SQLModelOuts` interface for model data define.
 func (b *QueryBuilder) OneDone(done ...DoneCallback) error {
 	if len(done) > 0 && done[0] != nil {
 		return b.master.OneDone(b, done[0], b.outs...)
@@ -136,8 +136,8 @@ func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
 //	- The model columns must not empty and out values must pointer like &myvalue.
 //	- No-need call Tags() and Outs() again when called this method.
 //
-// See SQLModel interface for out model data define.
-func (b *QueryBuilder) Model(model SQLModel) *QueryBuilder {
+// See SQLModelOuts interface for out model data define.
+func (b *QueryBuilder) Model(model SQLModelOuts) *QueryBuilder {
 	tags, outs := []string{}, []any{}
 
 	tagouts := model.MapOuts()
