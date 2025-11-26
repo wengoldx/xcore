@@ -41,14 +41,9 @@ type SQLModel interface {
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) MapValues() pd.KValues {
-	//		return pd.KValues{"name": &m.Name}
+	//		return pd.KValues{"name": &m.Name}  // out pointer!
 	//	}
 	MapOuts() KValues
-}
-
-// A interface implement by SQL model struct to return
-// columns names and bind values.
-type SQLValue interface {
 
 	// Return model columns and values.
 	//	@return KValues Target columns and bind values.
@@ -57,7 +52,7 @@ type SQLValue interface {
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) MapValues() pd.KValues {
-	//		return pd.KValues{"name": m.Name}
+	//		return pd.KValues{"name": m.Name}   // value data!
 	//	}
 	MapValues() KValues
 }
