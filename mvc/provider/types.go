@@ -18,6 +18,9 @@ import (
 // scanning when callback return error.
 type ScanCallback func(rows *sql.Rows) error
 
+// A callback for append query result to records array.
+type AddCallback func(item any)
+
 // A callback for format insert values as string to insert record.
 type InsertCallback func(index int) string
 

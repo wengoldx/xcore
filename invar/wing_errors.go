@@ -108,6 +108,7 @@ var (
 	ErrInactiveAccount     = WingErr{errors.New("inactive status account") /*                      */, 0x104C}
 	ErrCaseException       = WingErr{errors.New("case exception") /*                               */, 0x104D}
 	ErrBadDBConnect        = WingErr{errors.New("database not connnect") /*                        */, 0x104E}
+	ErrBadModelCreator     = WingErr{errors.New("bad model creator") /*                            */, 0x104F}
 )
 
 // Create a WingErr from given message and code that the code maybe set to 0 when not set.

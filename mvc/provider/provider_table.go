@@ -11,6 +11,8 @@
 package pd
 
 import (
+	"database/sql"
+
 	"github.com/wengoldx/xcore/invar"
 )
 
@@ -77,16 +79,24 @@ func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Ma
 /* ------------------------------------------------------------------- */
 
 // Check the target record whether exist by the given QueryBuilder to
-// build query string.
+// build query string, it no-need set any tags.
+//
+// # USAGE
+//
+//	h.Querier().Wheres(pd.Wheres{"account=?": acc}).Has()
 //
 // Use None() method to check whether unexist.
 func (p *TableProvider) Has(builder *QueryBuilder) (bool, error) {
-	query, args := builder.Build(p.debug)
+	query, args := builder.Tags("*").Build(p.debug)
 	return p.BaseProvider.Has(query, args...)
 }
 
 // Check the target record whether unexist by the given QueryBuilder to
-// build query string.
+// build query string, it no-need set any tags.
+//
+// # USAGE
+//
+//	h.Querier().Wheres(pd.Wheres{"account=?": acc}).None()
 //
 // Use Has() method to check has result.
 func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
@@ -95,11 +105,15 @@ func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
 }
 
 // Count records by the given builder to build a query string, it will
-// return 0 when notfound anyone.
+// return 0 when notfound anyone, it no-need set any tags.
+//
+// # USAGE
+//
+//	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Count()
 //
 // Use BaseProvider.Count() method to direct execute query string.
 func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
-	query, args := builder.Build(p.debug)
+	query, args := builder.Tags("*").Build(p.debug)
 	return p.BaseProvider.Count(query, args...)
 }
 
@@ -134,6 +148,18 @@ func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
 // result datas by given outs params.
 //
 // Use BaseProvider.OneDone() method to direct execute query string.
+//
+// # NOTICE
+//
+// This method also query one record for SQLModel data, as follow:
+//
+//	// Define MyAcc and implement pd.SQLModel interface.
+//	type MyAcc struct { Name string }
+//	func (c *MyAcc) GetTagOuts() { return map[string]any{"name": &c.Name} }
+//
+//	acc := MyAcc{}
+//	h.Querier().Model(acc).Wheres(pd.Wheres{"role=?": "admin"}).OneOuts()
+//	// the query result filled into acc object.
 func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
 	return p.OneDone(builder, nil, outs...)
 }
@@ -155,6 +181,34 @@ func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs .
 func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, cb, args...)
+}
+
+// Query records by given builder builded query string, and read datas
+// from builder ItemCreator callbacks.
+//
+//	// Define MyAcc and implement pd.SQLItemCreator interface.
+//	type MyAcc struct { Name string }
+//	func (c *MyAcc) GetTags() { return []strings{"name"} }
+//	func (c *MyAcc) GetOuts() { m := &MyAcc{}; return m, &m.Name }
+//
+//	accs, creator := []*MyAcc{}, MyAcc{}
+//	h.Querier().Models(creator).Wheres(pd.Wheres{"role=?": "admin"}).Querys(func(item any) {
+//		accs = append(accs, item.(*MyAcc))
+//	})
+func (p *TableProvider) Querys(builder *QueryBuilder, cb AddCallback) error {
+	if builder.ItemCreator == nil {
+		return invar.ErrBadModelCreator
+	}
+
+	query, args := builder.Build(p.debug)
+	return p.BaseProvider.Query(query, func(rows *sql.Rows) error {
+		item, outs := builder.ItemCreator.GetOuts()
+		if err := rows.Scan(outs...); err != nil {
+			return err
+		}
+		cb(item)
+		return nil
+	}, args...)
 }
 
 // Insert the given rows into target table and return inserted row id of

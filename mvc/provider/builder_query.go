@@ -39,6 +39,11 @@ type QueryBuilder struct {
 	like   string   // Like conditions string.
 	order  string   // Keyword for order by condition.
 	limit  int      // Limit number.
+
+	// Model creater for records query to create a new item object,
+	// and get target query columns bind out values, then append the
+	// query result to given array.
+	ItemCreator SQLItemCreator
 }
 
 var _ SQLBuilder = (*QueryBuilder)(nil)
@@ -52,11 +57,12 @@ func NewQuery(table string) *QueryBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }       // Check whether has the target record.
-func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }      // Check whether unexist the target record.
-func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }     // Count the mathed query condition records.
-func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }   // Query the top one record.
-func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) } // Query the all matched condition records.
+func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }        // Check whether has the target record.
+func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }       // Check whether unexist the target record.
+func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }      // Count the mathed query condition records.
+func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }    // Query the top one record.
+func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }  // Query the all matched condition records.
+func (b *QueryBuilder) Querys(cb AddCallback) error { return b.master.Querys(b, cb) } // Query the all records with the SQLItemCreator utils.
 
 // Query the top one record and return the results without scaner
 // callback, it canbe set the finally done callback called when
@@ -101,6 +107,42 @@ func (b *QueryBuilder) Tags(tag ...string) *QueryBuilder {
 // outs length must same as Tags length.
 func (b *QueryBuilder) Outs(outs ...any) *QueryBuilder {
 	b.outs = outs
+	return b
+}
+
+// Specify the target output fields and params for single query.
+//
+// # WARNING
+//	- The model columns must not empty and out values must pointer like &myvalue.
+//	- No-need call Tags() and Outs() again when called this method.
+//
+// See SQLModel interface for out model data define.
+func (b *QueryBuilder) Model(model SQLModel) *QueryBuilder {
+	tags, outs := []string{}, []any{}
+
+	tagouts := model.GetTagOuts()
+	for tag, out := range tagouts {
+		if tag != "" && out != nil {
+			tags = append(tags, tag)
+			outs = append(outs, out)
+		}
+	}
+	b.tags, b.outs = tags, outs
+	return b
+}
+
+// Specify the target output fields and params for array query.
+//
+// # WARNING
+//	- The creator.GetTags() returned columns names must not empty.
+//	- The creator.GetOuts() returned outs must a point value like &myvalue.
+//	- The returned tags and outs array lenght must same.
+//	- No-need call Tags() and Outs() again when called this method.
+//
+// See SQLItemCreator interface for out model data define.
+func (b *QueryBuilder) Models(creater SQLItemCreator) *QueryBuilder {
+	b.tags = creater.GetTags()
+	b.ItemCreator = creater
 	return b
 }
 
