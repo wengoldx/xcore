@@ -336,6 +336,7 @@ func (p *BaseProvider) Trans(cbs ...TransCallback) error {
 
 // Check the database client whther prepared and connected.
 func (p *BaseProvider) prepared() bool {
+	logger.I("client:", p.client)
 	return p.client != nil && p.client.DB() != nil
 }
 
