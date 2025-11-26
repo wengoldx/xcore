@@ -62,6 +62,11 @@ type SQLModelValues interface {
 	MapValues() *KValues
 }
 
+type SQLModel interface {
+	SQLModelOuts
+	SQLModelValues
+}
+
 // A interface implement by SQL model struct to return
 // query columns and bind values of created array items.
 type SQLItemCreator interface {
