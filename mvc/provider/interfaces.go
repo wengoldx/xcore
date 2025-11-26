@@ -52,9 +52,9 @@ type SQLModel interface {
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) MapValues() pd.KValues {
-	//		return pd.KValues{"name": m.Name}   // value data!
+	//		return &pd.KValues{"name": m.Name}  // value data!
 	//	}
-	MapValues() KValues
+	MapValues() *KValues
 }
 
 // A interface implement by SQL model struct to return
