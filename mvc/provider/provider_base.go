@@ -29,6 +29,9 @@ type BaseProvider struct {
 
 // Create a BaseProvider with given database client.
 func NewBaseProvider(client DBClient) *BaseProvider {
+	if client == nil {
+		panic("DBClient is nil!")
+	}
 	return &BaseProvider{client, &BaseBuilder{}}
 }
 
@@ -336,7 +339,6 @@ func (p *BaseProvider) Trans(cbs ...TransCallback) error {
 
 // Check the database client whther prepared and connected.
 func (p *BaseProvider) prepared() bool {
-	logger.I("client:", p.client)
 	return p.client != nil && p.client.DB() != nil
 }
 

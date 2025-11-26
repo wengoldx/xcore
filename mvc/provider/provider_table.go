@@ -14,7 +14,6 @@ import (
 	"database/sql"
 
 	"github.com/wengoldx/xcore/invar"
-	"github.com/wengoldx/xcore/logger"
 )
 
 // Table provider for using builder to build query string and args for
@@ -50,8 +49,6 @@ func NewTableProvider(client DBClient, opts ...Option) *TableProvider {
 	for _, optFunc := range opts {
 		optFunc(tp)
 	}
-
-	logger.I("New table provider:", client, "-", tp.table)
 	return tp
 }
 

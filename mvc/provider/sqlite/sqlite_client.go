@@ -82,7 +82,6 @@ func New(opts ...Option) *Sqlite {
 	for _, optFunc := range opts {
 		optFunc(client)
 	}
-	logger.I("New sqlite client with", client.options)
 
 	session := client.options.Session
 	if _, ok := _sqliteClients[session]; ok {
