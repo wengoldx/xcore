@@ -31,29 +31,28 @@ type SQLBuilder interface {
 }
 
 // A interface implement by SQL model struct to return
-// query tags and out values.
+// columns names and bind values.
 type SQLModel interface {
 
-	// Return query target columns and out values.
+	// Return model columns and values.
+	//	@return KValues Target columns and bind values.
 	//
-	//	@return KValues Target columns and bind out values.
-	//
-	// # USAGE
+	// # Example
 	//
 	//	type MyModel struct { Name string }
-	//	func (m *MyModel) OutTags() pd.KValues {
+	//	func (m *MyModel) MapValues() pd.KValues {
 	//		return pd.KValues{"name": &m.Name}
 	//	}
-	GetTagOuts() KValues
+	MapValues() KValues
 }
 
 // A interface implement by SQL model struct to return
-// query tags and out values of array items.
+// query columns and bind values of created array items.
 type SQLItemCreator interface {
 
 	// Return query target columns.
 	//
-	// # USAGE
+	// # Example
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) GetTags() []string {
@@ -63,7 +62,7 @@ type SQLItemCreator interface {
 
 	// Create a new item and return out values.
 	//
-	// # USAGE
+	// # Example
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) GetOuts() (any, []any) {

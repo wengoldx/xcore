@@ -67,6 +67,20 @@ func (b *QueryBuilder) Querys(cb AddCallback) error { return b.master.Querys(b, 
 // Query the top one record and return the results without scaner
 // callback, it canbe set the finally done callback called when
 // result success read.
+//
+// # NOTICE
+//
+// This method also used to query one record of SQLModel data, as follow:
+//
+//	// Define MyAcc and implement pd.SQLModel interface.
+//	type MyAcc struct { Name string }
+//	func (c *MyAcc) MapValues() { return map[string]any{"name": &c.Name} }
+//
+//	acc := MyAcc{}
+//	h.Querier().Model(acc).Wheres(pd.Wheres{"role=?": "admin"}).OneOuts()
+//	// the query result filled into acc object.
+//
+//	See `SQLModel` interface for model data define.
 func (b *QueryBuilder) OneDone(done ...DoneCallback) error {
 	if len(done) > 0 && done[0] != nil {
 		return b.master.OneDone(b, done[0], b.outs...)
@@ -110,6 +124,12 @@ func (b *QueryBuilder) Outs(outs ...any) *QueryBuilder {
 	return b
 }
 
+// Specify the target column and output param for single query.
+func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
+	b.tags, b.outs = []string{tag}, []any{out}
+	return b
+}
+
 // Specify the target output fields and params for single query.
 //
 // # WARNING
@@ -120,7 +140,7 @@ func (b *QueryBuilder) Outs(outs ...any) *QueryBuilder {
 func (b *QueryBuilder) Model(model SQLModel) *QueryBuilder {
 	tags, outs := []string{}, []any{}
 
-	tagouts := model.GetTagOuts()
+	tagouts := model.MapValues()
 	for tag, out := range tagouts {
 		if tag != "" && out != nil {
 			tags = append(tags, tag)

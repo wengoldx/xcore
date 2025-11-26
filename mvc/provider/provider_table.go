@@ -138,7 +138,8 @@ func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
 // Query one record by given builder builded query string, and read datas
 // from scan callback.
 //
-// Use BaseProvider.One() method to direct execute query string.
+// # NOTICE
+//	- Use BaseProvider.One() method to direct execute query string.
 func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.One(query, cb, args...)
@@ -147,19 +148,9 @@ func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
 // Query one record by given builder builded query string, and return the
 // result datas by given outs params.
 //
-// Use BaseProvider.OneDone() method to direct execute query string.
-//
 // # NOTICE
-//
-// This method also query one record for SQLModel data, as follow:
-//
-//	// Define MyAcc and implement pd.SQLModel interface.
-//	type MyAcc struct { Name string }
-//	func (c *MyAcc) GetTagOuts() { return map[string]any{"name": &c.Name} }
-//
-//	acc := MyAcc{}
-//	h.Querier().Model(acc).Wheres(pd.Wheres{"role=?": "admin"}).OneOuts()
-//	// the query result filled into acc object.
+//	- Use BaseProvider.OneDone() method to direct execute query string.
+//	- Use QueryBuilder.OneDone() method to query result by orm model.
 func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
 	return p.OneDone(builder, nil, outs...)
 }
@@ -168,7 +159,9 @@ func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
 // result datas by given outs params, finally call done callback to translate
 // the outs datas before provider method returned.
 //
-// Use BaseProvider.OneDone() method to direct execute query string.
+// # NOTICE
+//	- Use BaseProvider.OneDone() method to direct execute query string.
+//	- Use QueryBuilder.OneDone() method to query result by orm model.
 func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs ...any) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.OneDone(query, outs, done, args...)
