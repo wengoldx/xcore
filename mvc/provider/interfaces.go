@@ -31,8 +31,24 @@ type SQLBuilder interface {
 }
 
 // A interface implement by SQL model struct to return
-// columns names and bind values.
+// columns names and bind values pointers.
 type SQLModel interface {
+
+	// Return model columns and values pointers.
+	//	@return KValues Target columns and bind values pointers.
+	//
+	// # Example
+	//
+	//	type MyModel struct { Name string }
+	//	func (m *MyModel) MapValues() pd.KValues {
+	//		return pd.KValues{"name": &m.Name}
+	//	}
+	MapOuts() KValues
+}
+
+// A interface implement by SQL model struct to return
+// columns names and bind values.
+type SQLValue interface {
 
 	// Return model columns and values.
 	//	@return KValues Target columns and bind values.
@@ -41,7 +57,7 @@ type SQLModel interface {
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) MapValues() pd.KValues {
-	//		return pd.KValues{"name": &m.Name}
+	//		return pd.KValues{"name": m.Name}
 	//	}
 	MapValues() KValues
 }
@@ -67,7 +83,7 @@ type SQLItemCreator interface {
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) GetOuts() (any, []any) {
 	//		item := &MyModel{}
-	//		return &item, &item.Name
+	//		return &item, []any{&item.Name}
 	//	}
 	GetOuts() (any, []any)
 }

@@ -140,7 +140,7 @@ func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
 func (b *QueryBuilder) Model(model SQLModel) *QueryBuilder {
 	tags, outs := []string{}, []any{}
 
-	tagouts := model.MapValues()
+	tagouts := model.MapOuts()
 	for tag, out := range tagouts {
 		if tag != "" && out != nil {
 			tags = append(tags, tag)
