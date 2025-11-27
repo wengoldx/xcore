@@ -164,7 +164,7 @@ func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
 // Call mysql.Open(), or mysql.OpenWithOptions() first to ensure the
 // DBClient client inited (not nil), later call this method to set tables
 // DBClient client if need!
-func SetClient(tables ...*pd.BaseProvider) {
+func SetClient(tables ...pd.ClientStub) {
 	client := Select() // use the default session.
 	for _, table := range tables {
 		table.SetClient(client)

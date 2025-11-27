@@ -19,6 +19,10 @@ type DBClient interface {
 	Close() error   // Disconect and close database client
 }
 
+type ClientStub interface {
+	SetClient(client DBClient)
+}
+
 // A interface implement by CUDA builder to build
 // a sql string for database access.
 type SQLBuilder interface {
