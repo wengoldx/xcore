@@ -79,6 +79,15 @@ func Variable[T BuildIn](src []T, def T) T {
 	return def
 }
 
+// Return pointer value, or default value if pointer is nil.
+func PtrValue[T any](ptr *T) T {
+	if ptr != nil {
+		return *ptr
+	}
+	var def T;
+	return def
+}
+
 // Translate strict build-in types values to any type array.
 //
 //	See utils.BuildIn for more types defined informations.
