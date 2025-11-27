@@ -30,9 +30,15 @@ type BaseProvider struct {
 // Create a BaseProvider with given database client.
 func NewBaseProvider(client DBClient) *BaseProvider {
 	if client == nil {
-		panic("DBClient is nil!")
+		logger.E("@@ DBClient is nil!")
 	}
 	return &BaseProvider{client, &BaseBuilder{}}
+}
+
+// Set provider database client.
+func (p *BaseProvider) SetClient(client DBClient) {
+	if client == nil { logger.E("@@ DBClient is nil!") }
+	p.client = client
 }
 
 /* ------------------------------------------------------------------- */

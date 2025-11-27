@@ -130,13 +130,39 @@ func Close(session ...string) error {
 }
 
 // Create and return a BaseProvider instance with MSSQL client.
+//
+// # WARNING
+//
+// This method maybe init the nil DBClient client when mssql.Open(), or
+// mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
+// to set valid DBClient client for all tables!
 func NewBase(session ...string) *pd.BaseProvider {
 	return pd.NewBaseProvider(Select(session...))
 }
 
 // Create and return a TableProvider instance with MSSQL client.
+//
+// # WARNING
+//
+// This method maybe init the nil DBClient client when mssql.Open(), or
+// mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
+// to set valid DBClient client for all tables!
 func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
 	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
+}
+
+// Bind tables with the DBClient client.
+//
+// # WARNING
+//
+// Call mssql.Open(), or mssql.OpenWithOptions() first to ensure the
+// DBClient client inited (not nil), later call this method to set tables
+// DBClient client if need!
+func SetClient(tables ...*pd.BaseProvider) {
+	client := Select() // use the default session.
+	for _, table := range tables {
+		table.SetClient(client)
+	}
 }
 
 // Return MSSQL database client, maybe nil when not call Connect() before.
