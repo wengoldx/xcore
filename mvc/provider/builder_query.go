@@ -68,7 +68,7 @@ func (b *QueryBuilder) Querys(cb AddCallback) error { return b.master.Querys(b, 
 // callback, it canbe set the finally done callback called when
 // result success read.
 //
-// # NOTICE
+// # NOTICE:
 //
 // This method also used to query one record of SQLModelOuts data.
 //
@@ -132,7 +132,7 @@ func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
 
 // Specify the target output fields and params for single query.
 //
-// # WARNING
+// # WARNING:
 //	- The model columns must not empty and out values must pointer like &myvalue.
 //	- No-need call Tags() and Outs() again when called this method.
 //
@@ -153,7 +153,7 @@ func (b *QueryBuilder) Model(model SQLModelOuts) *QueryBuilder {
 
 // Specify the target output fields and params for array query.
 //
-// # WARNING
+// # WARNING:
 //	- The creator.GetTags() returned columns names must not empty.
 //	- The creator.GetOuts() returned outs must a point value like &myvalue.
 //	- The returned tags and outs array lenght must same.

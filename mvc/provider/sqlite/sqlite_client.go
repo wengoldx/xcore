@@ -91,6 +91,79 @@ func New(opts ...Option) *Sqlite {
 	return client
 }
 
+// Find and return the exist Sqlite instance by given session.
+func Select(session ...string) pd.DBClient {
+	return _sqliteClients[utils.Variable(session, _sqliteDefSession)]
+}
+
+// Close and remove the target Sqlite client.
+func Close(session ...string) error {
+	s := utils.Variable(session, _sqliteDefSession)
+	if client := _sqliteClients[s]; client != nil {
+		defer delete(_sqliteClients, s)
+		return client.Close()
+	}
+	return nil
+}
+
+/* ------------------------------------------------------------------- */
+/* Setup Provider                                                      */
+/* ------------------------------------------------------------------- */
+
+// Create and return a BaseProvider instance with Sqlite client.
+//
+// # USAGE:
+//
+//	type MyTable struct{ pd.BaseProvider }
+//	var MyTableIns = MyTable{ *sqlite.NewTable{"mytable", _logsql}}
+//	// Call sqlite.New(), or sqlite.Open() to create sqlite client here!
+//	sqlite.SetClient(MyTableIns)
+//
+// # WARNING:
+//
+// This method maybe init the nil DBClient client when sqlite.Open(), or
+// sqlite.OpenWithOptions() not called, So call sqlite.SetupTables() later
+// to set valid DBClient client for all tables!
+func NewBase(session ...string) *pd.BaseProvider {
+	return pd.NewBaseProvider(Select(session...))
+}
+
+// Create and return a TableProvider instance with Sqlite client.
+//
+// # USAGE:
+//
+//	type MyTable struct{ pd.TableProvider }
+//	var MyTableIns = MyTable{ *sqlite.NewTable{"mytable", _logsql}}
+//	// Call sqlite.New(), or sqlite.Open() to create sqlite client here!
+//	sqlite.SetClient(MyTableIns)
+//
+// # WARNING:
+//
+// This method maybe init the nil DBClient client when sqlite.Open(), or
+// sqlite.OpenWithOptions() not called, So call sqlite.SetupTables() later
+// to set valid DBClient client for all tables!
+func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
+}
+
+// Bind tables with the DBClient client of default session.
+//
+// # WARNING:
+//
+// Call sqlite.Open(), or sqlite.OpenWithOptions() first to ensure the
+// DBClient client inited (not nil), later call this method to set tables
+// DBClient client if need!
+func SetClient(tables ...pd.ClientStub) {
+	client := Select() // use the default session.
+	for _, table := range tables {
+		table.SetClient(client)
+	}
+}
+
+/* ------------------------------------------------------------------- */
+/* Create & Connect From app.conf                                      */
+/* ------------------------------------------------------------------- */
+
 // Create a Sqlite client and connect with options which loaded from app.conf file.
 //
 //	[sqlite]
@@ -114,56 +187,9 @@ func OpenWithOptions(opts Options) error {
 	return client.Connect()
 }
 
-// Find and return the exist Sqlite instance by given session.
-func Select(session ...string) pd.DBClient {
-	return _sqliteClients[utils.Variable(session, _sqliteDefSession)]
-}
-
-// Close and remove the target Sqlite client.
-func Close(session ...string) error {
-	s := utils.Variable(session, _sqliteDefSession)
-	if client := _sqliteClients[s]; client != nil {
-		defer delete(_sqliteClients, s)
-		return client.Close()
-	}
-	return nil
-}
-
-// Create and return a BaseProvider instance with Sqlite client.
-//
-// # WARNING
-//
-// This method maybe init the nil DBClient client when sqlite.Open(), or
-// sqlite.OpenWithOptions() not called, So call sqlite.SetupTables() later
-// to set valid DBClient client for all tables!
-func NewBase(session ...string) *pd.BaseProvider {
-	return pd.NewBaseProvider(Select(session...))
-}
-
-// Create and return a TableProvider instance with Sqlite client.
-//
-// # WARNING
-//
-// This method maybe init the nil DBClient client when sqlite.Open(), or
-// sqlite.OpenWithOptions() not called, So call sqlite.SetupTables() later
-// to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
-	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
-}
-
-// Bind tables with the DBClient client of default session.
-//
-// # WARNING
-//
-// Call sqlite.Open(), or sqlite.OpenWithOptions() first to ensure the
-// DBClient client inited (not nil), later call this method to set tables
-// DBClient client if need!
-func SetClient(tables ...pd.ClientStub) {
-	client := Select() // use the default session.
-	for _, table := range tables {
-		table.SetClient(client)
-	}
-}
+/* ------------------------------------------------------------------- */
+/* DBClient Interface Implements                                       */
+/* ------------------------------------------------------------------- */
 
 // Return Sqlite database client, maybe nil when not call Connect() before.
 func (m *Sqlite) DB() *sql.DB { return m.conn }

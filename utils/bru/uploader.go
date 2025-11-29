@@ -37,7 +37,7 @@ import (
 //	 |- [chunk 2  ] ->         |- chunk_2     |
 //	 |- [chunk ...] ->         |- chunk_...  /   [merge all chunks]
 //
-// # NOTICE
+// # NOTICE:
 //	- When any chunk fails to upload, it can be re-upload again before call Complete().
 type BRUploader struct {
 	cache    string              // Session chunks saved dir.
@@ -70,7 +70,7 @@ type BRUploader struct {
 //		return _bru.MergeChunks(se, dstfile)
 //	})
 //
-// # NOTICE
+// # NOTICE:
 //	- Try to make 'cache' dir when it empty and unexit.
 //	- The session chunks saved current folder if 'cache' empty.
 //	- Call Status() to get current uploading status for uncompelete session job.
@@ -151,7 +151,7 @@ func (t *BRUploader) SaveChunk(sid string, index int, chunk []byte, check ...Nex
 
 // Check all chunks upload status and merge to target file.
 //
-// # WARNING
+// # WARNING:
 //
 // You must call MergeChunk() in 'merge' callback, to merge all
 // uploaded chunks to out single file, it will salfly to delete

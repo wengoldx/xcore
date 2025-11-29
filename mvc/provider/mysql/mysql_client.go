@@ -91,6 +91,79 @@ func New(opts ...Option) *MySQL {
 	return client
 }
 
+// Find and return the exist MySQL instance by given session.
+func Select(session ...string) pd.DBClient {
+	return _mysqlClients[utils.Variable(session, _mysqlDriver)]
+}
+
+// Close and remove the target MySQL client.
+func Close(session ...string) error {
+	s := utils.Variable(session, _mysqlDriver)
+	if client := Select(s); client != nil {
+		defer delete(_mysqlClients, s)
+		return client.Close()
+	}
+	return nil
+}
+
+/* ------------------------------------------------------------------- */
+/* Setup Provider                                                      */
+/* ------------------------------------------------------------------- */
+
+// Create and return a BaseProvider instance with MySQL client.
+//
+// # USAGE:
+//
+//	type MyTable struct{ pd.BaseProvider }
+//	var MyTableIns = MyTable{ *mysql.NewTable{"mytable", _logsql}}
+//	// Call mysql.New(), or mysql.Open() to create mysql client here!
+//	mysql.SetClient(MyTableIns)
+//
+// # WARNING:
+//
+// This method maybe init the nil DBClient client when mysql.Open(), or
+// mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
+// to set valid DBClient client for all tables!
+func NewBase(session ...string) *pd.BaseProvider {
+	return pd.NewBaseProvider(Select(session...))
+}
+
+// Create and return a TableProvider instance with MySQL client.
+//
+// # USAGE:
+//
+//	type MyTable struct{ pd.TableProvider }
+//	var MyTableIns = MyTable{ *mysql.NewTable{"mytable", _logsql}}
+//	// Call mysql.New(), or mysql.Open() to create mysql client here!
+//	mysql.SetClient(MyTableIns)
+//
+// # WARNING:
+//
+// This method maybe init the nil DBClient client when mysql.Open(), or
+// mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
+// to set valid DBClient client for all tables!
+func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
+}
+
+// Bind tables with the DBClient client.
+//
+// # WARNING:
+//
+// Call mysql.Open(), or mysql.OpenWithOptions() first to ensure the
+// DBClient client inited (not nil), later call this method to set tables
+// DBClient client if need!
+func SetClient(tables ...pd.ClientStub) {
+	client := Select() // use the default session.
+	for _, table := range tables {
+		table.SetClient(client)
+	}
+}
+
+/* ------------------------------------------------------------------- */
+/* Create & Connect From app.conf                                      */
+/* ------------------------------------------------------------------- */
+
 // Create a MySQL client and connect with options which loaded from app.conf file.
 //
 //	[mysql]
@@ -120,56 +193,9 @@ func OpenWithOptions(opts Options, charset ...string) error {
 	return client.Connect()
 }
 
-// Find and return the exist MySQL instance by given session.
-func Select(session ...string) pd.DBClient {
-	return _mysqlClients[utils.Variable(session, _mysqlDriver)]
-}
-
-// Close and remove the target MySQL client.
-func Close(session ...string) error {
-	s := utils.Variable(session, _mysqlDriver)
-	if client := Select(s); client != nil {
-		defer delete(_mysqlClients, s)
-		return client.Close()
-	}
-	return nil
-}
-
-// Create and return a BaseProvider instance with MySQL client.
-//
-// # WARNING
-//
-// This method maybe init the nil DBClient client when mysql.Open(), or
-// mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
-// to set valid DBClient client for all tables!
-func NewBase(session ...string) *pd.BaseProvider {
-	return pd.NewBaseProvider(Select(session...))
-}
-
-// Create and return a TableProvider instance with MySQL client.
-//
-// # WARNING
-//
-// This method maybe init the nil DBClient client when mysql.Open(), or
-// mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
-// to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
-	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
-}
-
-// Bind tables with the DBClient client.
-//
-// # WARNING
-//
-// Call mysql.Open(), or mysql.OpenWithOptions() first to ensure the
-// DBClient client inited (not nil), later call this method to set tables
-// DBClient client if need!
-func SetClient(tables ...pd.ClientStub) {
-	client := Select() // use the default session.
-	for _, table := range tables {
-		table.SetClient(client)
-	}
-}
+/* ------------------------------------------------------------------- */
+/* DBClient Interface Implements                                       */
+/* ------------------------------------------------------------------- */
 
 // Return MySQL database client, maybe nil when not call Connect() before.
 func (m *MySQL) DB() *sql.DB { return m.conn }

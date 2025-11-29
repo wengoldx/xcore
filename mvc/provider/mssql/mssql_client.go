@@ -85,6 +85,79 @@ func New(opts ...Option) *MSSQL {
 	return client
 }
 
+// Find and return the exist MSSQL instance by given session.
+func Select(session ...string) pd.DBClient {
+	return _mssqlClients[utils.Variable(session, _mssqlDriver)]
+}
+
+// Close and remove the target MSSQL client.
+func Close(session ...string) error {
+	s := utils.Variable(session, _mssqlDriver)
+	if client := Select(s); client != nil {
+		defer delete(_mssqlClients, s)
+		return client.Close()
+	}
+	return nil
+}
+
+/* ------------------------------------------------------------------- */
+/* Setup Provider                                                      */
+/* ------------------------------------------------------------------- */
+
+// Create and return a BaseProvider instance with MSSQL client.
+//
+// # USAGE:
+//
+//	type MyTable struct{ pd.BaseProvider }
+//	var MyTableIns = MyTable{ *mssql.NewTable{"mytable", _logsql}}
+//	// Call mssql.New(), or mssql.Open() to create mssql client here!
+//	mssql.SetClient(MyTableIns)
+//
+// # WARNING:
+//
+// This method maybe init the nil DBClient client when mssql.Open(), or
+// mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
+// to set valid DBClient client for all tables!
+func NewBase(session ...string) *pd.BaseProvider {
+	return pd.NewBaseProvider(Select(session...))
+}
+
+// Create and return a TableProvider instance with MSSQL client.
+//
+// # USAGE:
+//
+//	type MyTable struct{ pd.TableProvider }
+//	var MyTableIns = MyTable{ *mssql.NewTable{"mytable", _logsql}}
+//	// Call mssql.New(), or mssql.Open() to create mssql client here!
+//	mssql.SetClient(MyTableIns)
+//
+// # WARNING:
+//
+// This method maybe init the nil DBClient client when mssql.Open(), or
+// mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
+// to set valid DBClient client for all tables!
+func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
+	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
+}
+
+// Bind tables with the DBClient client.
+//
+// # WARNING:
+//
+// Call mssql.Open(), or mssql.OpenWithOptions() first to ensure the
+// DBClient client inited (not nil), later call this method to set tables
+// DBClient client if need!
+func SetClient(tables ...pd.ClientStub) {
+	client := Select() // use the default session.
+	for _, table := range tables {
+		table.SetClient(client)
+	}
+}
+
+/* ------------------------------------------------------------------- */
+/* Create & Connect From app.conf                                      */
+/* ------------------------------------------------------------------- */
+
 // Create a MSSQL client and connect with options which loaded from app.conf file.
 //
 //	[mssql]
@@ -114,56 +187,9 @@ func OpenWithOptions(opts Options) error {
 	return client.Connect()
 }
 
-// Find and return the exist MSSQL instance by given session.
-func Select(session ...string) pd.DBClient {
-	return _mssqlClients[utils.Variable(session, _mssqlDriver)]
-}
-
-// Close and remove the target MSSQL client.
-func Close(session ...string) error {
-	s := utils.Variable(session, _mssqlDriver)
-	if client := Select(s); client != nil {
-		defer delete(_mssqlClients, s)
-		return client.Close()
-	}
-	return nil
-}
-
-// Create and return a BaseProvider instance with MSSQL client.
-//
-// # WARNING
-//
-// This method maybe init the nil DBClient client when mssql.Open(), or
-// mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
-// to set valid DBClient client for all tables!
-func NewBase(session ...string) *pd.BaseProvider {
-	return pd.NewBaseProvider(Select(session...))
-}
-
-// Create and return a TableProvider instance with MSSQL client.
-//
-// # WARNING
-//
-// This method maybe init the nil DBClient client when mssql.Open(), or
-// mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
-// to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
-	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
-}
-
-// Bind tables with the DBClient client.
-//
-// # WARNING
-//
-// Call mssql.Open(), or mssql.OpenWithOptions() first to ensure the
-// DBClient client inited (not nil), later call this method to set tables
-// DBClient client if need!
-func SetClient(tables ...pd.ClientStub) {
-	client := Select() // use the default session.
-	for _, table := range tables {
-		table.SetClient(client)
-	}
-}
+/* ------------------------------------------------------------------- */
+/* DBClient Interface Implements                                       */
+/* ------------------------------------------------------------------- */
 
 // Return MSSQL database client, maybe nil when not call Connect() before.
 func (m *MSSQL) DB() *sql.DB { return m.conn }

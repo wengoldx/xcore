@@ -138,7 +138,7 @@ func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
 // Query one record by given builder builded query string, and read datas
 // from scan callback.
 //
-// # NOTICE
+// # NOTICE:
 //	- Use BaseProvider.One() method to direct execute query string.
 func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
 	query, args := builder.Build(p.debug)
@@ -148,7 +148,7 @@ func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
 // Query one record by given builder builded query string, and return the
 // result datas by given outs params.
 //
-// # NOTICE
+// # NOTICE:
 //	- Use BaseProvider.OneDone() method to direct execute query string.
 //	- Use QueryBuilder.OneDone() method to query result by orm model.
 func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
@@ -159,7 +159,7 @@ func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
 // result datas by given outs params, finally call done callback to translate
 // the outs datas before provider method returned.
 //
-// # NOTICE
+// # NOTICE:
 //	- Use BaseProvider.OneDone() method to direct execute query string.
 //	- Use QueryBuilder.OneDone() method to query result by orm model.
 func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs ...any) error {

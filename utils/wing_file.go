@@ -215,6 +215,61 @@ func SaveB64File(dirpath, filename string, b64datas string) error {
 	return SaveFile(dirpath, filename, datas)
 }
 
+// Read the multipart file datas which uploaded by http.
+func ReadMultipartFile(header *multipart.FileHeader) ([]byte, error) {
+	buff := make([]byte, header.Size)
+	if file, err := header.Open(); err != nil {
+		return nil, err
+	} else {
+		defer file.Close()
+		if _, err := file.Read(buff); err != nil {
+			return nil, err
+		}
+	}
+	return buff, nil
+}
+
+// Read json file content and unmarshal to json object.
+func ReadJsonFile(jsonfile string, out any) error {
+	if !IsFile(jsonfile) {
+		return invar.ErrFileNotFound
+	}
+
+	buf, err := os.ReadFile(jsonfile)
+	if err != nil {
+		logger.E("Read", jsonfile, "err:", err)
+		return err
+	} else if err := json.Unmarshal(buf, out); err != nil {
+		logger.E("Unmarshal err:", err)
+		return err
+	}
+	return nil
+}
+
+// Read file content and output as string.
+func ReadFileString(txtfile string) string {
+	if IsFile(txtfile) {
+		buf, err := os.ReadFile(txtfile);
+		if err != nil {
+			logger.E("Read", txtfile, "err:", err)
+			return ""
+		}
+
+		content := strings.Trim(string(buf), "\n")
+		return strings.TrimSpace(content)
+	}
+	return ""
+}
+
+// Marshal struct data to json string and save to file.
+func SaveJsonFile(jsonfile string, data any) error {
+	buf, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(jsonfile, buf, 0755)
+}
+
 // Delete the target exist file, it will not do anything when file path
 // point to a exist directoy, or the file unexist.
 //
@@ -349,46 +404,7 @@ func CopyFileTo(src string, dir string) error {
 	return CopyFile(src, dst)
 }
 
-// Read json file content and unmarshal to json object.
-func ReadJsonFile(jsonfile string, out any) error {
-	if !IsFile(jsonfile) {
-		return invar.ErrFileNotFound
-	}
 
-	buf, err := os.ReadFile(jsonfile)
-	if err != nil {
-		logger.E("Read", jsonfile, "err:", err)
-		return err
-	} else if err := json.Unmarshal(buf, out); err != nil {
-		logger.E("Unmarshal err:", err)
-		return err
-	}
-	return nil
-}
-
-// Read file content and output as string.
-func ReadFileString(txtfile string) string {
-	if IsFile(txtfile) {
-		buf, err := os.ReadFile(txtfile);
-		if err != nil {
-			logger.E("Read", txtfile, "err:", err)
-			return ""
-		}
-
-		content := strings.Trim(string(buf), "\n")
-		return strings.TrimSpace(content)
-	}
-	return ""
-}
-
-// Write struct data to json file.
-func WriteJsonFile(jsonfile string, data any) error {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(jsonfile, buf, 0755)
-}
 
 /* ------------------------------------------------------------------- */
 /* Deprecated Methods                                                  */
