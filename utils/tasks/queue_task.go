@@ -103,6 +103,11 @@ func (t *QueueTask) SetLimits(limits int) {
 	}
 }
 
+// Return quenu item counts.
+func (t *QueueTask) Counts() int {
+	return t.queue.Len()
+}
+
 // Push a new task to monitor at queue backend.
 func (t *QueueTask) Post(task *Task) error {
 	if task == nil || task.ID == "" || task.Data == nil {
