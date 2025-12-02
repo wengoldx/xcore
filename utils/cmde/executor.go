@@ -123,7 +123,7 @@ func (ex *Executor) Exec(ctx context.Context) error {
 // the caller must blocking to wait 'notify' return if set any handlers.
 //
 //	See cmde.Exec() to execute command on sync way.
-func (ex *Executor) Async(ctx context.Context, notify chan error) error {
+func (ex *Executor) Async(ctx context.Context, notify chan<- error) error {
 	c := exec.CommandContext(ctx, "/bin/sh", "-c", ex.command)
 	if notify != nil {
 		readers, err := ex.setupReaders(c)
@@ -173,7 +173,7 @@ func (ex *Executor) setupReaders(cmd *exec.Cmd) ([]*ConsoleReader, error) {
 }
 
 // Read output logs line by line and streaming by given handler function.
-func (ex *Executor) readOutputs(ctx context.Context, pipe *ConsoleReader, close chan struct{}) {
+func (ex *Executor) readOutputs(ctx context.Context, pipe *ConsoleReader, close <-chan struct{}) {
 	// prepare pipe reader.
 	reader := bufio.NewReader(pipe)
 
