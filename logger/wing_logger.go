@@ -60,7 +60,7 @@ var _none_flogger = false
 func init() {
 	setupFileLogger()
 	logs.SetLogFuncCall(true) // use the default func depth
-	logs.Async(3)             // allow 3 asynchronous chanels
+	logs.Async(1)             // allow 3 asynchronous chanels
 
 	// set application logger level
 	switch beego.AppConfig.String(logConfigLevel) {

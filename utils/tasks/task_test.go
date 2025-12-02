@@ -13,6 +13,7 @@ package tasks
 
 import (
 	"math/rand/v2"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -25,70 +26,72 @@ import (
 /* ------------------------------------------------------------------- */
 
 func TestQueueTask(t *testing.T) {
-	handler := TaskHandlerFunc(ExecCallback)
-	qtask := NewQueueTask(handler, WithInterrupt(false), WithInterval(25*time.Millisecond))
+	handler := TaskHandlerFunc(execTaskWorks)
+	qtask := NewQueueTask(handler, WithInterrupt(false), WithInterval(10*time.Millisecond))
+	start := runtime.NumGoroutine()
 
-	logger.I("@@ Prepare cancel ids.")
-	cids := []string{}
-	for i := 1; i <= 10; i++ {
-		cids = append(cids, strconv.Itoa(rand.IntN(45)+5))
+	// create 10 cancel task ids.
+	cids, cnt := []string{}, 150
+	for i := 0; i < 10; i++ {
+		cids = append(cids, strconv.Itoa(rand.IntN(90)+10))
 	}
 
-	logger.I("@@ Post 50 test tasks...")
-	for i := 1; i <= 50; i++ {
-		logger.I("Post task:", i)
+	logger.I("Post", cnt, "Tasks (", start, ")...")
+	for i := 1; i <= cnt; i++ {
+		// logger.I("|- Post Task:", i)
 		qtask.Post(NewTask(strconv.Itoa(i), i))
 	}
+	logger.I("- Posted", cnt, "Tasks | blocking rountines:", runtime.NumGoroutine()-start)
 
-	// waiting for executing 1 ~ 2 tasks.
-	time.Sleep(100 * time.Millisecond)
-
-	logger.I("@@ Request cancels...")
+	// waiting for executing 1 ~ 10 tasks.
+	time.Sleep(250 * time.Millisecond)
+	logger.I("Post Cancels...")
 	go qtask.Cancels(cids...)
 
-	logger.I("@@ Continue post 10 test tasks...")
 	qtask.SetInterval(0)
-	for i := 51; i <= 60; i++ {
-		logger.I("Post task:", i)
+	logger.I("Continue Post", cnt, "Tasks...")
+	for i, max := cnt+1, 2*cnt+1; i <= max; i++ {
+		// logger.I("|- Post Task:", i)
 		qtask.Post(NewTask(strconv.Itoa(i), i))
 	}
 
-	logger.I("@@ Waiting 1 seconds")
-	time.Sleep(1 * time.Second)
-
-	logger.I("@@ Call exit and wait 1 second.")
+	logger.I("- Posted", cnt, "Tasks | blocking rountines:", runtime.NumGoroutine()-start)
+	logger.I("Waiting 5 seconds for exit...")
+	time.Sleep(5 * time.Second)
 	qtask.Exit()
-	time.Sleep(1 * time.Second)
-	logger.I("@@ Finish Test!")
+
+	// test post error when monitor closed.
+	qtask.Post(NewTask(strconv.Itoa(500), 500))
+	logger.I("Finished, rountines:", runtime.NumGoroutine())
 }
 
-func ExecCallback(data *Task) error {
-	time.Sleep(25 * time.Millisecond)
-	logger.I(" - Executed task:", data.ID)
+func execTaskWorks(data *Task) error {
+	time.Sleep(15 * time.Millisecond)
+	logger.I("| - Executed task:", data.ID)
 	return nil
 }
 
 func TestSwitchTask(t *testing.T) {
-	handler := TaskHandlerFunc(ExecCallback)
+	handler := TaskHandlerFunc(execTaskWorks)
 	qtask := NewQueueTask(handler, WithInterrupt(false))
 
-	logger.I("@@ Random from and to ids.")
 	from := strconv.Itoa(rand.IntN(24) + 10)
 	to := strconv.Itoa(rand.IntN(24) + 36)
+	logger.I("Random from:", from, "and to:", to, "ids")
 
-	logger.I("@@ Post 60 test tasks...")
+	logger.I("Post 60 test tasks...")
 	for i := 1; i <= 60; i++ {
-		logger.I("Post task:", i)
+		// logger.I("| - Post Task:", i)
 		qtask.Post(NewTask(strconv.Itoa(i), i))
 	}
+	time.Sleep(20 * time.Millisecond)
 
-	logger.I("@@ Swith", from, ">", to)
+	logger.I("Swith", from, ">", to)
 	if !qtask.Switch(from, to) {
-		logger.I("@@ Switch failed!")
+		logger.I("? - Switch failed!")
 	}
 
-	// waiting for executing 1 second.
-	time.Sleep(2 * time.Second)
 	qtask.Exit()
-	logger.I("@@ Finish Test!")
+	time.Sleep(100 * time.Millisecond)
+	logger.I("Finished, rountines:", runtime.NumGoroutine())
 }

@@ -41,6 +41,27 @@ func NewTask(id string, data any) *Task {
 /* ------------------------------------------------------------------- */
 
 // Task monitor to execute queue tasks in sequence.
+//
+// # NOTICE:
+//
+// 1. The concurrent tasks <= 100, the postchan like:
+//
+//	             postchan
+//	             ----------------------------------------
+//	[Pop Out] <- | 1 | 2 | ... | n |            | - | - |
+//	             --^---^---------^-----------------------
+//	               |   |         | [Push Task]
+//	           cached events     +-- direct caching, no-blocking rountine
+//
+//
+// 2. The concurrent tasks > 100, the postchan like:
+//
+//	             postchan: (can caches max 100 chan events)
+//	             ------------------------------------------
+//	[Pop Out] <- | 1 | 2 | ...       <---       ... | 100 | 101 ...
+//	             --^---^-------------------------------^---  ^
+//	               |   |            [FIFO]             |     | [Push Task]
+//	            post & cache events <------------------+     blocking rountines
 type QueueTask struct {
 	queue *list.List // Tasks queue.
 	mutex sync.Mutex
@@ -48,6 +69,7 @@ type QueueTask struct {
 	postchan chan utils.TNone // Block chan for queue task PIPO.
 	exitchan chan utils.TNone // Block chan for exit queue task monitor.
 	opts     Options          // Queue task options.
+	isExit   bool             // Indicate current monitor whether exist.
 }
 
 // Create a new queue task and start as runtime monitor.
@@ -63,7 +85,7 @@ type QueueTask struct {
 func NewQueueTask(handler TaskHandler, opts ...Option) *QueueTask {
 	qt := &QueueTask{
 		queue:    list.New(),
-		postchan: make(chan utils.TNone),
+		postchan: make(chan utils.TNone, 100), // max chan send events cache!
 		exitchan: make(chan utils.TNone),
 		opts: Options{
 			interrupt: false, // not interrupt by default.
@@ -103,14 +125,22 @@ func (t *QueueTask) SetLimits(limits int) {
 	}
 }
 
-// Return quenu item counts.
+// Return queue item counts.
 func (t *QueueTask) Counts() int {
 	return t.queue.Len()
 }
 
+// Return queue monitor exit status.
+func (t *QueueTask) IsExit() bool {
+	return t.isExit
+}
+
 // Push a new task to monitor at queue backend.
 func (t *QueueTask) Post(task *Task) error {
-	if task == nil || task.ID == "" || task.Data == nil {
+	if t.isExit {
+		logger.E("QueueTask already exit!")
+		return invar.ErrInvalidState
+	} else if task == nil || task.ID == "" || task.Data == nil {
 		return invar.ErrInvalidData
 	}
 
@@ -124,6 +154,9 @@ func (t *QueueTask) Post(task *Task) error {
 	 * 'postchan' to blocking in gorutine, so it no-need to check
 	 * whether handler methods executing toggether when multiple
 	 * post requests comming.
+	 *
+	 * And, the postchan can caches max 100 events without blocking
+	 * send rountine, but blocked when events over max size.
 	 */
 	t.push(task)
 	go func() { t.postchan <- utils.NONE }()
@@ -148,8 +181,14 @@ func (t *QueueTask) Switch(from, to string) bool {
 
 // Clear waiting tasks and exit the QueueTask monitor.
 func (t *QueueTask) Exit() {
-	t.clear() // clear tasks first.
-	go func() { t.exitchan <- utils.NONE }()
+	if !t.isExit {
+		t.isExit = true
+		// close send, but still receivable!
+		close(t.postchan)
+
+		t.clear() // clear tasks and exit loopper.
+		go func() { t.exitchan <- utils.NONE }()
+	}
 }
 
 // Start task monitor to listen tasks pushed into queue, and execute it.
@@ -161,19 +200,20 @@ func (t *QueueTask) startMonitor(handler TaskHandler) {
 
 	for {
 		select {
-		case <-t.exitchan: // stop task monitor.
+		case <-t.exitchan: // stop QueueTask monitor.
 			logger.I("Exist QueueTask monitor!")
+			close(t.exitchan)
 			return
 
-		case <-t.postchan: // blocking and waiting task post.
+		case <-t.postchan: // receive commein task or blocking.
 			// popup the topmost task to execte.
 			task, err := t.pop()
 			if err != nil {
 				/*
 				 * FIXME: Any tasks maybe removed when user handled cancel
-				 * action, but the postchan requests not removed toggether,
-				 * so HERE MUST filter out the invalid request chans when
-				 * QueueTask is empty!
+				 * action, but the postchan events not removed toggether,
+				 * so HERE MUST filter out the invalid request event chans
+				 * when QueueTask is empty!
 				 */
 				continue // queue maybe empty.
 			}
@@ -235,7 +275,7 @@ func (t *QueueTask) clear() {
 func (t *QueueTask) removes(tags ...string) []string {
 	ids := utils.NewSets[string]().Add(tags...)
 	cnt := ids.Size()
-	logger.I("Fetching and cancel tasks:", ids.Array())
+	logger.I("Remove tasks:", ids.Array())
 
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -246,7 +286,7 @@ func (t *QueueTask) removes(tags ...string) []string {
 		if ok && task != nil && ids.Contain(task.ID) {
 			t.queue.Remove(e)
 
-			logger.I("> Canceled task:", task.ID)
+			logger.I("> Removed task:", task.ID)
 			ids.Remove(task.ID) // remove target found item id.
 			cnt--               // decrease the cancel ids count.
 		}
@@ -264,6 +304,7 @@ func (t *QueueTask) switchs(from, to string) bool {
 	defer t.mutex.Unlock()
 
 	for e := t.queue.Front(); e != nil; e = e.Next() {
+		// find from and to elements.
 		task, ok := e.Value.(*Task)
 		if ok && task != nil {
 			switch task.ID {
