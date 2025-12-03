@@ -130,6 +130,14 @@ func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
 	return b
 }
 
+// Specify the target column and output param for single query.
+//
+//	Set BaseBuilder.ParseOut() get more info.
+func (b *QueryBuilder) Parse(out any) *QueryBuilder {
+	b.tags, b.outs = b.ParseOut(out)
+	return b
+}
+
 // Specify the target output fields and params for single query.
 //
 // # WARNING:

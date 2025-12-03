@@ -593,13 +593,13 @@ func (c *WingController) validateUrlParams(ps any, validate bool) bool {
 //	- The sample param must create as a struct pointer for this methoed!
 //	- This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
 func (c *WingController) parseUrlParams(ps any) bool {
-	rv := reflect.ValueOf(ps)
-	if !rv.IsValid() || rv.Kind() != reflect.Ptr || rv.IsNil() {
+	vp := reflect.ValueOf(ps) // rv = &{}
+	if !vp.IsValid() || vp.Kind() != reflect.Ptr || vp.IsNil() {
 		return false
 	}
 
-	rv = rv.Elem()  // get param struct value
-	rt := rv.Type() // get param struct types
+	rv := vp.Elem() // get param struct value: rv = {}
+	rt := rv.Type() // get param struct types: rt = MyStruct
 	for i := 0; i < rt.NumField(); i++ {
 		field := rt.Field(i)
 		name, tag := field.Name, field.Tag.Get("json")

@@ -12,6 +12,7 @@ package pd
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/wengoldx/xcore/utils"
@@ -324,4 +325,42 @@ func (b *BaseBuilder) JoinAndWheres(wheres ...string) string {
 // Join the given where conditions with input OR connectors.
 func (b *BaseBuilder) JoinOrWheres(wheres ...string) string {
 	return strings.Join(wheres, " OR ")
+}
+
+// Parse and return struct json tags and fields pointer.
+//
+//	param := &MyStruct{
+//		Name string `json:"name"`
+//		Aga  int    // none json tag, filter out.
+//	}
+//	tags, outs := pd.ParseOut(param)
+//	// tags = []string{"name"}, outs = []any{&param.Name}
+//
+// # WARNING:
+//	- The 'out' param must create as a struct pointer for this methoed!
+//	- The 'out' struct field only support build in types.
+func (b *BaseBuilder) ParseOut(out any) ([]string, []any) {
+	tags, outs := []string{}, []any{}
+
+	vp := reflect.ValueOf(out) // rv = &{}
+	if !vp.IsValid() || vp.Kind() != reflect.Ptr || vp.IsNil() {
+		return []string{}, []any{}
+	}
+
+	rv := vp.Elem() // get out struct value: rv = {}
+	rt := rv.Type() // get out struct types: rt = MyStruct
+	for i := 0; i < rt.NumField(); i++ {
+		field := rt.Field(i)
+		name, tag := field.Name, field.Tag.Get("json")
+		if name == "" || tag == "" {
+			continue // filter none json tag fields.
+		}
+
+		v := rv.FieldByName(name)
+		if v.IsValid() && v.CanSet() {
+			tags = append(tags, tag)
+			outs = append(outs, v.Addr().Interface())
+		}
+	}
+	return tags, outs
 }

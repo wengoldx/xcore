@@ -11,6 +11,8 @@
 package pd
 
 import (
+	"fmt"
+	"strconv"
 	"testing"
 
 	wt "github.com/wengoldx/xcore/utils/testx"
@@ -63,6 +65,58 @@ func TestFormatLike(t *testing.T) {
 			t.Fatal("BaseBuilder.FormatLike error > want:", want, "but result is", rst)
 		}
 	}
+}
+
+type MyTestDoc struct {
+	Doc string `json:"doc"`
+}
+
+type MyTestData struct {
+	Name   string     `json:"name"`
+	Age    int64      `json:"age"`
+	Labels []string   `json:"labels"`
+	Doc    MyTestDoc  `json:"doc"`
+	DocPtr *MyTestDoc `json:"docptr"`
+	NilPtr *MyTestDoc `json:"nilptr"`
+}
+
+func TestParseOut(t *testing.T) {
+	data := &MyTestData{}
+	fmt.Println("MyTestData json tag:")
+
+	builder := &BaseBuilder{}
+	tags, outs := builder.ParseOut(data)
+	for index, tag := range tags {
+		fmt.Println(fmt.Sprintf("% 12s", tag), "- out:", outs[index])
+		switch tag {
+		case "name":
+			nameptr := outs[index].(*string)
+			*nameptr = "zhangsan-" + strconv.Itoa(index)
+		case "age":
+			ageptr := outs[index].(*int64)
+			*ageptr = 20 + int64(index)
+		case "labels":
+			labelsptr := outs[index].(*[]string)
+			*labelsptr = []string{"label1", "label2", "label3"}
+		case "doc":
+			docptr := outs[index].(*MyTestDoc)
+			*docptr = MyTestDoc{Doc: "my-doc"}
+		case "docptr":
+			docpptr := outs[index].(**MyTestDoc)
+			*docpptr = &MyTestDoc{Doc: "my-doc-ptr"}
+		case "nilptr":
+			docpptr := outs[index].(**MyTestDoc)
+			*docpptr = nil
+		}
+	}
+	fmt.Println("")
+	fmt.Println("MyTestData result:")
+	fmt.Println(" data.Name   =", data.Name)
+	fmt.Println("     .Age    =", data.Age)
+	fmt.Println("     .Labels =", data.Labels)
+	fmt.Println("     .Doc    =", data.Doc)
+	fmt.Println("     .DocPtr =", data.DocPtr)
+	fmt.Println("     .NilPtr =", data.NilPtr)
 }
 
 // TODO
