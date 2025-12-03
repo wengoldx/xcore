@@ -130,7 +130,7 @@ func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
 	return b
 }
 
-// Specify the target column and output param for single query.
+// Specify the target columns and struct fields for single query.
 //
 //	Set BaseBuilder.ParseOut() get more info.
 func (b *QueryBuilder) Parse(out any) *QueryBuilder {

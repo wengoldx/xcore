@@ -327,11 +327,11 @@ func (b *BaseBuilder) JoinOrWheres(wheres ...string) string {
 	return strings.Join(wheres, " OR ")
 }
 
-// Parse and return struct json tags and fields pointer.
+// Parse and return struct column tags and fields pointer.
 //
 //	param := &MyStruct{
-//		Name string `json:"name"`
-//		Aga  int    // none json tag, filter out.
+//		Name string `column:"name"`
+//		Aga  int    // none column tag, filter out.
 //	}
 //	tags, outs := pd.ParseOut(param)
 //	// tags = []string{"name"}, outs = []any{&param.Name}
@@ -351,9 +351,9 @@ func (b *BaseBuilder) ParseOut(out any) ([]string, []any) {
 	rt := rv.Type() // get out struct types: rt = MyStruct
 	for i := 0; i < rt.NumField(); i++ {
 		field := rt.Field(i)
-		name, tag := field.Name, field.Tag.Get("json")
+		name, tag := field.Name, field.Tag.Get("column")
 		if name == "" || tag == "" {
-			continue // filter none json tag fields.
+			continue // filter none column tag fields.
 		}
 
 		v := rv.FieldByName(name)
