@@ -182,20 +182,20 @@ func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 //	// Define MyAcc and implement pd.SQLItemCreator interface.
 //	type MyAcc struct { Name string }
 //	func (c *MyAcc) GetTags() { return []strings{"name"} }
-//	func (c *MyAcc) GetOuts() { m := &MyAcc{}; return m, &m.Name }
+//	func (c *MyAcc) NewItem() { m := &MyAcc{}; return m, &m.Name }
 //
 //	accs, creator := []*MyAcc{}, MyAcc{}
-//	h.Querier().Models(creator).Wheres(pd.Wheres{"role=?": "admin"}).Querys(func(item any) {
+//	h.Querier().Models(creator).Wheres(pd.Wheres{"role=?": "admin"}).Array(func(item any) {
 //		accs = append(accs, item.(*MyAcc))
 //	})
-func (p *TableProvider) Querys(builder *QueryBuilder, cb AddCallback) error {
-	if builder.ItemCreator == nil {
+func (p *TableProvider) Array(builder *QueryBuilder, cb ItemCallback) error {
+	if cb == nil || builder.ItemCreator == nil {
 		return invar.ErrBadModelCreator
 	}
 
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, func(rows *sql.Rows) error {
-		item, outs := builder.ItemCreator.GetOuts()
+		item, outs := builder.ItemCreator.NewItem()
 		if err := rows.Scan(outs...); err != nil {
 			return err
 		}

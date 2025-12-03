@@ -50,9 +50,9 @@ type SQLItemCreator interface {
 	// Create a new item and return out values.
 	//
 	//	type MyModel struct { Name string }
-	//	func (m *MyModel) GetOuts() (any, []any) {
+	//	func (m *MyModel) NewItem() (any, []any) {
 	//		item := &MyModel{}
 	//		return &item, []any{&item.Name}
 	//	}
-	GetOuts() (any, []any)
+	NewItem() (any, []any)
 }

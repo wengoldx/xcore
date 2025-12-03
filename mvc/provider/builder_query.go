@@ -57,12 +57,12 @@ func NewQuery(table string) *QueryBuilder {
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }        // Check whether has the target record.
-func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }       // Check whether unexist the target record.
-func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }      // Count the mathed query condition records.
-func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }    // Query the top one record.
-func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) }  // Query the all matched condition records.
-func (b *QueryBuilder) Querys(cb AddCallback) error { return b.master.Querys(b, cb) } // Query the all records with the SQLItemCreator utils.
+func (b *QueryBuilder) Has() (bool, error)          { return b.master.Has(b) }       // Check whether has the target record.
+func (b *QueryBuilder) None() (bool, error)         { return b.master.None(b) }      // Check whether unexist the target record.
+func (b *QueryBuilder) Count() (int, error)         { return b.master.Count(b) }     // Count the mathed query condition records.
+func (b *QueryBuilder) One(cb ScanCallback) error   { return b.master.One(b, cb) }   // Query the top one record.
+func (b *QueryBuilder) Query(cb ScanCallback) error { return b.master.Query(b, cb) } // Query the all matched condition records.
+func (b *QueryBuilder) Array(cb ItemCallback) error { return b.master.Array(b, cb) } // Query the all records with the SQLItemCreator utils.
 
 // Query the top one record and return the results without scaner
 // callback, it canbe set the finally done callback called when
@@ -142,7 +142,7 @@ func (b *QueryBuilder) Parse(out any) *QueryBuilder {
 //
 // # WARNING:
 //	- The creator.GetTags() returned columns names must not empty.
-//	- The creator.GetOuts() returned outs must a point value like &myvalue.
+//	- The creator.NewItem() returned outs must a point value like &myvalue.
 //	- The returned tags and outs array lenght must same.
 //	- No-need call Tags() and Outs() again when called this method.
 //
