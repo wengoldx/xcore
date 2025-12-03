@@ -35,24 +35,10 @@ type SQLBuilder interface {
 	Build(debug ...bool) (string, []any)
 }
 
-// A interface implement by SQL model struct to return
-// query columns and bind values of created array items.
-type SQLItemCreator interface {
-
-	// Return query target columns.
-	//
-	//	type MyModel struct { Name string }
-	//	func (m *MyModel) GetTags() []string {
-	//		return []string{"name"}
-	//	}
-	GetTags() []string
+// A interface implement by array elems creator to return
+// out values of columns.
+type SQLCreator interface {
 
 	// Create a new item and return out values.
-	//
-	//	type MyModel struct { Name string }
-	//	func (m *MyModel) NewItem() (any, []any) {
-	//		item := &MyModel{}
-	//		return &item, []any{&item.Name}
-	//	}
-	NewItem() (any, []any)
+	NewItem() []any
 }

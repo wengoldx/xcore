@@ -177,29 +177,23 @@ func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 }
 
 // Query records by given builder builded query string, and read datas
-// from builder ItemCreator callbacks.
+// from ElemCreator instance.
 //
-//	// Define MyAcc and implement pd.SQLItemCreator interface.
 //	type MyAcc struct { Name string }
-//	func (c *MyAcc) GetTags() { return []strings{"name"} }
-//	func (c *MyAcc) NewItem() { m := &MyAcc{}; return m, &m.Name }
 //
-//	accs, creator := []*MyAcc{}, MyAcc{}
-//	h.Querier().Models(creator).Wheres(pd.Wheres{"role=?": "admin"}).Array(func(item any) {
-//		accs = append(accs, item.(*MyAcc))
+//	accs := []*MyAcc{}
+//	creator := pd.NewCreator(func(iv *MyAcc) []any {
+//		datas= append(datas, iv)
+//		return []any{&iv.Name}
 //	})
-func (p *TableProvider) Array(builder *QueryBuilder, cb ItemCallback) error {
-	if cb == nil || builder.ItemCreator == nil {
-		return invar.ErrBadModelCreator
-	}
-
+//	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
+func (p *TableProvider) Array(builder *QueryBuilder, creator SQLCreator) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, func(rows *sql.Rows) error {
-		item, outs := builder.ItemCreator.NewItem()
+		outs := creator.NewItem()
 		if err := rows.Scan(outs...); err != nil {
 			return err
 		}
-		cb(item)
 		return nil
 	}, args...)
 }

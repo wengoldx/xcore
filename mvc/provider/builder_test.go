@@ -68,16 +68,16 @@ func TestFormatLike(t *testing.T) {
 }
 
 type MyTestDoc struct {
-	Doc string `json:"doc"`
+	Doc string `column:"doc"`
 }
 
 type MyTestData struct {
-	Name   string     `json:"name"`
-	Age    int64      `json:"age"`
-	Labels []string   `json:"labels"`
-	Doc    MyTestDoc  `json:"doc"`
-	DocPtr *MyTestDoc `json:"docptr"`
-	NilPtr *MyTestDoc `json:"nilptr"`
+	Name   string     `column:"name"`
+	Age    int64      `column:"age"`
+	Labels []string   `column:"labels"`
+	Doc    MyTestDoc  `column:"doc"`
+	DocPtr *MyTestDoc `column:"docptr"`
+	NilPtr *MyTestDoc `column:"nilptr"`
 }
 
 func TestParseOut(t *testing.T) {
@@ -109,7 +109,7 @@ func TestParseOut(t *testing.T) {
 			*docpptr = nil
 		}
 	}
-	fmt.Println("")
+	fmt.Println("---")
 	fmt.Println("MyTestData result:")
 	fmt.Println(" data.Name   =", data.Name)
 	fmt.Println("     .Age    =", data.Age)
@@ -117,6 +117,28 @@ func TestParseOut(t *testing.T) {
 	fmt.Println("     .Doc    =", data.Doc)
 	fmt.Println("     .DocPtr =", data.DocPtr)
 	fmt.Println("     .NilPtr =", data.NilPtr)
+}
+
+func TestSQLCreator(t *testing.T) {
+	datas := []*MyTestData{}
+	creator := NewCreator(func(iv *MyTestData) []any {
+		datas = append(datas, iv)
+		return []any{&iv.Name, &iv.Age, &iv.Labels, &iv.Doc, &iv.DocPtr, &iv.NilPtr}
+	})
+
+	for i := 0; i < 10; i++ {
+		fields := creator.NewItem()
+		*(fields[0].(*string)) = "zhangsan" + strconv.Itoa(i)
+		*(fields[1].(*int64)) = 19 + int64(i)
+		*(fields[2].(*[]string)) = []string{"label-" + strconv.Itoa(i)}
+		*(fields[3].(*MyTestDoc)) = MyTestDoc{Doc: "test doc"}
+		*(fields[4].(**MyTestDoc)) = &MyTestDoc{Doc: "test doc ptr"}
+		*(fields[5].(**MyTestDoc)) = nil
+	}
+
+	for _, data := range datas {
+		fmt.Println("Data:", data)
+	}
 }
 
 // TODO
