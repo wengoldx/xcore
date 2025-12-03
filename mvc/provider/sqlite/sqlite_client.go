@@ -153,7 +153,7 @@ func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
 // Call sqlite.Open(), or sqlite.OpenWithOptions() first to ensure the
 // DBClient client inited (not nil), later call this method to set tables
 // DBClient client if need!
-func SetClient(tables ...pd.ClientStub) {
+func SetClient(tables ...pd.SQLClient) {
 	client := Select() // use the default session.
 	for _, table := range tables {
 		table.SetClient(client)

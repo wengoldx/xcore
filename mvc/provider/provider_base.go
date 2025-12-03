@@ -33,7 +33,7 @@ func NewBaseProvider(client DBClient) *BaseProvider {
 	return &BaseProvider{client, &BaseBuilder{}}
 }
 
-var _ ClientStub = (*BaseProvider)(nil)
+var _ SQLClient = (*BaseProvider)(nil)
 
 // Set provider database client.
 func (p *BaseProvider) SetClient(client DBClient) {

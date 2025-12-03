@@ -138,27 +138,6 @@ func (b *QueryBuilder) Parse(out any) *QueryBuilder {
 	return b
 }
 
-// Specify the target output fields and params for single query.
-//
-// # WARNING:
-//	- The model columns must not empty and out values must pointer like &myvalue.
-//	- No-need call Tags() and Outs() again when called this method.
-//
-// See SQLModelOuts interface for out model data define.
-func (b *QueryBuilder) Model(model SQLModelOuts) *QueryBuilder {
-	tags, outs := []string{}, []any{}
-
-	tagouts := model.MapOuts()
-	for tag, out := range tagouts {
-		if tag != "" && out != nil {
-			tags = append(tags, tag)
-			outs = append(outs, out)
-		}
-	}
-	b.tags, b.outs = tags, outs
-	return b
-}
-
 // Specify the target output fields and params for array query.
 //
 // # WARNING:

@@ -19,7 +19,8 @@ type DBClient interface {
 	Close() error   // Disconect and close database client
 }
 
-type ClientStub interface {
+// A interface for set DBClient client to table provider.
+type SQLClient interface {
 	SetClient(client DBClient)
 }
 
@@ -35,44 +36,10 @@ type SQLBuilder interface {
 }
 
 // A interface implement by SQL model struct to return
-// columns names and bind values pointers.
-type SQLModelOuts interface {
-
-	// Return model columns and values pointers.
-	//	@return KValues Target columns and bind values pointers.
-	//
-	// # Example
-	//
-	//	type MyModel struct { Name string }
-	//	func (m *MyModel) MapValues() pd.KValues {
-	//		return pd.KValues{"name": &m.Name}  // out pointer!
-	//	}
-	MapOuts() KValues
-}
-
-// A interface implement by SQL model struct to return
-// columns names and bind values pointers.
-type SQLModelValues interface {
-
-	// Return model columns and values.
-	//	@return KValues Target columns and bind values.
-	//
-	// # Example
-	//
-	//	type MyModel struct { Name string }
-	//	func (m *MyModel) MapValues() pd.KValues {
-	//		return &pd.KValues{"name": m.Name}  // value data!
-	//	}
-	MapValues() *KValues
-}
-
-// A interface implement by SQL model struct to return
 // query columns and bind values of created array items.
 type SQLItemCreator interface {
 
 	// Return query target columns.
-	//
-	// # Example
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) GetTags() []string {
@@ -81,8 +48,6 @@ type SQLItemCreator interface {
 	GetTags() []string
 
 	// Create a new item and return out values.
-	//
-	// # Example
 	//
 	//	type MyModel struct { Name string }
 	//	func (m *MyModel) GetOuts() (any, []any) {
