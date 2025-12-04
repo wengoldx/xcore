@@ -18,7 +18,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/secure"
-	"github.com/wengoldx/xcore/utils/httpx"
+	"github.com/wengoldx/xcore/utils/xhttp"
 )
 
 const (
@@ -245,7 +245,7 @@ func (s *DTalkSender) send(posturl string, data any) error {
 		Errcode int    `json:"errcode"`
 		Errmsg  string `json:"errmsg"`
 	}
-	if err := httpx.Post(posturl, data, &resp); err != nil {
+	if err := xhttp.Post(posturl, data, &resp); err != nil {
 		logger.E("Failed send text message to DingTalk group chat")
 		return invar.ErrSendFailed
 	}

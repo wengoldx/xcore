@@ -12,21 +12,14 @@ package tu
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
-	"github.com/wengoldx/xcore/logger"
-	"github.com/wengoldx/xcore/mvc/provider/mysql"
-	"github.com/wengoldx/xcore/utils"
-	"gopkg.in/ini.v1"
 )
 
 // Test case datas for multiple testing.
@@ -104,82 +97,4 @@ func TestMain(t *testing.T, c, uid, api, method string, want int, params any) {
 	if rst := resp.Body.String(); rst != "" && rst != "<nil>" && rst != "null" {
 		t.Log("Test response:", rst)
 	}
-}
-
-// Set 'dev' runmode and fix debug logger.
-func UseDebugLogger() {
-	beego.BConfig.RunMode = "dev"
-	logs.SetLevel(beego.LevelDebug)
-}
-
-// Check app whether running on test mode, it just check the .test
-// file whether exist in ~/{app}/conf/ folder.
-//
-//	~/{app}
-//	  |- bin
-//	  |- conf
-//	  |    |- .test  // -> Enable test mode, delete it for disable.
-//	  ...
-//
-// # WARNING:
-//	- DO NOT use beego.BConfig.AppName when unexist app.conf!
-func CheckTestMode(app string) string {
-	if pwd, err := os.Getwd(); err == nil {
-		if length := len(app); length > 0 {
-			if start := strings.Index(pwd, app); start > 0 {
-				env := pwd[:start+length] + "/conf/.test"
-				if utils.IsFile(env) {
-					fmt.Println()
-					fmt.Println("\t+--------------------+")
-					fmt.Println("\t+ LAUNCHED TEST MODE +")
-					fmt.Println("\t+--------------------+")
-					fmt.Println()
-					return env
-				}
-			}
-		}
-	}
-	return ""
-}
-
-// Open database for testing by given .test env file.
-//
-//	opts := mysql.Options{
-//		Host: "localhost:3306", Database: "testdb",
-//		User: "user", Password: "****",
-//	}
-func OpenTestDatabase(env string) {
-	UseDebugLogger()
-
-	opts := readTestEnv(env)
-	if opts.Host == "" {
-		panic("Empty database host !!")
-	} else if err := mysql.OpenWithOptions(opts, "utf8mb4"); err != nil {
-		panic("Failed Open test database: " + err.Error())
-	}
-	logger.I("Opened test database...")
-}
-
-// Read test env configs from .test file.
-//
-//	[DATABASE]
-//	Host="localhost:3306"
-//	Database="testdb"
-//	User="user"
-//	Password="****"
-func readTestEnv(env string) mysql.Options {
-	opts := mysql.Options{}
-	if !utils.IsFile(env) {
-		return opts
-	}
-
-	if cfg, err := ini.Load(env); err != nil {
-		panic("Failed read test env:" + err.Error())
-	} else if section := cfg.Section("DATABASE"); section != nil {
-		opts.Host = section.Key("Host").String()
-		opts.Database = section.Key("Database").String()
-		opts.User = section.Key("User").String()
-		opts.Password = section.Key("Password").String()
-	}
-	return opts
 }

@@ -9,7 +9,7 @@
 // 00002       2022/03/26   yangping       Using toolbox.Task
 // -------------------------------------------------------------------
 
-package tasks
+package xtask
 
 import (
 	"container/list"

@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"testing"
 
-	wt "github.com/wengoldx/xcore/utils/testx"
+	wt "github.com/wengoldx/xcore/utils/xtest"
 )
 
 /* ------------------------------------------------------------------- */

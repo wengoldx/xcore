@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"testing"
 
-	wt "github.com/wengoldx/xcore/utils/testx"
+	xt "github.com/wengoldx/xcore/utils/xtest"
 )
 
 /* ------------------------------------------------------------------- */
@@ -24,28 +24,28 @@ import (
 
 func TestNormalizePath(t *testing.T) {
 	// FIXME : for windows system want string.
-	cases := []*wt.TestCase{
-		wt.NewCase("Check 1", "1\\2\\4\\5\\6", "  /  1//2\\3/..///4/./5/6\\\\"),
-		wt.NewCase("Check 2", "1\\2\\3", "    1/2//3/     "),
-		wt.NewCase("Check 3", "1 \\2\\3", "/  1 /2\\3\\    "),
-		wt.NewCase("Check 4", ".", ""),
+	cases := []*xt.TestCase{
+		xt.NewCase("Check 1", "1\\2\\4\\5\\6", "  /  1//2\\3/..///4/./5/6\\\\"),
+		xt.NewCase("Check 2", "1\\2\\3", "    1/2//3/     "),
+		xt.NewCase("Check 3", "1 \\2\\3", "/  1 /2\\3\\    "),
+		xt.NewCase("Check 4", ".", ""),
 	}
 
-	wt.TestMults(t, cases, func(param any) any {
+	xt.TestMults(t, cases, func(param any) any {
 		return NormalizePath(param.(string))
 	})
 }
 
 func TestSplitSuffix(t *testing.T) {
-	cases := []*wt.TestCase{
-		wt.NewCase("Check 1", "123", "/1/2/   123  .pdf"),
-		wt.NewCase("Check 1", "123", "123.pdf"),
-		wt.NewCase("Check 2", "123", "123"),
-		wt.NewCase("Check 3", "", ".pdf"),
-		wt.NewCase("Check 4", "", ""),
+	cases := []*xt.TestCase{
+		xt.NewCase("Check 1", "123", "/1/2/   123  .pdf"),
+		xt.NewCase("Check 1", "123", "123.pdf"),
+		xt.NewCase("Check 2", "123", "123"),
+		xt.NewCase("Check 3", "", ".pdf"),
+		xt.NewCase("Check 4", "", ""),
 	}
 
-	wt.TestMults(t, cases, func(param any) any {
+	xt.TestMults(t, cases, func(param any) any {
 		rst, suffix := SplitSuffix(param.(string))
 		fmt.Println("suffix:", suffix)
 		return rst
