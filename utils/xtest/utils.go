@@ -53,12 +53,15 @@ func NewCase(label string, want any, param any) *TestCase {
 //	})
 func TestMults(t *testing.T, cases []*TestCase, callback TestHandler) {
 	t.Helper()
+
+	fmt.Println("Start Testing cases...")
 	for _, c := range cases {
-		fmt.Println("> TEST CASE:", c.Case)
 		if want := callback(c.Params); want != c.Want {
 			t.Fatal("Failed, want:", c.Want, "but result", want)
 		}
+		fmt.Println("- [OK] CASE:", c.Case, "-", c.Want)
 	}
+	fmt.Println("Finished Testing!")
 }
 
 /* ------------------------------------------------------------------- */
