@@ -54,19 +54,22 @@ func NewCase(label string, want any, param any) *TestCase {
 func TestMults(t *testing.T, cases []*TestCase, callback TestHandler) {
 	t.Helper()
 
-	fmt.Println("Start Testing cases...")
+	LogI("Start Testing Cases...")
 	for _, c := range cases {
 		if want := callback(c.Params); want != c.Want {
-			t.Fatal("Failed, want:", c.Want, "but result", want)
+			t.Fatal("Failed, want:", c.Want, "but result:", want)
 		}
-		fmt.Println("- [OK] CASE:", c.Case, "-", c.Want)
+		LogI("- [OK] CASE:", c.Case, "-", c.Want)
 	}
-	fmt.Println("Finished Testing!")
+	LogI("Finished Tests!")
 }
 
 /* ------------------------------------------------------------------- */
 /* For Test Utils                                                      */
 /* ------------------------------------------------------------------- */
+
+func LogI(msg ...any) { fmt.Println(append([]any{"[I]"}, msg...)...) }
+func LogE(msg ...any) { fmt.Println(append([]any{"[E]"}, msg...)...) }
 
 // Set 'dev' runmode and fix debug logger.
 func UseDebugLogger() {
