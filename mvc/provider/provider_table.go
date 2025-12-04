@@ -113,7 +113,7 @@ func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
 //
 // Use BaseProvider.Count() method to direct execute query string.
 func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
-	query, args := builder.Tags("*").Build(p.debug)
+	query, args := builder.Tags("COUNT(*)").Build(p.debug)
 	return p.BaseProvider.Count(query, args...)
 }
 
