@@ -59,7 +59,7 @@ func TestMults(t *testing.T, cases []*TestCase, callback TestHandler) {
 		if want := callback(c.Params); want != c.Want {
 			t.Fatal("Failed, want:", c.Want, "but result:", want)
 		}
-		LogI("- [OK] CASE:", c.Case, "-", c.Want)
+		LogI("[OK]", c.Case, "-", c.Want)
 	}
 	LogI("Finished Tests!")
 }
