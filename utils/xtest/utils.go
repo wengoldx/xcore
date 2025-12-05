@@ -114,6 +114,18 @@ func GetServRoot(app string) string {
 	return ""
 }
 
+// Return test mode status, the method base on xt.GetTestEnv().
+func IsTestMode(app string) bool {
+	if _test_mode_inited {
+		_test_mode_inited = true
+		_test_mode_status = (GetTestEnv(app) != "")
+	}
+	return _test_mode_status
+}
+
+var _test_mode_status = false
+var _test_mode_inited = false
+
 func existFile(env string) bool {
 	if info, err := os.Stat(env); err == nil {
 		return !info.IsDir()
