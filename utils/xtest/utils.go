@@ -88,6 +88,7 @@ func UseDebugLogger() {
 //
 // # WARNING:
 //	- DO NOT use beego.BConfig.AppName when unexist app.conf!
+//	- Return empty when ~/conf/.test unexist.
 func GetTestEnv(app string) string {
 	length := len(app)
 	if pwd, err := os.Getwd(); err == nil && length > 0 {
@@ -97,6 +98,18 @@ func GetTestEnv(app string) string {
 				return env
 			}
 		}
+	}
+	return ""
+}
+
+// Return server root dir: /home/.../{server} on test model.
+//
+// # WARNING:
+//	- Use xt.GetTestEnv() get abstract path and trim conf paths.
+//	- Return empty when ~/conf/.test unexist.
+func GetServRoot(app string) string {
+	if test := GetTestEnv(app); test != "" {
+		return strings.TrimSuffix(test, "/conf/.test")
 	}
 	return ""
 }
