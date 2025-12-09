@@ -168,41 +168,49 @@ func GetLevel() string {
 // EM logs a message at emergency level.
 func EM(v ...any) {
 	logs.Emergency(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // AL logs a message at alert level.
 func AL(v ...any) {
 	logs.Alert(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // CR logs a message at critical level.
 func CR(v ...any) {
 	logs.Critical(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // E logs a message at error level.
 func E(v ...any) {
 	logs.Error(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // W logs a message at warning level.
 func W(v ...any) {
 	logs.Warn(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // N logs a message at notice level.
 func N(v ...any) {
 	logs.Notice(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // I logs a message at info level.
 func I(v ...any) {
 	logs.Info(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // D logs a message at debug level.
 func D(v ...any) {
 	logs.Debug(logFormatString(len(v)), v...)
+	logs.SetPrefix("")
 }
 
 // -----------------
@@ -210,24 +218,29 @@ func D(v ...any) {
 // E logs a message at error level.
 func Ef(f string, v ...any) {
 	logs.Error(f+logFormatString(0), v...)
+	logs.SetPrefix("")
 }
 
 // W logs a message at warning level.
 func Wf(f string, v ...any) {
 	logs.Warn(f+logFormatString(0), v...)
+	logs.SetPrefix("")
 }
 
 // N logs a message at notice level.
 func Nf(f string, v ...any) {
 	logs.Notice(f+logFormatString(0), v...)
+	logs.SetPrefix("")
 }
 
 // I logs a message at info level.
 func If(f string, v ...any) {
 	logs.Info(f+logFormatString(0), v...)
+	logs.SetPrefix("")
 }
 
 // D logs a message at debug level.
 func Df(f string, v ...any) {
 	logs.Debug(f+logFormatString(0), v...)
+	logs.SetPrefix("")
 }
