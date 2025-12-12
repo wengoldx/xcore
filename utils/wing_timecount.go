@@ -25,9 +25,7 @@ type timeCounter struct {
 
 // Create a new time counter for calculate duration and logs.
 func NewTimeCounter() timeCounter {
-	tc := timeCounter{start: time.Now().UnixNano()}
-	tc.tick = tc.start
-	return tc
+	return *(&timeCounter{}).Reset()
 }
 
 // Count the used duration time after counter create or called Reset().
@@ -38,14 +36,16 @@ func (c *timeCounter) Count() int64 {
 
 // Count the tick interval after counter create or called Reset().
 func (c *timeCounter) Tick() int64 {
-	c.tick = time.Now().UnixNano() - c.tick
-	return c.tick
+	last := c.tick
+	c.tick = time.Now().UnixNano()
+	return c.tick - last
 }
 
 // Reset start time and clear used duration value.
-func (c *timeCounter) Reset() {
+func (c *timeCounter) Reset() *timeCounter {
 	c.start = time.Now().UnixNano()
 	c.tick = c.start
+	return c
 }
 
 // Count and logout the used duration on auto calculate unit.
