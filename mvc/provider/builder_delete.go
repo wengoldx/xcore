@@ -125,7 +125,7 @@ func (b *DeleteBuilder) Build(debug ...bool) (string, []any) {
 
 	query := "DELETE FROM %s %s %s"
 	query = fmt.Sprintf(query, b.table, where, limit)
-	query = strings.TrimSuffix(query, " ")
+	query = strings.TrimRight(query, " ")
 
 	if utils.Variable(debug, false) {
 		logger.D("[DELETE] SQL:", query, "|", args)

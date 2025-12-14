@@ -207,7 +207,7 @@ func (b *QueryBuilder) Build(debug ...bool) (string, []any) {
 
 	query := "SELECT %s FROM %s %s %s %s"
 	query = fmt.Sprintf(query, tags, table, where, b.order, limit)
-	query = strings.TrimSuffix(query, " ")
+	query = strings.TrimRight(query, " ")
 	if utils.Variable(debug, false) {
 		logger.D("[QUERY] SQL:", query, "|", args)
 	}

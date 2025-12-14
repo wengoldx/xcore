@@ -136,7 +136,7 @@ func (b *UpdateBuilder) Build(debug ...bool) (string, []any) {
 
 	query := "UPDATE %s SET %s %s"
 	query = fmt.Sprintf(query, b.table, tags, where)
-	query = strings.TrimSuffix(query, " ")
+	query = strings.TrimRight(query, " ")
 	if utils.Variable(debug, false) {
 		logger.D("[UPDATE] SQL:", query, "|", args)
 	}
