@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
@@ -116,12 +115,10 @@ func MakeDirs(dirpath string, perm ...os.FileMode) error {
 //
 // # WARNING:
 // - The caller must call file.Close() after writing finished.
-func OpenWriteFile(fp string, perm ...os.FileMode) (*os.File, error) {
+func OpenWriteFile(fp string, perm ...uint32) (*os.File, error) {
+	pv := Variable(perm, 0666)
 	flag := os.O_CREATE | os.O_WRONLY | os.O_APPEND
-	if len(perm) > 0 && perm[0] != 0 {
-		return os.OpenFile(fp, flag, perm[0])
-	}
-	return os.OpenFile(fp, flag, 0666)
+	return os.OpenFile(fp, flag, os.FileMode(pv))
 }
 
 // Create a new writonly file with permission bits, by default perm is 0666,
@@ -129,90 +126,10 @@ func OpenWriteFile(fp string, perm ...os.FileMode) (*os.File, error) {
 //
 // # WARNING:
 //	- The caller must call file.Close() after writing finished.
-func OpenTruncFile(fp string, perm ...os.FileMode) (*os.File, error) {
-	flag := syscall.O_CREAT | os.O_WRONLY | syscall.O_TRUNC
-	if len(perm) > 0 && perm[0] != 0 {
-		return os.OpenFile(fp, flag, perm[0])
-	}
-	return os.OpenFile(fp, flag, 0666)
-}
-
-// Save the multipart file datas to given local file path.
-func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
-	if !IsFile(dirpath) {
-		if err := MakeDirs(dirpath); err != nil {
-			logger.E("Make paths:", dirpath, "err:", err)
-			return  err
-		}
-	}
-
-	dstfile := filepath.Join(dirpath, filename)
-	dst, err := OpenTruncFile(dstfile)
-	if err != nil {
-		return  err 
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
-		logger.E("Save file:", dstfile, "err:", err)
-		return  err
-	}
-
-	logger.I("Saved file:", dstfile)
-	return nil	
-}
-
-// Save the multipart file datas to given local file path from files header.
-func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader)  error {
-	partfile, err := header.Open()
-	if err != nil {
-		logger.E("Open multipart file by header, err:", err)
-		return  err
-	}
-	defer partfile.Close()
-
-	fn := header.Filename
-	return SaveMultipartFile(dirpath, fn, partfile)
-}
-
-// Save file datas to target file on override or append mode, by default override
-// the datas to file, the function will auto create the unexist directories.
-func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
-	dirpath, filename = filepath.Clean(dirpath), NormalizePath(filename)
-
-	if len(datas) == 0 {
-		return nil // non-need write anything.
-	} else if filename == "" || filename == "." || filename == ".." {
-		return invar.NewError("Invalid filename '" + filename + "'")
-	} else if err := EnsurePath(dirpath); err != nil {
-		return err
-	}
-
-	var err error
-	var tagfile *os.File
-	fp := filepath.Join(dirpath, filename)
-	if Variable(append, false) {
-		tagfile, err = OpenWriteFile(fp)
-	} else {
-		tagfile, err = OpenTruncFile(fp)
-	}
-	if err != nil {
-		return err
-	}
-
-	// write content to file.
-	defer tagfile.Close()
-	_, err = tagfile.Write(datas)
-	return err
-}
-
-// Decode the base64 datas and override the plaintext datas to file.
-func SaveB64File(dirpath, filename string, b64datas string) error {
-	datas, err := secure.Base64ToByte(b64datas)
-	if err != nil {
-		return err
-	}
-	return SaveFile(dirpath, filename, datas)
+func OpenTruncFile(fp string, perm ...uint32) (*os.File, error) {
+	pv := Variable(perm, 0666)
+	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	return os.OpenFile(fp, flag, os.FileMode(pv))
 }
 
 // Read the multipart file datas which uploaded by http.
@@ -261,6 +178,44 @@ func ReadFileString(txtfile string) string {
 	return ""
 }
 
+// Save the multipart file datas to given local file path.
+func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
+	if !IsFile(dirpath) {
+		if err := MakeDirs(dirpath); err != nil {
+			logger.E("Make paths:", dirpath, "err:", err)
+			return  err
+		}
+	}
+
+	dstfile := filepath.Join(dirpath, filename)
+	dst, err := OpenTruncFile(dstfile)
+	if err != nil {
+		return  err 
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		logger.E("Save file:", dstfile, "err:", err)
+		return  err
+	}
+
+	logger.I("Saved file:", dstfile)
+	return nil	
+}
+
+// Save the multipart file datas to given local file path from files header.
+func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader)  error {
+	partfile, err := header.Open()
+	if err != nil {
+		logger.E("Open multipart file by header, err:", err)
+		return  err
+	}
+	defer partfile.Close()
+
+	fn := header.Filename
+	return SaveMultipartFile(dirpath, fn, partfile)
+}
+
 // Marshal struct data to json string and save to file.
 func SaveJsonFile(jsonfile string, data any) error {
 	buf, err := json.Marshal(data)
@@ -269,6 +224,49 @@ func SaveJsonFile(jsonfile string, data any) error {
 	}
 	return os.WriteFile(jsonfile, buf, 0755)
 }
+
+// Save file datas to target file on override or append mode, by default override
+// the datas to file, the function will auto create the unexist directories.
+func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
+	dirpath, filename = filepath.Clean(dirpath), NormalizePath(filename)
+
+	if len(datas) == 0 {
+		return nil // non-need write anything.
+	} else if filename == "" || filename == "." || filename == ".." {
+		return invar.NewError("Invalid filename '" + filename + "'")
+	} else if err := EnsurePath(dirpath); err != nil {
+		return err
+	}
+
+	var err error
+	var tagfile *os.File
+	fp := filepath.Join(dirpath, filename)
+	if Variable(append, false) {
+		tagfile, err = OpenWriteFile(fp)
+	} else {
+		tagfile, err = OpenTruncFile(fp)
+	}
+	if err != nil {
+		return err
+	}
+
+	// write content to file.
+	defer tagfile.Close()
+	_, err = tagfile.Write(datas)
+	return err
+}
+
+// Decode the base64 datas and override the plaintext datas to file.
+func SaveB64File(dirpath, filename string, b64datas string) error {
+	datas, err := secure.Base64ToByte(b64datas)
+	if err != nil {
+		return err
+	}
+	return SaveFile(dirpath, filename, datas)
+}
+
+
+
 
 // Delete the target exist file, it will not do anything when file path
 // point to a exist directoy, or the file unexist.
