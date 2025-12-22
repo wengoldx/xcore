@@ -46,6 +46,12 @@ const (
 var uuidNode *snowflake.Node
 var rander *rand.Rand
 
+// For loop id use in runtime.
+var _loop_id = rand.Intn(_max_loop_id)
+
+// The max loop id value for 6 digit code.
+const _max_loop_id = 1000000
+
 // init uuid generater
 func init() {
 	rander = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -102,6 +108,18 @@ func NewRUID(buflen ...int) string {
 		buf[i] = letters[rand.Intn(letlen)]
 	}
 	return string(buf)
+}
+
+// Create a loop code with 6 digits.
+func NewLCode() string {
+	code := fmt.Sprintf("%06d", _loop_id)
+
+	// use current second as increate seed.
+	_loop_id += time.Now().Second() + 1
+	if _loop_id >= _max_loop_id {
+		_loop_id %= _max_loop_id
+	}
+	return code
 }
 
 // Create a code just as current nano seconds time, e.g. 1693359476235899600
