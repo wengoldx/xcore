@@ -48,24 +48,32 @@ func (c *timeCounter) Reset() *timeCounter {
 	return c
 }
 
+// Count and return the used duration on auto calculate unit.
+func (c *timeCounter) UsedTime() string {
+	return formatDuration(c.Count())
+}
+
+// Count and return the tick interval on auto calculate unit.
+func (c *timeCounter) TickTime() string {
+	return formatDuration(c.Tick())
+}
+
 // Count and logout the used duration on auto calculate unit.
 func (c *timeCounter) LogUsed(msg string, islogger ...bool) {
-	used := c.Count()
 	if Variable(islogger, false) {
-		logger.If("%s: %s", msg, formatDuration(used))
-		return
+		logger.If("%s: %s", msg, c.UsedTime())
+	} else {
+		fmt.Printf("%s: %s\n", msg, c.UsedTime())
 	}
-	fmt.Printf("%s: %s\n", msg, formatDuration(used))
 }
 
 // Count and logout the used duration on auto calculate unit.
 func (c *timeCounter) LogTick(msg string, islogger ...bool) {
-	interval := c.Tick()
 	if Variable(islogger, false) {
-		logger.If("%s: %s", msg, formatDuration(interval))
-		return
+		logger.If("%s: %s", msg, c.TickTime())
+	} else {
+		fmt.Printf("%s: %s\n", msg, c.TickTime())
 	}
-	fmt.Printf("%s: %s\n", msg, formatDuration(interval))
 }
 
 const (
