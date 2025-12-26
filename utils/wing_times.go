@@ -40,6 +40,9 @@ const (
 	// TimeLayout standery time layout format at second minimum
 	TimeLayout = "2006-01-02 15:04:05"
 
+	// ZoomLayout time layout with local time zoom, see RFC3339.
+	ZoomLayout = "2006-01-02T15:04:05Z"
+
 	// HourLayout standery time layout format as hour
 	HourLayout = "15:04:05"
 
