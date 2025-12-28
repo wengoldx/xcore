@@ -25,17 +25,10 @@ const (
 	logConfigFLogs   = "logger::flogs"   // configs key of file logger flag.
 	logConfigMaxDays = "logger::maxdays" // configs key of logger max days
 
-	// LevelDebug debug level of logger
-	LevelDebug = "debug"
-
-	// LevelInfo info level of logger
-	LevelInfo = "info"
-
-	// LevelWarn warn level of logger
-	LevelWarn = "warn"
-
-	// LevelError error level of logger
-	LevelError = "error"
+	LevelDebug = "debug" // Debug level of logger
+	LevelInfo  = "info"  // Info  level of logger
+	LevelWarn  = "warn"  // Warn  level of logger
+	LevelError = "error" // Error level of logger
 )
 
 // Skip init file logger when init functions called.

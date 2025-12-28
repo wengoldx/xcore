@@ -25,9 +25,9 @@ type wingLogger struct {
 // Create a logger instance to output logs with ' [CAT] ' mark, notice
 // that the mark will auto append '[]' and change to upper strings.
 //
-// ---------------------------------------------------------------------------
-// 2023/05/31 10:56:36.609 [I] [code_file.go:89] [CAT] FuncName() ...
-// ---------------------------------------------------------------------------
+//	---------------------------------------------------------------------------
+//	2023/05/31 10:56:36.609 [I] [code_file.go:89] [CAT] FuncName() ...
+//	---------------------------------------------------------------------------
 func CatLogger(cat string) *wingLogger {
 	return NewLogger(cat, "")
 }
@@ -35,9 +35,9 @@ func CatLogger(cat string) *wingLogger {
 // Create a logger instance to output logs with ' Tag:' perfix in logs message,
 // notice that the tag will auto tail ':' if unexist the char.
 //
-// ---------------------------------------------------------------------------
-// 2023/05/31 10:56:36.609 [I] [code_file.go:89] FuncName() Tag: xxx ...
-// ---------------------------------------------------------------------------
+//	---------------------------------------------------------------------------
+//	2023/05/31 10:56:36.609 [I] [code_file.go:89] FuncName() Tag: xxx ...
+//	---------------------------------------------------------------------------
 func TagLogger(tag string) *wingLogger {
 	return NewLogger("", tag)
 }
@@ -46,13 +46,12 @@ func TagLogger(tag string) *wingLogger {
 // if set any string value, notice that the mark will auto append '[]' and change
 // to upper strings, the tag will tail ':' if unexist end of target key.
 //
-// ---------------------------------------------------------------------------
-// 2023/05/31 10:56:36.609 [I] [code_file.go:89] [CAT] FuncName() Tag: xxx ...
-// ---------------------------------------------------------------------------
+//	---------------------------------------------------------------------------
+//	2023/05/31 10:56:36.609 [I] [code_file.go:89] [CAT] FuncName() Tag: xxx ...
+//	---------------------------------------------------------------------------
 //
-// `@see` Call logger.CatLogger() to create logger output category mark only.
-//
-// `@see` Call logger.TagLogger() to create logger output target perfix key only.
+//	Call logger.CatLogger() to create logger output category mark only.
+//	Call logger.TagLogger() to create logger output target perfix key only.
 func NewLogger(cat, tag string) *wingLogger {
 	cat, tag = strings.TrimSpace(cat), strings.TrimSpace(tag)
 	if cat != "" {
