@@ -70,39 +70,47 @@ func NewLogger(cat, tag string) *wingLogger {
 // E logs a message at error level.
 func (l *wingLogger) E(v ...any) {
 	logs.Error(logFormatString(len(v), l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // W logs a message at warning level.
 func (l *wingLogger) W(v ...any) {
 	logs.Warn(logFormatString(len(v), l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // I logs a message at info level.
 func (l *wingLogger) I(v ...any) {
 	logs.Info(logFormatString(len(v), l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // D logs a message at debug level.
 func (l *wingLogger) D(v ...any) {
 	logs.Debug(logFormatString(len(v), l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // E logs a message at error level.
 func (l *wingLogger) Ef(f string, v ...any) {
 	logs.Error(f+logFormatString(0, l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // W logs a message at warning level.
 func (l *wingLogger) Wf(f string, v ...any) {
 	logs.Warn(f+logFormatString(0, l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // I logs a message at info level.
 func (l *wingLogger) If(f string, v ...any) {
 	logs.Info(f+logFormatString(0, l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
 
 // D logs a message at debug level.
 func (l *wingLogger) Df(f string, v ...any) {
 	logs.Debug(f+logFormatString(0, l.cat, l.tag), v...)
+	logs.SetPrefix("")
 }
