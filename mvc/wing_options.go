@@ -39,7 +39,7 @@ func WithProtect(protect bool) Option {
 	}
 }
 
-func WithSlie(silent bool) Option {
+func WithSilent(silent bool) Option {
 	return func(opts *Options) {
 		opts.Silent = silent
 	}

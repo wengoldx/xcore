@@ -24,7 +24,7 @@ type Options struct {
 	interrupt bool          // The flag for interrupt task monitor when case error if set true.
 	interval  time.Duration // The interval between two task to waiting, set 0 for non-waiting.
 	limits    int           // The maximums task items allow push into, default 0 not limit.
-	slient    bool          // Not output logs, default false.
+	silent    bool          // Not output logs, default false.
 }
 
 // Typed function to configure a QueueTask.
@@ -53,10 +53,10 @@ func WithLImits(limits int) Option {
 	}
 }
 
-// Set the slient for output logs.
-func WithSlientLogs(slient bool) Option {
+// Set the silent for output logs.
+func WithSilentLogs(silent bool) Option {
 	return func(qt *QueueTask) {
-		qt.opts.slient = slient
+		qt.opts.silent = silent
 	}
 }
 

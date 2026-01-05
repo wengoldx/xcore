@@ -176,8 +176,8 @@ func (c *WingController) ResponData(state int, data ...map[any]any) {
 }
 
 // ResponOK sends a empty success response to client
-func (c *WingController) ResponOK(slient ...bool) {
-	if !(len(slient) > 0 && slient[0]) {
+func (c *WingController) ResponOK(silent ...bool) {
+	if !(len(silent) > 0 && silent[0]) {
 		ctl, act := c.GetControllerAndAction()
 		logger.I("Respone OK >", ctl+"."+act)
 	}

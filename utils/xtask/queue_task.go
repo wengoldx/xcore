@@ -102,7 +102,7 @@ func NewQueueTask(handler TaskHandler, opts ...Option) *QueueTask {
 	// start task monitor to listen task insert.
 	go qt.startMonitor(handler)
 	it, iv := qt.opts.interrupt, qt.opts.interval
-	if !qt.opts.slient {
+	if !qt.opts.silent {
 		logger.I("Create and start QueueTask monitor:")
 		logger.I("                 > interrupt:", it, "interval:", iv)
 	}
@@ -141,7 +141,7 @@ func (t *QueueTask) IsExit() bool {
 // Push a new task to monitor at queue backend.
 func (t *QueueTask) Post(task *Task) error {
 	if t.isExit {
-		if !t.opts.slient {
+		if !t.opts.silent {
 			logger.E("QueueTask already exit!")
 		}
 		return invar.ErrInvalidState
