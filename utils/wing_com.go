@@ -183,7 +183,7 @@ func Contain[T comparable](list []T, item T) bool {
 
 // Check the given items whether all contains in totals.
 func Contains[T any](totals []T, items []T) bool {
-	return NewSets[T]().Add(totals...).Contain(items...)
+	return NewSets(totals...).Contain(items...)
 }
 
 // Remove the invalid values from items which not exist in totals.
@@ -191,7 +191,7 @@ func Filters[T any](totals []T, items []T) []T {
 	if len(totals) == 0 || len(items) == 0 {
 		return []T{}
 	}
-	return NewSets[T]().Add(totals...).Filters(items...)
+	return NewSets(totals...).Filters(items...)
 }
 
 // Remove the invalid values from totals array.
@@ -199,17 +199,17 @@ func Valids[T any](totals []T, invalids []T) []T {
 	if len(totals) == 0 || len(invalids) == 0 {
 		return totals
 	}
-	return NewSets[T]().Add(totals...).Remove(invalids...).Array()
+	return NewSets(totals...).Remove(invalids...).Array()
 }
 
 // Check the given items whether exist anyone in totals.
 func Exists[T any](totals []T, items []T) bool {
-	return NewSets[T]().Add(totals...).Exist(items...)
+	return NewSets(totals...).Exist(items...)
 }
 
 // Remove duplicate items from the given array.
 func Distinct[T any](src []T) []T {
-	return NewSets[T]().Add(src...).Array()
+	return NewSets(src...).Array()
 }
 
 // TrimEmpty remove empty string, it maybe return empty result array.

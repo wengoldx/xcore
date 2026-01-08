@@ -278,7 +278,7 @@ func (t *QueueTask) clear() {
 
 // Remove tasks by given ids.
 func (t *QueueTask) removes(tags ...string) []string {
-	ids := utils.NewSets[string]().Add(tags...)
+	ids := utils.NewSets(tags...)
 	cnt := ids.Size()
 	logger.I("Remove tasks:", ids.Array())
 
