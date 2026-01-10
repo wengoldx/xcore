@@ -69,10 +69,33 @@ func WithDebug(debug bool) Option {
 /* Create and Return Builder Instance FOR QIUD Actions                 */
 /* ------------------------------------------------------------------- */
 
-func (p *TableProvider) Querier() *QueryBuilder   { return NewQuery(p.table).Master(p) }
-func (p *TableProvider) Inserter() *InsertBuilder { return NewInsert(p.table).Master(p) }
-func (p *TableProvider) Updater() *UpdateBuilder  { return NewUpdate(p.table).Master(p) }
-func (p *TableProvider) Deleter() *DeleteBuilder  { return NewDelete(p.table).Master(p) }
+// Create a query builder to query table records.
+func (p *TableProvider) Querier(t ...string) *QueryBuilder {
+	return NewQuery(p.getTable(t...)).Master(p)
+}
+
+// Create a insert builder to insert records to table.
+func (p *TableProvider) Inserter(t ...string) *InsertBuilder {
+	return NewInsert(p.getTable(t...)).Master(p)
+}
+
+// Create a update builder to update table records.
+func (p *TableProvider) Updater(t ...string) *UpdateBuilder {
+	return NewUpdate(p.getTable(t...)).Master(p)
+}
+
+// Create a delete builder to delete table records.
+func (p *TableProvider) Deleter(t ...string) *DeleteBuilder {
+	return NewDelete(p.getTable(t...)).Master(p)
+}
+
+// Return target table name or current provider table name.
+func (p *TableProvider) getTable(t ...string) string {
+	if len(t) > 0 && t[0] != "" {
+		return t[0]
+	}
+	return p.table
+}
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
