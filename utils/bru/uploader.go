@@ -122,7 +122,7 @@ func (t *BRUploader) SaveChunk(sid string, index int, chunk []byte, check ...Nex
 	} else if _, ok := se.Chunks[index]; ok {
 		logger.W("Chunk index:", index, "already uploaded!")
 		return invar.StatusOK
-	} else if chunksize != CHUNK_SIZE {
+	} else if index < se.Counts-1 && chunksize != CHUNK_SIZE {
 		logger.W("Unmatched chunk size:", chunksize)
 	}
 
