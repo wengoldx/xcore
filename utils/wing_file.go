@@ -110,6 +110,14 @@ func MakeDirs(dirpath string, perm ...os.FileMode) error {
 	return os.MkdirAll(dirpath, os.ModePerm)
 }
 
+// Create a new file with append option.
+func OpenFile(fp string, append bool) (*os.File, error) {
+	if append {
+		return OpenWriteFile(fp)
+	}
+	return OpenTruncFile(fp)
+}
+
 // Create a new writeonly file with permission bits, by default perm is 0666,
 // it will append write datas to file tails.
 //
