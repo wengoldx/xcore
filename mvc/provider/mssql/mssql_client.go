@@ -109,7 +109,7 @@ func Close(session ...string) error {
 //
 // # USAGE:
 //
-//	type MyTable struct{ provider.BaseProvider }
+//	type MyTable struct{ *provider.BaseProvider }
 //	var MyTableIns = MyTable{ mssql.NewBase()}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
 //	mssql.SetClient(MyTableIns)
@@ -127,7 +127,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 //
 // # USAGE:
 //
-//	type MyTable struct{ pd.TableProvider }
+//	type MyTable struct{ pd.TableProviderImpl }
 //	var MyTableIns = MyTable{ mssql.NewTable("mytable", _logsql)}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
 //	mssql.SetClient(MyTableIns)
@@ -137,7 +137,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 // This method maybe init the nil DBClient client when mssql.Open(), or
 // mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) pd.TableProvider {
+func NewTable(table string, debug bool, session ...string) *provider.TableProviderImpl {
 	return provider.NewTableProvider(Select(session...),
 		provider.WithTable(table), provider.WithDebug(debug))
 }

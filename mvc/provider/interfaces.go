@@ -25,7 +25,7 @@ type DBClient interface {
 
 // A interface for set DBClient client to data provider.
 //
-// Such as provider.BaseProvider, provider.ProviderImpl.
+// Such as provider.BaseProvider, provider.TableProviderImpl.
 type Provider interface {
 	SetClient(client DBClient)
 }
@@ -185,7 +185,7 @@ type DeleteBuilder interface {
 	Reset() DeleteBuilder
 }
 
-// A interface implement by builder.ProviderImpl to suport table datas access.
+// A interface implement by builder.TableProviderImpl to suport table datas access.
 type TableProvider interface {
 	Provider
 
