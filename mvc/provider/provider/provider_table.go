@@ -223,10 +223,10 @@ func (p *TableProviderImpl) Query(builder pd.QueryBuilder, cb pd.ScanCallback) e
 //		return []any{&iv.Name}
 //	})
 //	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
-func (p *TableProviderImpl) Array(builder pd.QueryBuilder, creator pd.SQLCreator) error {
+func (p *TableProviderImpl) Array(builder pd.QueryBuilder, creator pd.ModuleCreator) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, func(rows *sql.Rows) error {
-		outs := creator.NewItem()
+		outs := creator.Generate()
 		if err := rows.Scan(outs...); err != nil {
 			return err
 		}

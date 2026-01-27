@@ -58,7 +58,7 @@ func (b *QuerierImpl) None() (bool, error)              { return b.provider.None
 func (b *QuerierImpl) Count() (int, error)              { return b.provider.Count(b) }       // Count the mathed query condition records.
 func (b *QuerierImpl) OneScan(cb pd.ScanCallback) error { return b.provider.OneScan(b, cb) } // Query the top one record with scan callback.
 func (b *QuerierImpl) Query(cb pd.ScanCallback) error   { return b.provider.Query(b, cb) }   // Query the all matched condition records.
-func (b *QuerierImpl) Array(cr pd.SQLCreator) error     { return b.provider.Array(b, cr) }   // Query the all records with the SQLCreator utils.
+func (b *QuerierImpl) Array(cr pd.ModuleCreator) error  { return b.provider.Array(b, cr) }   // Query the all records with the ModuleCreator utils.
 
 // Query the top one record and return the results without scaner
 // callback, it canbe set the finally done callback called when

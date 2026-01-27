@@ -116,33 +116,3 @@ func TxDelete(tx *sql.Tx, query string, args ...any) error {
 	}
 	return nil
 }
-
-/* ------------------------------------------------------------------- */
-/* Util Methods For package callable                                   */
-/* ------------------------------------------------------------------- */
-
-// Query the target column values and return array by callback.
-//
-// # USAGE:
-//
-//	// case 1: new a builder and set exist provider.
-//	files := []string{}
-//	builder := pd.NewQuery("mytable").Master(myprovider)
-//	err := pd.QueryColumn(builder.Tags("file").Wheres(pd.Wheres{"uid": uid}), &files)
-//
-//	// case 2: or, use exist provider get builder.
-//	builder = myprovider.Querier()
-func QueryColumn[T any](builder QueryBuilder, outs *[]T) error {
-	if outs == nil || builder == nil || !builder.HasProvider() {
-		return invar.ErrBadDBConnect
-	}
-
-	return builder.Query(func(rows *sql.Rows) error {
-		var v T
-		if err := rows.Scan(&v); err != nil {
-			return err
-		}
-		*outs = append(*outs, v)
-		return nil
-	})
-}

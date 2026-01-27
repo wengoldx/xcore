@@ -122,13 +122,13 @@ func TestParseOut(t *testing.T) {
 
 func TestSQLCreator(t *testing.T) {
 	datas := []*MyTestData{}
-	creator := NewCreator(func(iv *MyTestData) []any {
+	creator := pd.NewCreator(func(iv *MyTestData) []any {
 		datas = append(datas, iv)
 		return []any{&iv.Name, &iv.Age, &iv.Labels, &iv.Doc, &iv.DocPtr, &iv.NilPtr}
 	})
 
 	for i := 0; i < 10; i++ {
-		fields := creator.NewItem()
+		fields := creator.Generate()
 		*(fields[0].(*string)) = "zhangsan" + strconv.Itoa(i)
 		*(fields[1].(*int64)) = 19 + int64(i)
 		*(fields[2].(*[]string)) = []string{"label-" + strconv.Itoa(i)}

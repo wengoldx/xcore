@@ -30,16 +30,6 @@ type Provider interface {
 	SetClient(client DBClient)
 }
 
-// A interface implement by array elems creator to return
-// out values of columns.
-//
-// It only for QueryBuilder.Array().
-type SQLCreator interface {
-
-	// Create a new item and return out values.
-	NewItem() []any
-}
-
 // A interface implement by QUID builder to build
 // a sql string for database access.
 type SQLBuilder interface {
@@ -94,7 +84,7 @@ type QueryBuilder interface {
 	OneScan(cb ScanCallback) error
 	OneDone(done ...DoneCallback) error
 	Query(cb ScanCallback) error
-	Array(cr SQLCreator) error
+	Array(cr ModuleCreator) error
 
 	/* ------------------------------------------------------------------- */
 	/* SQL String Build Utils                                              */
@@ -211,7 +201,7 @@ type TableProvider interface {
 	OneDone(builder QueryBuilder, done DoneCallback, outs ...any) error
 	OneOuts(builder QueryBuilder, outs ...any) error
 	Query(builder QueryBuilder, cb ScanCallback) error
-	Array(builder QueryBuilder, creator SQLCreator) error
+	Array(builder QueryBuilder, creator ModuleCreator) error
 	Insert(builder InsertBuilder) (int64, error)
 	InsertCheck(builder InsertBuilder) error
 	InsertUncheck(builder InsertBuilder) error
