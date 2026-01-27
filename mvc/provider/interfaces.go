@@ -187,6 +187,8 @@ type DeleteBuilder interface {
 
 // A interface implement by builder.ProviderImpl to suport table datas access.
 type TableProvider interface {
+	Provider
+
 	/* ------------------------------------------------------------------- */
 	/* Create QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder    */
 	/* ------------------------------------------------------------------- */
