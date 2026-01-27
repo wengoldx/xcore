@@ -22,7 +22,7 @@ import (
 
 // Restful api tester runtime configs.
 type tester struct {
-	tabler   pd.TableProvider // TableProvider instance.
+	tabler   pd.Tabler         // TableProvider instance.
 	tokens   map[string]string // Auth token of test user, format as {uuid:token}.
 	envs     map[string]any    // Env caches, user ut.Get(key) and ut.Set(key, value) to get and set datas.
 	author   string            // Author header, such as 'WENGOLD-V1.1', 'WENGOLD-V1.2', 'WENGOLD-V2.0'

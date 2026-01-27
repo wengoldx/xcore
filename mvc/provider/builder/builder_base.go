@@ -26,8 +26,8 @@ import (
 //	- The BuilderImpl not implement SQLBuilder.Build().
 //	- Use QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder to build whole sql string.
 type BuilderImpl struct {
-	provider pd.TableProvider // Table provider for execute sql actions.
-	table    string           // Table name for update
+	provider pd.Tabler // Table provider for execute sql actions.
+	table    string    // Table name for update
 }
 
 var _ pd.BaseBuilder = (*BuilderImpl)(nil)
@@ -40,8 +40,8 @@ func NewBuilder(table string) BuilderImpl {
 /* For BaseBuilder interface                                           */
 /* ------------------------------------------------------------------- */
 
-func (b *BuilderImpl) SetProvider(p pd.TableProvider) { b.provider = p }           // Specify master provider.
-func (b *BuilderImpl) HasProvider() bool              { return b.provider != nil } // Check master provider whether inited.
+func (b *BuilderImpl) SetProvider(p pd.Tabler) { b.provider = p }           // Specify master provider.
+func (b *BuilderImpl) HasProvider() bool       { return b.provider != nil } // Check master provider whether inited.
 
 // Format table joins to string for multi-table query, it will filter out the
 // empty table or alias join datas.

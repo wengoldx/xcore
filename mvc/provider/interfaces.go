@@ -23,13 +23,6 @@ type DBClient interface {
 	Close() error   // Disconect and close database client
 }
 
-// A interface for set DBClient client to data provider.
-//
-// Such as provider.BaseProvider, provider.TableProviderImpl.
-type Provider interface {
-	SetClient(client DBClient)
-}
-
 // A interface implement by QUID builder to build
 // a sql string for database access.
 type SQLBuilder interface {
@@ -44,8 +37,8 @@ type SQLBuilder interface {
 // A interface implement by builder.BuilderImpl to
 // suport SQL string build utils.
 type BaseBuilder interface {
-	SetProvider(provider TableProvider) // Set TableProvider instance.
-	HasProvider() bool                  // Check TableProvider whether inited.
+	SetProvider(provider Tabler) // Set TableProvider instance.
+	HasProvider() bool           // Check TableProvider whether inited.
 
 	/* ------------------------------------------------------------------- */
 	/* SQL String Build Utils                                              */
@@ -175,8 +168,15 @@ type DeleteBuilder interface {
 	Reset() DeleteBuilder
 }
 
-// A interface implement by builder.TableProviderImpl to suport table datas access.
-type TableProvider interface {
+// A interface for set DBClient client to data provider.
+//
+// Such as provider.BaseProvider, provider.TableProvider.
+type Provider interface {
+	SetClient(client DBClient)
+}
+
+// A interface implement by builder.TableProvider to suport table datas access.
+type Tabler interface {
 	Provider
 
 	/* ------------------------------------------------------------------- */
