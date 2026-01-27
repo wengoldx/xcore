@@ -8,7 +8,9 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package builder
+
+import pd "github.com/wengoldx/xcore/mvc/provider"
 
 type FieldsFunc[T any] func(iv *T) []any
 
@@ -16,7 +18,7 @@ type ItemCreator[T any] struct {
 	OutsFunc FieldsFunc[T]
 }
 
-var _ SQLCreator = (*ItemCreator[any])(nil)
+var _ pd.SQLCreator = (*ItemCreator[any])(nil)
 
 func NewCreator[T any](cb FieldsFunc[T]) *ItemCreator[T] {
 	return &ItemCreator[T]{OutsFunc : cb}

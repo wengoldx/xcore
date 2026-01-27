@@ -8,7 +8,7 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package provider
 
 import (
 	"database/sql"
@@ -17,26 +17,28 @@ import (
 
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
+	pd "github.com/wengoldx/xcore/mvc/provider"
+	"github.com/wengoldx/xcore/mvc/provider/builder"
 )
 
 // Base provider for simple access database datas.
 type BaseProvider struct {
-	client DBClient // Database conncet client.
+	client pd.DBClient // Database conncet client.
 
 	/* Only for BaseProvider as build utils! */
-	Builder *BaseBuilder // Base builder as utils tools.
+	Builder pd.BaseBuilder // Base builder as utils tools.
 }
 
 // Create a BaseProvider with given database client.
-func NewBaseProvider(client DBClient) *BaseProvider {
+func NewBaseProvider(client pd.DBClient) *BaseProvider {
 	// FIXME: the client maybe nil!
-	return &BaseProvider{client, &BaseBuilder{}}
+	return &BaseProvider{client, &builder.BuilderImpl{}}
 }
 
-var _ SQLClient = (*BaseProvider)(nil)
+var _ pd.Provider = (*BaseProvider)(nil)
 
 // Set provider database client.
-func (p *BaseProvider) SetClient(client DBClient) {
+func (p *BaseProvider) SetClient(client pd.DBClient) {
 	if client == nil { logger.E("@@ DBClient is nil!") }
 	p.client = client
 }
@@ -135,7 +137,7 @@ func (p *BaseProvider) ExecResult(query string, args ...any) (int64, error) {
 // 'LIMIT 1' as tail in query string for high-performance.
 //
 //	Use QueryBuilder to build a query string and agrs.
-func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
+func (p *BaseProvider) One(query string, cb pd.ScanCallback, args ...any) error {
 	if !p.prepared() || query == "" || cb == nil {
 		return invar.ErrBadDBConnect
 	}
@@ -158,7 +160,7 @@ func (p *BaseProvider) One(query string, cb ScanCallback, args ...any) error {
 // it will auto append 'LIMIT 1' as tail in query string for high-performance.
 //
 //	Use QueryBuilder to build a query string and agrs.
-func (p *BaseProvider) OneDone(query string, outs []any, done DoneCallback, args ...any) error {
+func (p *BaseProvider) OneDone(query string, outs []any, done pd.DoneCallback, args ...any) error {
 	if !p.prepared() || query == "" || len(outs) <= 0 {
 		return invar.ErrBadDBConnect
 	}
@@ -185,7 +187,7 @@ func (p *BaseProvider) OneDone(query string, outs []any, done DoneCallback, args
 // Execute query string with scan callback to read result records.
 //
 //	Use QueryBuilder to build a query string and agrs.
-func (p *BaseProvider) Query(query string, cb ScanCallback, args ...any) error {
+func (p *BaseProvider) Query(query string, cb pd.ScanCallback, args ...any) error {
 	if !p.prepared() || query == "" || cb == nil {
 		return invar.ErrBadDBConnect
 	}
@@ -238,7 +240,7 @@ func (p *BaseProvider) Insert(query string, args ...any) (int64, error) {
 //	})
 //	// => INSERT table (field1, field2) VALUES (1,2),(3,4)..
 //	// => INSERT table (field1, field2) VALUES ('1','2'),('3','4')..
-func (p *BaseProvider) Inserts(query string, cnt int, cb InsertCallback) error {
+func (p *BaseProvider) Inserts(query string, cnt int, cb pd.InsertCallback) error {
 	values := []string{}
 	for i := 0; i < cnt; i++ {
 		value := strings.TrimSpace(cb(i))
@@ -316,7 +318,7 @@ func (p *BaseProvider) Tran(query string, args ...any) error {
 //			}, args...) },
 //		func(tx *sql.Tx) error { return provider.TxExec(tx, query2, args...) },
 //		func(tx *sql.Tx) error { return provider.TxExec(tx, query3, args...) })
-func (p *BaseProvider) Trans(cbs ...TransCallback) error {
+func (p *BaseProvider) Trans(cbs ...pd.TransCallback) error {
 	if !p.prepared() || len(cbs) == 0 {
 		return invar.ErrBadDBConnect
 	}
@@ -554,8 +556,8 @@ func printHeader(header int, ps [6]int) {
 //
 //	// case 2: or, use exist provider get builder.
 //	builder = myprovider.Querier()
-func QueryColumn[T any](builder *QueryBuilder, outs *[]T) error {
-	if outs == nil || builder == nil || builder.master == nil{
+func QueryColumn[T any](builder pd.QueryBuilder, outs *[]T) error {
+	if outs == nil || builder == nil || !builder.HasProvider() {
 		return invar.ErrBadDBConnect
 	}
 

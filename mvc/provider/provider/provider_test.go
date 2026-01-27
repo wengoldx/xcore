@@ -8,22 +8,24 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package provider
 
 import (
 	"fmt"
 	"testing"
 
+	pd "github.com/wengoldx/xcore/mvc/provider"
+	"github.com/wengoldx/xcore/mvc/provider/builder"
 	"github.com/wengoldx/xcore/utils"
 )
 
 func TestQueryBuilder(t *testing.T) {
-	q := NewQuery("test_table")
+	q := builder.NewQuery("test_table")
 
 	query, arg := q.Tags("f1", "f2", "f3").Build()
 	fmt.Println(query, "-", arg)
 
-	query, arg = q.Wheres(Wheres{"w1=?": 1, "w2<>?": 2}).Build()
+	query, arg = q.Wheres(pd.Wheres{"w1=?": 1, "w2<>?": 2}).Build()
 	fmt.Println(query, "-", arg)
 
 	query, arg = q.WhereIn("in3", utils.ToAnys([]int64{3, 4, 5})).Build()
@@ -50,10 +52,10 @@ func TestQueryBuilder(t *testing.T) {
 }
 
 func TestInsertBuilder(t *testing.T) {
-	i := NewInsert("test_table")
-	v1 := KValues{"manager": "123456", "perfer": 2}
-	v2 := KValues{"manager": "qwertyu", "perfer": 6, "obj": nil}
-	v3 := KValues{"": 123, "manager": "poiuytr", "perfer": 8, "obj": nil}
+	i := builder.NewInsert("test_table")
+	v1 := pd.KValues{"manager": "123456", "perfer": 2}
+	v2 := pd.KValues{"manager": "qwertyu", "perfer": 6, "obj": nil}
+	v3 := pd.KValues{"": 123, "manager": "poiuytr", "perfer": 8, "obj": nil}
 
 	query, arg := i.Values(v1).Build()
 	fmt.Println(query, "-", arg)

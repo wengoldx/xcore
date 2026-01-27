@@ -8,13 +8,14 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package builder
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/wengoldx/xcore/logger"
+	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -24,56 +25,44 @@ import (
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
 //
-// See QueryBuilder, InsertBuilder, UpdateBuilder.
-type DeleteBuilder struct {
-	BaseBuilder
+// See QuerierImpl, InserterImpl, UpdaterImpl.
+type DeleterImpl struct {
+	BuilderImpl
 
-	table  string // Table name for delete
-	wheres Wheres // Where conditions and args values.
-	sep    string // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
-	ins    string // Where in conditions.
-	like   string // Like conditions string.
-	limit  int    // Limit number.
+	wheres pd.Wheres // Where conditions and args values.
+	sep    string    // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
+	ins    string    // Where in conditions.
+	like   string    // Like conditions string.
+	limit  int       // Limit number.
 }
 
-var _ SQLBuilder = (*DeleteBuilder)(nil)
+var _ pd.SQLBuilder = (*DeleterImpl)(nil)
+var _ pd.DeleteBuilder = (*DeleterImpl)(nil)
 
 // Create a DeleteBuilder instance to build a query string.
-func NewDelete(table string) *DeleteBuilder {
-	return &DeleteBuilder{table: table}
+func NewDelete(table string) pd.DeleteBuilder {
+	return &DeleterImpl{BuilderImpl: NewBuilder(table)}
 }
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *DeleteBuilder) Exec() error   { return b.master.Exec(b) }   // Delete record without check.
-func (b *DeleteBuilder) Delete() error { return b.master.Delete(b) } // Delete record and check deleted counts.
+func (b *DeleterImpl) Exec() error   { return b.provider.Exec(b) }   // Delete record without check.
+func (b *DeleterImpl) Delete() error { return b.provider.Delete(b) } // Delete record and check deleted counts.
 
 /* ------------------------------------------------------------------- */
-/* SQL Action Builder Methonds                                         */
+/* For DeleteBuilder interface                                         */
 /* ------------------------------------------------------------------- */
-
-// Specify master provider.
-func (b *DeleteBuilder) Master(master *TableProvider) *DeleteBuilder {
-	b.master = master
-	return b
-}
-
-// Specify the target table for query.
-func (b *DeleteBuilder) Table(table string) *DeleteBuilder {
-	b.table = table
-	return b
-}
 
 // Specify the where conditions and args for query.
 //
-//	where = provider.Wheres{
+//	where = pd.Wheres{
 //		"acc=?":"123", "age>=?":20, "role<>?":"admin",
 //	}
 //	// => WHERE acc=? AND age>=? AND role<>?
 //	// => args ("123", 20, "admin")
-func (b *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
+func (b *DeleterImpl) Wheres(where pd.Wheres) pd.DeleteBuilder {
 	b.wheres = where
 	return b
 }
@@ -81,13 +70,13 @@ func (b *DeleteBuilder) Wheres(where Wheres) *DeleteBuilder {
 // Specify the where in condition with field and args for query.
 //
 //	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
-func (b *DeleteBuilder) WhereIn(field string, args []any) *DeleteBuilder {
+func (b *DeleterImpl) WhereIn(field string, args []any) pd.DeleteBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (b *DeleteBuilder) WhereSep(sep string) *DeleteBuilder {
+func (b *DeleterImpl) WhereSep(sep string) pd.DeleteBuilder {
 	switch s := strings.ToUpper(sep); s {
 	case "AND", "OR", " " /* for none where connector */ :
 		b.sep = s
@@ -100,7 +89,7 @@ func (b *DeleteBuilder) WhereSep(sep string) *DeleteBuilder {
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
 //	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
 //	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
-func (b *DeleteBuilder) Like(field, filter string, pattern ...string) *DeleteBuilder {
+func (b *DeleterImpl) Like(field, filter string, pattern ...string) pd.DeleteBuilder {
 	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
@@ -108,17 +97,29 @@ func (b *DeleteBuilder) Like(field, filter string, pattern ...string) *DeleteBui
 // Specify the limit result for query.
 //
 //	builder.Limit(20) // => LIMIT 20
-func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
+func (b *DeleterImpl) Limit(limit int) pd.DeleteBuilder {
 	b.limit = limit
 	return b
 }
+
+// Reset builder datas for next prepare and build.
+func (b *DeleterImpl) Reset() pd.DeleteBuilder {
+	clear(b.wheres)
+	b.sep, b.ins, b.like = "", "", ""
+	b.limit = 0
+	return b
+}
+
+/* ------------------------------------------------------------------- */
+/* For SQLBuilder interface                                            */
+/* ------------------------------------------------------------------- */
 
 // Build the delete action sql string and args for provider to delete datas.
 //
 //	DELETE FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
-func (b *DeleteBuilder) Build(debug ...bool) (string, []any) {
+func (b *DeleterImpl) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	limit := b.FormatLimit(b.limit)                            // LIMIT n
@@ -131,12 +132,4 @@ func (b *DeleteBuilder) Build(debug ...bool) (string, []any) {
 		logger.D("[DELETE] SQL:", query, "|", args)
 	}
 	return query, args
-}
-
-// Reset builder datas for next prepare and build.
-func (b *DeleteBuilder) Reset() *DeleteBuilder {
-	clear(b.wheres)
-	b.sep, b.ins, b.like = "", "", ""
-	b.limit = 0
-	return b
 }

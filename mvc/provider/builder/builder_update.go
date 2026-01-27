@@ -8,13 +8,14 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package builder
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/wengoldx/xcore/logger"
+	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -24,47 +25,35 @@ import (
 //		SET v1=?, v2=?, v3=?...
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //
-// See QueryBuilder, InsertBuilder, DeleteBuilder.
-type UpdateBuilder struct {
-	BaseBuilder
+// See QuerierImpl, InserterImpl, DeleterImpl.
+type UpdaterImpl struct {
+	BuilderImpl
 
-	table  string  // Table name for update
-	values KValues // Target fields and values to update.
-	wheres Wheres  // Where conditions and args values.
-	sep    string  // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
-	ins    string  // Where in conditions.
-	like   string  // Like conditions string.
+	values pd.KValues // Target fields and values to update.
+	wheres pd.Wheres  // Where conditions and args values.
+	sep    string     // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
+	ins    string     // Where in conditions.
+	like   string     // Like conditions string.
 }
 
-var _ SQLBuilder = (*UpdateBuilder)(nil)
+var _ pd.SQLBuilder = (*UpdaterImpl)(nil)
+var _ pd.UpdateBuilder = (*UpdaterImpl)(nil)
 
 // Create a UpdateBuilder instance to build a query string.
-func NewUpdate(table string) *UpdateBuilder {
-	return &UpdateBuilder{table: table}
+func NewUpdate(table string) pd.UpdateBuilder {
+	return &UpdaterImpl{BuilderImpl: NewBuilder(table)}
 }
 
 /* ------------------------------------------------------------------- */
 /* SQL Action Utils By Using master Provider                           */
 /* ------------------------------------------------------------------- */
 
-func (b *UpdateBuilder) Exec() error   { return b.master.Exec(b) }   // Update target record without check.
-func (b *UpdateBuilder) Update() error { return b.master.Update(b) } // Update target record and check changes counts.
+func (b *UpdaterImpl) Exec() error   { return b.provider.Exec(b) }   // Update target record without check.
+func (b *UpdaterImpl) Update() error { return b.provider.Update(b) } // Update target record and check changes counts.
 
 /* ------------------------------------------------------------------- */
-/* SQL Action Builder Methonds                                         */
+/* For UpdateBuilder interface                                         */
 /* ------------------------------------------------------------------- */
-
-// Specify master provider.
-func (b *UpdateBuilder) Master(master *TableProvider) *UpdateBuilder {
-	b.master = master
-	return b
-}
-
-// Specify the target table for query.
-func (b *UpdateBuilder) Table(table string) *UpdateBuilder {
-	b.table = table
-	return b
-}
 
 // Specify the values of row to update.
 //
@@ -78,19 +67,19 @@ func (b *UpdateBuilder) Table(table string) *UpdateBuilder {
 //	}
 //	// => SET Age=?, Male=?, Name=?, Height=?
 //	// => values: []any{16, true, "ZhangSan", 176.8}
-func (b *UpdateBuilder) Values(row KValues) *UpdateBuilder {
+func (b *UpdaterImpl) Values(row pd.KValues) pd.UpdateBuilder {
 	b.values = row
 	return b
 }
 
 // Specify the where conditions and args for query.
 //
-//	where = provider.Wheres{
+//	where = pd.Wheres{
 //		"acc=?":"123", "age>=?":20, "role<>?":"admin",
 //	}
 //	// => WHERE acc=? AND age>=? AND role<>?
 //	// => args ("123", 20, "admin")
-func (b *UpdateBuilder) Wheres(where Wheres) *UpdateBuilder {
+func (b *UpdaterImpl) Wheres(where pd.Wheres) pd.UpdateBuilder {
 	b.wheres = where
 	return b
 }
@@ -98,13 +87,13 @@ func (b *UpdateBuilder) Wheres(where Wheres) *UpdateBuilder {
 // Specify the where in condition with field and args for query.
 //
 //	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
-func (b *UpdateBuilder) WhereIn(field string, args []any) *UpdateBuilder {
+func (b *UpdaterImpl) WhereIn(field string, args []any) pd.UpdateBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
+func (b *UpdaterImpl) WhereSep(sep string) pd.UpdateBuilder {
 	switch s := strings.ToUpper(sep); s {
 	case "AND", "OR", " " /* for none where connector */ :
 		b.sep = s
@@ -117,17 +106,29 @@ func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
 //	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
 //	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
-func (b *UpdateBuilder) Like(field, filter string, pattern ...string) *UpdateBuilder {
+func (b *UpdaterImpl) Like(field, filter string, pattern ...string) pd.UpdateBuilder {
 	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
+
+// Reset builder datas for next prepare and build.
+func (b *UpdaterImpl) Reset() pd.UpdateBuilder {
+	clear(b.values)
+	clear(b.wheres)
+	b.sep, b.ins, b.like = "", "", ""
+	return b
+}
+
+/* ------------------------------------------------------------------- */
+/* For SQLBuilder interface                                            */
+/* ------------------------------------------------------------------- */
 
 // Build the update action sql string and args for provider to update datas.
 //
 //	UPDATE table
 //		SET v1=?, v2=?, v3=?...
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-func (b *UpdateBuilder) Build(debug ...bool) (string, []any) {
+func (b *UpdaterImpl) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 
 	tags, args := b.FormatSets(b.values)                      // SET v1=?,v2=?...
@@ -141,12 +142,4 @@ func (b *UpdateBuilder) Build(debug ...bool) (string, []any) {
 		logger.D("[UPDATE] SQL:", query, "|", args)
 	}
 	return query, args
-}
-
-// Reset builder datas for next prepare and build.
-func (b *UpdateBuilder) Reset() *UpdateBuilder {
-	clear(b.values)
-	clear(b.wheres)
-	b.sep, b.ins, b.like = "", "", ""
-	return b
 }

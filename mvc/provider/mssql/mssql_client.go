@@ -17,6 +17,7 @@ import (
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 	pd "github.com/wengoldx/xcore/mvc/provider"
+	"github.com/wengoldx/xcore/mvc/provider/provider"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -108,8 +109,8 @@ func Close(session ...string) error {
 //
 // # USAGE:
 //
-//	type MyTable struct{ pd.BaseProvider }
-//	var MyTableIns = MyTable{ *mssql.NewTable{"mytable", _logsql}}
+//	type MyTable struct{ provider.BaseProvider }
+//	var MyTableIns = MyTable{ mssql.NewBase()}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
 //	mssql.SetClient(MyTableIns)
 //
@@ -118,8 +119,8 @@ func Close(session ...string) error {
 // This method maybe init the nil DBClient client when mssql.Open(), or
 // mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewBase(session ...string) *pd.BaseProvider {
-	return pd.NewBaseProvider(Select(session...))
+func NewBase(session ...string) *provider.BaseProvider {
+	return provider.NewBaseProvider(Select(session...))
 }
 
 // Create and return a TableProvider instance with MSSQL client.
@@ -127,7 +128,7 @@ func NewBase(session ...string) *pd.BaseProvider {
 // # USAGE:
 //
 //	type MyTable struct{ pd.TableProvider }
-//	var MyTableIns = MyTable{ *mssql.NewTable{"mytable", _logsql}}
+//	var MyTableIns = MyTable{ mssql.NewTable("mytable", _logsql)}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
 //	mssql.SetClient(MyTableIns)
 //
@@ -136,8 +137,9 @@ func NewBase(session ...string) *pd.BaseProvider {
 // This method maybe init the nil DBClient client when mssql.Open(), or
 // mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
-	return pd.NewTableProvider(Select(session...), pd.WithTable(table), pd.WithDebug(debug))
+func NewTable(table string, debug bool, session ...string) pd.TableProvider {
+	return provider.NewTableProvider(Select(session...),
+		provider.WithTable(table), provider.WithDebug(debug))
 }
 
 // Bind tables with the DBClient client.
@@ -147,7 +149,7 @@ func NewTable(table string, debug bool, session ...string) *pd.TableProvider {
 // Call mssql.Open(), or mssql.OpenWithOptions() first to ensure the
 // DBClient client inited (not nil), later call this method to set tables
 // DBClient client if need!
-func SetClient(tables ...pd.SQLClient) {
+func SetClient(tables ...pd.Provider) {
 	client := Select() // use the default session.
 	for _, table := range tables {
 		table.SetClient(client)

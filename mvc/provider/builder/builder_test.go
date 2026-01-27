@@ -8,33 +8,34 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package builder
 
 import (
 	"fmt"
 	"strconv"
 	"testing"
 
+	pd "github.com/wengoldx/xcore/mvc/provider"
 	wt "github.com/wengoldx/xcore/utils/xtest"
 )
 
 /* ------------------------------------------------------------------- */
-/* For BaseBuilder Tests                                               */
+/* For BuilderImpl Tests                                               */
 /* ------------------------------------------------------------------- */
 
 func TestFormatJoins(t *testing.T) {
 	cases := []*wt.TestCase{
-		wt.NewCase("Check normal datas", "table_a AS a, table_b AS b", Joins{"table_a": "a", "table_b": "b"}),
-		wt.NewCase("Check empty table ", "table_a AS a", Joins{"table_a": "a", "": "b"}),
-		wt.NewCase("Check empty alias ", "table_b AS b", Joins{"table_a": "", "table_b": "b"}),
-		wt.NewCase("Check all emptys  ", "", Joins{"": ""}),
+		wt.NewCase("Check normal datas", "table_a AS a, table_b AS b", pd.Joins{"table_a": "a", "table_b": "b"}),
+		wt.NewCase("Check empty table ", "table_a AS a", pd.Joins{"table_a": "a", "": "b"}),
+		wt.NewCase("Check empty alias ", "table_b AS b", pd.Joins{"table_a": "", "table_b": "b"}),
+		wt.NewCase("Check all emptys  ", "", pd.Joins{"": ""}),
 	}
 
-	builder := &BaseBuilder{}
+	builder := &BuilderImpl{}
 	for _, c := range cases {
-		rst := builder.FormatJoins(c.Params.(Joins))
+		rst := builder.FormatJoins(c.Params.(pd.Joins))
 		if want := c.Want.(string); rst != want {
-			t.Fatal("BaseBuilder.FormatJoins error > want:", want, "but result is", rst)
+			t.Fatal("BuilderImpl.FormatJoins error > want:", want, "but result is", rst)
 		}
 	}
 }
@@ -57,12 +58,12 @@ func TestFormatLike(t *testing.T) {
 		wt.NewCase("Check emptys", "", LikeData{"", "", []string{}}),
 	}
 
-	builder := &BaseBuilder{}
+	builder := &BuilderImpl{}
 	for _, c := range cases {
 		param := c.Params.(LikeData)
 		rst := builder.FormatLike(param.Field, param.Filter, param.Pattern...)
 		if want := c.Want.(string); rst != want {
-			t.Fatal("BaseBuilder.FormatLike error > want:", want, "but result is", rst)
+			t.Fatal("BuilderImpl.FormatLike error > want:", want, "but result is", rst)
 		}
 	}
 }
@@ -84,7 +85,7 @@ func TestParseOut(t *testing.T) {
 	data := &MyTestData{}
 	fmt.Println("MyTestData json tag:")
 
-	builder := &BaseBuilder{}
+	builder := &BuilderImpl{}
 	tags, outs := builder.ParseOut(data)
 	for index, tag := range tags {
 		fmt.Println(fmt.Sprintf("% 12s", tag), "- out:", outs[index])

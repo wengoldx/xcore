@@ -8,12 +8,14 @@
 // 00001       2019/05/22   yangping       New version
 // -------------------------------------------------------------------
 
-package pd
+package provider
 
 import (
 	"database/sql"
 
 	"github.com/wengoldx/xcore/invar"
+	pd "github.com/wengoldx/xcore/mvc/provider"
+	"github.com/wengoldx/xcore/mvc/provider/builder"
 )
 
 // Table provider for using builder to build query string and args for
@@ -22,20 +24,23 @@ import (
 // Usage: Define the custom provider as follow code.
 //
 //	// define the custom provider.
-//	type SampleProvider struct {
-//		provider.TableProvider
-//	}
-//	s := &SampleProvider{*mysql.NewTable(
-//		provider.WithTable("sample"),  //set table name.
-//	)}
+//	type SampleTable struct { provider.ProviderImpl }
+//	s := &SampleTable{*mysql.NewTable("sample", _logsql)}
+//	mysql.SetClient(s)
+//
+//	// or create directory if client exist.
+//	s := provider.NewTableProvider(client,
+//		provider.WithTable("sample"), provider.WithDebug(true))
 //
 // Use mysql.NewTable(), mysql.NewTable() sqlite.NewTable() of mvc inner packages
 // to create TableProvider with connected mysql, mssql, sqlite database client.
-type TableProvider struct {
+type ProviderImpl struct {
 	BaseProvider
 	table string // Table name.
 	debug bool   // Debug mode for show builded query string, default false.
 }
+
+var _ pd.TableProvider = (*ProviderImpl)(nil)
 
 // Create a TableProvider with given database client.
 //
@@ -43,8 +48,8 @@ type TableProvider struct {
 //
 // This method call by 'sqlite3', 'mysql', 'mssql' module called to create
 // target table and bind with connected database client instance.
-func NewTableProvider(client DBClient, opts ...Option) *TableProvider {
-	tp := &TableProvider{}
+func NewTableProvider(client pd.DBClient, opts ...Option) pd.TableProvider {
+	tp := &ProviderImpl{}
 	tp.BaseProvider = *NewBaseProvider(client)
 	for _, optFunc := range opts {
 		optFunc(tp)
@@ -52,45 +57,53 @@ func NewTableProvider(client DBClient, opts ...Option) *TableProvider {
 	return tp
 }
 
-// The setter for set TableProvider fields.
-type Option func(provider *TableProvider)
+// The setter for set TableProvider options.
+type Option func(provider *ProviderImpl)
 
 // Specify the table name.
 func WithTable(table string) Option {
-	return func(provider *TableProvider) { provider.table = table }
+	return func(provider *ProviderImpl) { provider.table = table }
 }
 
 // Specify the debug mode.
 func WithDebug(debug bool) Option {
-	return func(provider *TableProvider) { provider.debug = debug }
+	return func(provider *ProviderImpl) { provider.debug = debug }
 }
 
 /* ------------------------------------------------------------------- */
-/* Create and Return Builder Instance FOR QIUD Actions                 */
+/* Create and Return Builder Instance FOR QUID Actions                 */
 /* ------------------------------------------------------------------- */
 
 // Create a query builder to query table records.
-func (p *TableProvider) Querier(t ...string) *QueryBuilder {
-	return NewQuery(p.getTable(t...)).Master(p)
+func (p *ProviderImpl) Querier(t ...string) pd.QueryBuilder {
+	query := builder.NewQuery(p.getTable(t...))
+	query.SetProvider(p)
+	return query
 }
 
 // Create a insert builder to insert records to table.
-func (p *TableProvider) Inserter(t ...string) *InsertBuilder {
-	return NewInsert(p.getTable(t...)).Master(p)
+func (p *ProviderImpl) Inserter(t ...string) pd.InsertBuilder {
+	insert := builder.NewInsert(p.getTable(t...))
+	insert.SetProvider(p)
+	return insert
 }
 
 // Create a update builder to update table records.
-func (p *TableProvider) Updater(t ...string) *UpdateBuilder {
-	return NewUpdate(p.getTable(t...)).Master(p)
+func (p *ProviderImpl) Updater(t ...string) pd.UpdateBuilder {
+	update := builder.NewUpdate(p.getTable(t...))
+	update.SetProvider(p)
+	return update
 }
 
 // Create a delete builder to delete table records.
-func (p *TableProvider) Deleter(t ...string) *DeleteBuilder {
-	return NewDelete(p.getTable(t...)).Master(p)
+func (p *ProviderImpl) Deleter(t ...string) pd.DeleteBuilder {
+	delete := builder.NewDelete(p.getTable(t...))
+	delete.SetProvider(p)
+	return delete
 }
 
 // Return target table name or current provider table name.
-func (p *TableProvider) getTable(t ...string) string {
+func (p *ProviderImpl) getTable(t ...string) string {
 	if len(t) > 0 && t[0] != "" {
 		return t[0]
 	}
@@ -109,7 +122,7 @@ func (p *TableProvider) getTable(t ...string) string {
 //	h.Querier().Wheres(pd.Wheres{"account=?": acc}).Has()
 //
 // Use None() method to check whether unexist.
-func (p *TableProvider) Has(builder *QueryBuilder) (bool, error) {
+func (p *ProviderImpl) Has(builder pd.QueryBuilder) (bool, error) {
 	query, args := builder.Tags("*").Build(p.debug)
 	return p.BaseProvider.Has(query, args...)
 }
@@ -122,7 +135,7 @@ func (p *TableProvider) Has(builder *QueryBuilder) (bool, error) {
 //	h.Querier().Wheres(pd.Wheres{"account=?": acc}).None()
 //
 // Use Has() method to check has result.
-func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
+func (p *ProviderImpl) None(builder pd.QueryBuilder) (bool, error) {
 	has, err := p.Has(builder)
 	return !has, err
 }
@@ -135,7 +148,7 @@ func (p *TableProvider) None(builder *QueryBuilder) (bool, error) {
 //	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Count()
 //
 // Use BaseProvider.Count() method to direct execute query string.
-func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
+func (p *ProviderImpl) Count(builder pd.QueryBuilder) (int, error) {
 	query, args := builder.Tags("COUNT(*)").Build(p.debug)
 	return p.BaseProvider.Count(query, args...)
 }
@@ -144,7 +157,7 @@ func (p *TableProvider) Count(builder *QueryBuilder) (int, error) {
 // UpdateBuilder or DeleteBuilder, it not check the affected row counts.
 //
 // Use BaseProvider.Exec() method to direct execute query string.
-func (p *TableProvider) Exec(builder SQLBuilder) error {
+func (p *ProviderImpl) Exec(builder pd.SQLBuilder) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Exec(query, args...)
 }
@@ -153,7 +166,7 @@ func (p *TableProvider) Exec(builder SQLBuilder) error {
 // UpdateBuilder or DeleteBuilder, and check the affected row counts.
 //
 // Use BaseProvider.Exec() method to direct execute query string.
-func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
+func (p *ProviderImpl) ExecResult(builder pd.SQLBuilder) (int64, error) {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.ExecResult(query, args...)
 }
@@ -163,19 +176,9 @@ func (p *TableProvider) ExecResult(builder SQLBuilder) (int64, error) {
 //
 // # NOTICE:
 //	- Use BaseProvider.One() method to direct execute query string.
-func (p *TableProvider) One(builder *QueryBuilder, cb ScanCallback) error {
+func (p *ProviderImpl) OneScan(builder pd.QueryBuilder, cb pd.ScanCallback) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.One(query, cb, args...)
-}
-
-// Query one record by given builder builded query string, and return the
-// result datas by given outs params.
-//
-// # NOTICE:
-//	- Use BaseProvider.OneDone() method to direct execute query string.
-//	- Use QueryBuilder.OneDone() method to query result by orm model.
-func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
-	return p.OneDone(builder, nil, outs...)
 }
 
 // Query one record by given builder builded query string, and return the
@@ -185,16 +188,26 @@ func (p *TableProvider) OneOuts(builder *QueryBuilder, outs ...any) error {
 // # NOTICE:
 //	- Use BaseProvider.OneDone() method to direct execute query string.
 //	- Use QueryBuilder.OneDone() method to query result by orm model.
-func (p *TableProvider) OneDone(builder *QueryBuilder, done DoneCallback, outs ...any) error {
+func (p *ProviderImpl) OneDone(builder pd.QueryBuilder, done pd.DoneCallback, outs ...any) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.OneDone(query, outs, done, args...)
+}
+
+// Query one record by given builder builded query string, and return the
+// result datas by given outs params.
+//
+// # NOTICE:
+//	- Use BaseProvider.OneDone() method to direct execute query string.
+//	- Use QueryBuilder.OneDone() method to query result by orm model.
+func (p *ProviderImpl) OneOuts(builder pd.QueryBuilder, outs ...any) error {
+	return p.OneDone(builder, nil, outs...)
 }
 
 // Query records by given builder builded query string, and read datas
 // from scan callback.
 //
 // Use BaseProvider.Query() method to direct execute query string.
-func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
+func (p *ProviderImpl) Query(builder pd.QueryBuilder, cb pd.ScanCallback) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, cb, args...)
 }
@@ -210,7 +223,7 @@ func (p *TableProvider) Query(builder *QueryBuilder, cb ScanCallback) error {
 //		return []any{&iv.Name}
 //	})
 //	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
-func (p *TableProvider) Array(builder *QueryBuilder, creator SQLCreator) error {
+func (p *ProviderImpl) Array(builder pd.QueryBuilder, creator pd.SQLCreator) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Query(query, func(rows *sql.Rows) error {
 		outs := creator.NewItem()
@@ -225,9 +238,9 @@ func (p *TableProvider) Array(builder *QueryBuilder, creator SQLCreator) error {
 // single value, or inserted rows count of multiple values.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *TableProvider) Insert(builder *InsertBuilder) (int64, error) {
+func (p *ProviderImpl) Insert(builder pd.InsertBuilder) (int64, error) {
 	query, args := builder.Build(p.debug)
-	if cnt := len(builder.rows); cnt <= 0 {
+	if cnt := builder.ValuesSize(); cnt <= 0 {
 		return -1, invar.ErrInvalidData
 	} else if cnt == 1 {
 		return p.BaseProvider.Insert(query, args...)
@@ -240,7 +253,7 @@ func (p *TableProvider) Insert(builder *InsertBuilder) (int64, error) {
 // but not return insert id or counts.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *TableProvider) InsertCheck(builder *InsertBuilder) error {
+func (p *ProviderImpl) InsertCheck(builder pd.InsertBuilder) error {
 	_, err := p.Insert(builder)
 	return err
 }
@@ -248,8 +261,8 @@ func (p *TableProvider) InsertCheck(builder *InsertBuilder) error {
 // Insert the given rows into target table without check insert counts.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *TableProvider) InsertUncheck(builder *InsertBuilder) error {
-	if cnt := len(builder.rows); cnt <= 0 {
+func (p *ProviderImpl) InsertUncheck(builder pd.InsertBuilder) error {
+	if builder.ValuesSize() <= 0 {
 		return invar.ErrInvalidData
 	}
 	return p.Exec(builder)
@@ -259,7 +272,7 @@ func (p *TableProvider) InsertUncheck(builder *InsertBuilder) error {
 // return invar.ErrNotChanged error when none updated.
 //
 // Use BaseProvider.Update() method to direct execute query string.
-func (p *TableProvider) Update(builder *UpdateBuilder) error {
+func (p *ProviderImpl) Update(builder pd.UpdateBuilder) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Update(query, args...)
 }
@@ -268,7 +281,7 @@ func (p *TableProvider) Update(builder *UpdateBuilder) error {
 // return invar.ErrNotChanged error when none deleted.
 //
 // Use BaseProvider.Delete() method to direct execute query string.
-func (p *TableProvider) Delete(builder *DeleteBuilder) error {
+func (p *ProviderImpl) Delete(builder pd.DeleteBuilder) error {
 	query, args := builder.Build(p.debug)
 	return p.BaseProvider.Delete(query, args...)
 }
