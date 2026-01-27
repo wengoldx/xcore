@@ -23,9 +23,7 @@ import (
 
 // Base provider for simple access database datas.
 type BaseProvider struct {
-	client pd.DBClient // Database conncet client.
-
-	/* Only for BaseProvider as build utils! */
+	client  pd.DBClient    // Database conncet client.
 	Builder pd.BaseBuilder // Base builder as utils tools.
 }
 

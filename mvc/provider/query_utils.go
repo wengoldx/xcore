@@ -37,6 +37,13 @@ type Module[T any] struct {
 var _ ModuleCreator = (*Module[any])(nil)
 
 // Create a ModuleCreator instance to generate target module items object.
+//
+//	datas := []*types.Account{}
+//	err := h.Querier().Tags("uid", "email").Wheres(...).
+//		Array(pd.NewCreator(func(iv *types.Account) []any {
+//			datas = append(datas, iv)
+//			return []any{&iv.UID, &iv.Email}
+//		}))
 func NewCreator[T any](cb GetFields[T]) *Module[T] {
 	return &Module[T]{OutsFunc : cb}
 }
