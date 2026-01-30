@@ -116,6 +116,24 @@ func ToStrings[T BuildIn](values []T) []string {
 	return vs
 }
 
+// Decode json string to struct object, maybe return nil when unmarshal
+// error or obj is nil, or src is empty string.
+//
+//	types MyData struc {
+//	    ID int64 `json:"id"` // must define json tag!
+//	}
+//	data := utils.ToJson("{\"id\": 123}", &MyData{})
+//	// data is MyData object {id:123} or nil.
+func ToJson[T any](src string, obj *T) *T {
+	src = strings.TrimSpace(src)
+	if src != "" && obj != nil {
+		if json.Unmarshal([]byte(src), obj) == nil {
+			return obj
+		}
+	}
+	return nil
+}
+
 // Join the strict build-in types values as string like "1,2,3",
 // "true,false", "4.5,6.78", "'abc','bce'" and so on, then append 
 // the joined string into the query which set by caller.
