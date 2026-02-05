@@ -44,7 +44,7 @@ func TestViaJwtToken(t *testing.T) {
 				t.Fatal("New Jwt token, err:", err)
 			} else if decode, err := ViaJwtToken(token, salt); err != nil {
 				if strings.HasPrefix(err.Error(), "token is expired by") {
-					t.Log("Verified expire Jwt token!")
+					t.Log("Verified expire Jwt token! >", decode)
 				} else {
 					t.Fatal("Verify Jwt token, err:", err)
 				}
