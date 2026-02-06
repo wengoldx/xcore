@@ -253,3 +253,19 @@ func (m *Sqlite) CreateTables(tables ...string) error {
 	}
 	return nil
 }
+
+// Check connected database has any tables, it useful
+// to check target sqlite database whether inited!
+func (m *Sqlite) HasTables() (bool, error) {
+	if m.conn == nil {
+		return false, invar.ErrBadDBConnect
+	}
+
+	query := "SELECT name FROM sqlite_master WHERE type='table' LIMIT 1"
+	tables, err := m.conn.Query(query)
+	if err != nil {
+		return false, err
+	}
+	defer tables.Close()
+	return tables.Next(), nil
+}
