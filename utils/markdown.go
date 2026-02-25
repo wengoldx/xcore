@@ -37,7 +37,7 @@ func MarkdownToText(src string) (string, error) {
 
 	var text bytes.Buffer
 	walkHtmlNode(doc, &text, func(n *html.Node) bool {
-		if n.Type == html.TextNode {
+		if n.Type == html.TextNode && n.Data != "" {
 			text.WriteString(n.Data)
 		}
 		return true
