@@ -14,15 +14,16 @@ import (
 	"fmt"
 	"net/url"
 
-	pd "github.com/wengoldx/xcore/mvc/provider"
+	"github.com/wengoldx/xcore/mvc/provider/builder"
 	"github.com/wengoldx/xcore/mvc/provider/mysql"
+	"github.com/wengoldx/xcore/mvc/provider/provider"
 	"github.com/wengoldx/xcore/utils"
 	"github.com/wengoldx/xcore/utils/xhttp"
 )
 
 // Restful api tester runtime configs.
 type tester struct {
-	tabler   pd.Tabler         // TableProvider instance.
+	tabler   *provider.TableProvider     // TableProvider instance.
 	tokens   map[string]string // Auth token of test user, format as {uuid:token}.
 	envs     map[string]any    // Env caches, user ut.Get(key) and ut.Set(key, value) to get and set datas.
 	author   string            // Author header, such as 'WENGOLD-V1.1', 'WENGOLD-V1.2', 'WENGOLD-V2.0'
@@ -56,10 +57,10 @@ func Tester() *tester { return _t }
 /* SQL Querier, Inserter, Updater, Deleter                             */
 /* ------------------------------------------------------------------- */
 
-func Querier(t ...string) pd.QueryBuilder   { return _t.tabler.Querier(utils.Variable(t, "")) }
-func Inserter(t ...string) pd.InsertBuilder { return _t.tabler.Inserter(utils.Variable(t, "")) }
-func Updater(t ...string) pd.UpdateBuilder  { return _t.tabler.Updater(utils.Variable(t, "")) }
-func Deleter(t ...string) pd.DeleteBuilder  { return _t.tabler.Deleter(utils.Variable(t, "")) }
+func Querier(t ...string) *builder.QueryBuilder   { return _t.tabler.Querier(utils.Variable(t, "")) }
+func Inserter(t ...string) *builder.InsertBuilder { return _t.tabler.Inserter(utils.Variable(t, "")) }
+func Updater(t ...string) *builder.UpdateBuilder  { return _t.tabler.Updater(utils.Variable(t, "")) }
+func Deleter(t ...string) *builder.DeleteBuilder  { return _t.tabler.Deleter(utils.Variable(t, "")) }
 
 /* ------------------------------------------------------------------- */
 /* Env datas getter and setter                                         */

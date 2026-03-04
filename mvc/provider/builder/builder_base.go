@@ -23,25 +23,27 @@ import (
 // sql string for database QUID (query, update, insert, delete) actions.
 //
 // # WARNING:
-//	- The BuilderImpl not implement SQLBuilder.Build().
+//	- The BaseBuilder not implement SQLBuilder.Build().
 //	- Use QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder to build whole sql string.
-type BuilderImpl struct {
-	provider pd.Tabler // Table provider for execute sql actions.
-	table    string    // Table name for update
+type BaseBuilder struct {
+	provider pd.ProviderUtils // Table provider utils.
+	table    string           // Table name for update.
 }
 
-var _ pd.BaseBuilder = (*BuilderImpl)(nil)
-
-func NewBuilder(table string) BuilderImpl {
-	return BuilderImpl{table: table}
+// Create a BaseBuilder instance to support sql build utils.
+func NewBuilder(table string) *BaseBuilder {
+	return &BaseBuilder{table: table}
 }
 
 /* ------------------------------------------------------------------- */
 /* For BaseBuilder interface                                           */
 /* ------------------------------------------------------------------- */
 
-func (b *BuilderImpl) SetProvider(p pd.Tabler) { b.provider = p }           // Specify master provider.
-func (b *BuilderImpl) HasProvider() bool       { return b.provider != nil } // Check master provider whether inited.
+// Specify provider utils.
+func (b *BaseBuilder) SetProvider(p pd.ProviderUtils) { b.provider = p }
+
+// Check provider utils whether inited.
+func (b *BaseBuilder) HasProvider() bool { return b.provider != nil }
 
 // Format table joins to string for multi-table query, it will filter out the
 // empty table or alias join datas.
@@ -51,7 +53,7 @@ func (b *BuilderImpl) HasProvider() bool       { return b.provider != nil } // C
 //	}
 //	joins := builder.FormatJoins(tables)
 //	fmt.Println(joins) // => account AS a, profile AS b
-func (b *BuilderImpl) FormatJoins(tables pd.Joins) string {
+func (b *BaseBuilder) FormatJoins(tables pd.Joins) string {
 	ts := []string{}
 	for table, alias := range tables {
 		table, alias = strings.TrimSpace(table), strings.TrimSpace(alias)
@@ -71,7 +73,7 @@ func (b *BuilderImpl) FormatJoins(tables pd.Joins) string {
 //
 // # WARNING:
 //	- Here will filter out the nil values in wheres.
-func (b *BuilderImpl) FormatWheres(wheres pd.Wheres, sep ...string) (string, []any) {
+func (b *BaseBuilder) FormatWheres(wheres pd.Wheres, sep ...string) (string, []any) {
 	where, args := "", []any{}
 	if len(wheres) > 0 {
 		conditions := []string{}
@@ -109,7 +111,7 @@ func (b *BuilderImpl) FormatWheres(wheres pd.Wheres, sep ...string) (string, []a
 //
 // # WARNING:
 //	- Here will filter out the nil values in args.
-func (b *BuilderImpl) FormatWhereIn(field string, args []any) string {
+func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 	if len(args) > 0 {
 		values := strings.Join(utils.ToStrings(args), ",")
 		return fmt.Sprintf("%s IN (%s)", field, values)
@@ -121,7 +123,7 @@ func (b *BuilderImpl) FormatWhereIn(field string, args []any) string {
 //
 //	- desc = true : ORDER BY field DESC
 //	- desc = false: ORDER BY field ASC
-func (b *BuilderImpl) FormatOrder(field string, desc ...bool) string {
+func (b *BaseBuilder) FormatOrder(field string, desc ...bool) string {
 	if field != "" {
 		isdesc := utils.Variable(desc, true) // default for DESC.
 		order := utils.Condition(isdesc, "DESC", "ASC")
@@ -133,7 +135,7 @@ func (b *BuilderImpl) FormatOrder(field string, desc ...bool) string {
 // Format limit condition to string.
 //
 //	- output string: LIMIT n
-func (b *BuilderImpl) FormatLimit(n int) string {
+func (b *BaseBuilder) FormatLimit(n int) string {
 	if n > 0 {
 		return fmt.Sprintf("LIMIT %d", n)
 	}
@@ -146,7 +148,7 @@ func (b *BuilderImpl) FormatLimit(n int) string {
 //	- Perfix pattern: field LIKE 'filter%%'
 //	- Center pattern: field LIKE '%%filter%%'
 //	- Suffix pattern: field LIKE '%%filter'
-func (b *BuilderImpl) FormatLike(field, filter string, pattern ...string) string {
+func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string {
 	if field != "" && filter != "" {
 		lower := strings.ToLower(utils.Variable(pattern, "center"))
 		switch lower {
@@ -179,7 +181,7 @@ func (b *BuilderImpl) FormatLike(field, filter string, pattern ...string) string
 //
 // This method not well support insert nil value by arg, the nil
 // value will inserted like '<nil>' string, not NULL value;
-func (b *BuilderImpl) FormatInserts(values pd.KValues) (string, string, []any) {
+func (b *BaseBuilder) FormatInserts(values pd.KValues) (string, string, []any) {
 	fields, holders, args := "", "", []any{}
 	if cnt := len(values); cnt > 0 {
 		tags := []string{}
@@ -216,7 +218,7 @@ func (b *BuilderImpl) FormatInserts(values pd.KValues) (string, string, []any) {
 //
 // # WARNING:
 //	- This method support update nil arg as NULL value.
-func (b *BuilderImpl) FormatSets(values pd.KValues) (string, []any) {
+func (b *BaseBuilder) FormatSets(values pd.KValues) (string, []any) {
 	fields, args := "", []any{}
 	if cnt := len(values); cnt > 0 {
 		sets := []string{}
@@ -250,7 +252,7 @@ func (b *BuilderImpl) FormatSets(values pd.KValues) (string, []any) {
 //		"Secure": nil,      // Filter out nil value
 //	}
 //	// => Age=16, Male=true, Name='ZhangSan', Height=176.8
-func (p *BuilderImpl) FormatValues(values pd.KValues) string {
+func (p *BaseBuilder) FormatValues(values pd.KValues) string {
 	sets := []string{}
 	for key, value := range values {
 		if key != "" && value != nil {
@@ -266,7 +268,7 @@ func (p *BuilderImpl) FormatValues(values pd.KValues) string {
 }
 
 // Ensure where condition prefixed 'WHERE' keyword when not empty.
-func (b *BuilderImpl) CheckWhere(wheres string) string {
+func (b *BaseBuilder) CheckWhere(wheres string) string {
 	wheres = strings.TrimSpace(wheres)
 	if wheres != "" && !strings.HasPrefix(wheres, "WHERE ") {
 		wheres = "WHERE " + wheres
@@ -275,7 +277,7 @@ func (b *BuilderImpl) CheckWhere(wheres string) string {
 }
 
 // Ensure query string must tail 'LIMIT 1' for query the top one record.
-func (b *BuilderImpl) CheckLimit(query string) string {
+func (b *BaseBuilder) CheckLimit(query string) string {
 	query = strings.TrimSpace(query)
 	if query != "" && !strings.HasSuffix(query, "LIMIT 1") &&
 		!strings.HasSuffix(query, "limit 1") {
@@ -293,7 +295,7 @@ func (b *BuilderImpl) CheckLimit(query string) string {
 //	- WHERE field LIKE '%%filter%%'
 //
 // Use FormatWheres(), FormatWhereIn() to format Wheres data or where in condition.
-func (b *BuilderImpl) BuildWheres(wheres pd.Wheres, ins, like string, sep ...string) (string, []any) {
+func (b *BaseBuilder) BuildWheres(wheres pd.Wheres, ins, like string, sep ...string) (string, []any) {
 	where, args := b.FormatWheres(wheres, sep...) // WHERE wheres
 	if where != "" {
 		// WHERE wheres AND field IN (v1,v2...)
@@ -321,17 +323,17 @@ func (b *BuilderImpl) BuildWheres(wheres pd.Wheres, ins, like string, sep ...str
 }
 
 // Join the given where conditions without input AND and OR connectors.
-func (b *BuilderImpl) JoinWheres(wheres ...string) string {
+func (b *BaseBuilder) JoinWheres(wheres ...string) string {
 	return strings.Join(wheres, " ")
 }
 
 // Join the given where conditions with input AND connectors.
-func (b *BuilderImpl) JoinAndWheres(wheres ...string) string {
+func (b *BaseBuilder) JoinAndWheres(wheres ...string) string {
 	return strings.Join(wheres, " AND ")
 }
 
 // Join the given where conditions with input OR connectors.
-func (b *BuilderImpl) JoinOrWheres(wheres ...string) string {
+func (b *BaseBuilder) JoinOrWheres(wheres ...string) string {
 	return strings.Join(wheres, " OR ")
 }
 
@@ -347,7 +349,7 @@ func (b *BuilderImpl) JoinOrWheres(wheres ...string) string {
 // # WARNING:
 //	- The 'out' param must create as a struct pointer for this methoed!
 //	- The 'out' struct field only support build in types.
-func (b *BuilderImpl) ParseOut(out any) ([]string, []any) {
+func (b *BaseBuilder) ParseOut(out any) ([]string, []any) {
 	tags, outs := []string{}, []any{}
 
 	vp := reflect.ValueOf(out) // rv = &{}

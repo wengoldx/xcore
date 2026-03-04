@@ -24,11 +24,8 @@ import (
 //	UPDATE table
 //		SET v1=?, v2=?, v3=?...
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-//
-// See QuerierImpl, InserterImpl, DeleterImpl.
-type UpdaterImpl struct {
-	BuilderImpl
-
+type UpdateBuilder struct {
+	BaseBuilder
 	values pd.KValues // Target fields and values to update.
 	wheres pd.Wheres  // Where conditions and args values.
 	sep    string     // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
@@ -36,23 +33,25 @@ type UpdaterImpl struct {
 	like   string     // Like conditions string.
 }
 
-var _ pd.SQLBuilder = (*UpdaterImpl)(nil)
-var _ pd.UpdateBuilder = (*UpdaterImpl)(nil)
+var _ pd.SQLBuilder = (*UpdateBuilder)(nil)
 
 // Create a UpdateBuilder instance to build a query string.
-func NewUpdate(table string) pd.UpdateBuilder {
-	return &UpdaterImpl{BuilderImpl: NewBuilder(table)}
+func NewUpdate(table string) *UpdateBuilder {
+	return &UpdateBuilder{BaseBuilder: *NewBuilder(table)}
 }
 
 /* ------------------------------------------------------------------- */
-/* SQL Action Utils By Using master Provider                           */
+/* For Provider Update Utils                                           */
 /* ------------------------------------------------------------------- */
 
-func (b *UpdaterImpl) Exec() error   { return b.provider.Exec(b) }   // Update target record without check.
-func (b *UpdaterImpl) Update() error { return b.provider.Update(b) } // Update target record and check changes counts.
+// Update record without check.
+func (b *UpdateBuilder) Exec() error { return b.provider.Exec(b) }
+
+// Update record and check changed counts.
+func (b *UpdateBuilder) Update() error { return b.provider.Update(b) }
 
 /* ------------------------------------------------------------------- */
-/* For UpdateBuilder interface                                         */
+/* For Query String Build Utils                                        */
 /* ------------------------------------------------------------------- */
 
 // Specify the values of row to update.
@@ -67,7 +66,7 @@ func (b *UpdaterImpl) Update() error { return b.provider.Update(b) } // Update t
 //	}
 //	// => SET Age=?, Male=?, Name=?, Height=?
 //	// => values: []any{16, true, "ZhangSan", 176.8}
-func (b *UpdaterImpl) Values(row pd.KValues) pd.UpdateBuilder {
+func (b *UpdateBuilder) Values(row pd.KValues) *UpdateBuilder {
 	b.values = row
 	return b
 }
@@ -79,7 +78,7 @@ func (b *UpdaterImpl) Values(row pd.KValues) pd.UpdateBuilder {
 //	}
 //	// => WHERE acc=? AND age>=? AND role<>?
 //	// => args ("123", 20, "admin")
-func (b *UpdaterImpl) Wheres(where pd.Wheres) pd.UpdateBuilder {
+func (b *UpdateBuilder) Wheres(where pd.Wheres) *UpdateBuilder {
 	b.wheres = where
 	return b
 }
@@ -87,13 +86,13 @@ func (b *UpdaterImpl) Wheres(where pd.Wheres) pd.UpdateBuilder {
 // Specify the where in condition with field and args for query.
 //
 //	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
-func (b *UpdaterImpl) WhereIn(field string, args []any) pd.UpdateBuilder {
+func (b *UpdateBuilder) WhereIn(field string, args []any) *UpdateBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (b *UpdaterImpl) WhereSep(sep string) pd.UpdateBuilder {
+func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
 	switch s := strings.ToUpper(sep); s {
 	case "AND", "OR", " " /* for none where connector */ :
 		b.sep = s
@@ -106,13 +105,13 @@ func (b *UpdaterImpl) WhereSep(sep string) pd.UpdateBuilder {
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
 //	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
 //	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
-func (b *UpdaterImpl) Like(field, filter string, pattern ...string) pd.UpdateBuilder {
+func (b *UpdateBuilder) Like(field, filter string, pattern ...string) *UpdateBuilder {
 	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
 
 // Reset builder datas for next prepare and build.
-func (b *UpdaterImpl) Reset() pd.UpdateBuilder {
+func (b *UpdateBuilder) Reset() *UpdateBuilder {
 	clear(b.values)
 	clear(b.wheres)
 	b.sep, b.ins, b.like = "", "", ""
@@ -128,7 +127,7 @@ func (b *UpdaterImpl) Reset() pd.UpdateBuilder {
 //	UPDATE table
 //		SET v1=?, v2=?, v3=?...
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-func (b *UpdaterImpl) Build(debug ...bool) (string, []any) {
+func (b *UpdateBuilder) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 
 	tags, args := b.FormatSets(b.values)                      // SET v1=?,v2=?...

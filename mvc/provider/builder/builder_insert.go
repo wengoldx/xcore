@@ -23,33 +23,36 @@ import (
 //
 //	`MySQL & MSSQL`: INSERT table (tags) VALUES (?, ?, ?)...
 //	`SQLITE`       : INSERT INTO table (tags) VALUES (?, ?, ?)...
-//
-// See QuerierImpl, UpdaterImpl, DeleterImpl.
-type InserterImpl struct {
-	BuilderImpl
-
+type InsertBuilder struct {
+	BaseBuilder
 	rows []pd.KValues // Target row records to insert.
 }
 
-var _ pd.SQLBuilder = (*InserterImpl)(nil)
-var _ pd.InsertBuilder = (*InserterImpl)(nil)
+var _ pd.SQLBuilder = (*InsertBuilder)(nil)
 
 // Create a InsertBuilder instance to build a query string.
-func NewInsert(table string) pd.InsertBuilder {
-	return &InserterImpl{BuilderImpl: NewBuilder(table)}
+func NewInsert(table string) *InsertBuilder {
+	return &InsertBuilder{BaseBuilder: *NewBuilder(table)}
 }
 
 /* ------------------------------------------------------------------- */
-/* SQL Action Utils By Using master Provider                           */
+/* For Provider Insert Utils                                           */
 /* ------------------------------------------------------------------- */
 
-func (b *InserterImpl) Exec() error            { return b.provider.Exec(b) }          // Insert a new record without check.
-func (b *InserterImpl) Insert() (int64, error) { return b.provider.Insert(b) }        // Insert records and check inserted row id or counts.
-func (b *InserterImpl) InsertCheck() error     { return b.provider.InsertCheck(b) }   // Insert records and check result.
-func (b *InserterImpl) InsertUncheck() error   { return b.provider.InsertUncheck(b) } // Insert records without result check.
+// Insert a new record without check.
+func (b *InsertBuilder) Exec() error { return b.provider.Exec(b) }
+
+// Insert records and check inserted row id or counts.
+func (b *InsertBuilder) Insert() (int64, error) { return b.provider.Insert(b) }
+
+// Insert records and check result.
+func (b *InsertBuilder) InsertCheck() error { return b.provider.InsertCheck(b) }
+
+// Insert records without result check.
+func (b *InsertBuilder) InsertUncheck() error { return b.provider.InsertUncheck(b) }
 
 /* ------------------------------------------------------------------- */
-/* For InsertBuilder interface                                         */
+/* For Query String Build Utils                                        */
 /* ------------------------------------------------------------------- */
 
 // Specify the values of row to insert.
@@ -75,18 +78,19 @@ func (b *InserterImpl) InsertUncheck() error   { return b.provider.InsertUncheck
 //		{ "Age": 15, "Name": "LiXu", "Height": 168.5 },
 //	}
 //	// => (Age=16,Name="ZhangSan",Height=176.8),(Age=15,Name="LiXu",Height=168.5)
-func (b *InserterImpl) Values(row ...pd.KValues) pd.InsertBuilder {
+func (b *InsertBuilder) Values(row ...pd.KValues) *InsertBuilder {
 	b.rows = row
 	return b
 }
 
 // Reset builder datas for next prepare and build.
-func (b *InserterImpl) Reset() pd.InsertBuilder {
+func (b *InsertBuilder) Reset() *InsertBuilder {
 	clear(b.rows)
 	return b
 }
 
-func (b *InserterImpl) ValuesSize() int {
+// Return rows count which insert to table later.
+func (b *InsertBuilder) ValRows() int {
 	return len(b.rows)
 }
 
@@ -105,7 +109,7 @@ func (b *InserterImpl) ValuesSize() int {
 // insert, but good for insert nil value as NULL for multiple rows insert.
 //
 // And, it use the first row args key as the column headers.
-func (b *InserterImpl) Build(debug ...bool) (string, []any) {
+func (b *InsertBuilder) Build(debug ...bool) (string, []any) {
 	// diff := utils.Condition(b.driver == "sqlite", "INTO ", "")
 	if cnt := len(b.rows); cnt == 1 {
 		// INSERT INTO table (v1, v2...) VALUES (?,?...)'

@@ -25,11 +25,8 @@ import (
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
 //		LIMIT limit.
-//
-// See InserterImpl, UpdaterImpl, DeleterImpl.
-type QuerierImpl struct {
-	BuilderImpl
-
+type QueryBuilder struct {
+	BaseBuilder
 	joins  pd.Joins  // Table-Alias for multi-table joins.
 	tags   []string  // Target fields for output values.
 	outs   []any     // The params output query results, only for single query.
@@ -41,68 +38,73 @@ type QuerierImpl struct {
 	limit  int       // Limit number.
 }
 
-var _ pd.SQLBuilder = (*QuerierImpl)(nil)
-var _ pd.QueryBuilder = (*QuerierImpl)(nil)
+var _ pd.SQLBuilder = (*QueryBuilder)(nil)
 
 // Create a QueryBuilder instance to build a query string.
-func NewQuery(table string) pd.QueryBuilder {
-	return &QuerierImpl{BuilderImpl: NewBuilder(table)}
+func NewQuery(table string) *QueryBuilder {
+	return &QueryBuilder{BaseBuilder: *NewBuilder(table)}
 }
 
-/* ------------------------------------------------------------------- */
-/* SQL Action Utils By Using master Provider                           */
-/* ------------------------------------------------------------------- */
-
-func (b *QuerierImpl) Has() (bool, error)               { return b.provider.Has(b) }         // Check whether has the target record.
-func (b *QuerierImpl) None() (bool, error)              { return b.provider.None(b) }        // Check whether unexist the target record.
-func (b *QuerierImpl) Count() (int, error)              { return b.provider.Count(b) }       // Count the mathed query condition records.
-func (b *QuerierImpl) OneScan(cb pd.ScanCallback) error { return b.provider.OneScan(b, cb) } // Query the top one record with scan callback.
-func (b *QuerierImpl) Query(cb pd.ScanCallback) error   { return b.provider.Query(b, cb) }   // Query the all matched condition records.
-func (b *QuerierImpl) Array(cr pd.ModuleCreator) error  { return b.provider.Array(b, cr) }   // Query the all records with the ModuleCreator utils.
-
-// Query the top one record and return the results without scaner
-// callback, it canbe set the finally done callback called when
-// result success read.
-func (b *QuerierImpl) OneDone(done ...pd.DoneCallback) error {
-	if len(done) > 0 && done[0] != nil {
-		return b.provider.OneDone(b, done[0], b.outs...)
-	} else {
-		return b.provider.OneOuts(b, b.outs...)
-	}
-}
+// Return out params, maybe empty when called before Build().
+func (b *QueryBuilder) GetOuts() []any { return b.outs }
 
 /* ------------------------------------------------------------------- */
-/* For QueryBuilder interface                                          */
+/* For Provider Query Utils                                            */
+/* ------------------------------------------------------------------- */
+
+// Check whether has the target record.
+func (b *QueryBuilder) Has() (bool, error) { return b.provider.Has(b) }
+
+// Check whether unexist the target record.
+func (b *QueryBuilder) None() (bool, error) { return b.provider.None(b) }
+
+// Count the mathed query condition records.
+func (b *QueryBuilder) Count() (int, error) { return b.provider.Count(b) }
+
+// Query the top one record with scan callback.
+func (b *QueryBuilder) OneScan(cb pd.ScanCallback) error { return b.provider.OneScan(b, cb) }
+
+// Query the top one record and translate result by done callback.
+func (b *QueryBuilder) OneDone(done ...pd.DoneCallback) error { return b.provider.OneDone(b, done...) }
+
+// Query the all matched condition records.
+func (b *QueryBuilder) Query(cb pd.ScanCallback) error { return b.provider.Query(b, cb) }
+
+// Query the all records with the Creator utils.
+func (b *QueryBuilder) Array(cr pd.Creator) error { return b.provider.Array(b, cr) }
+
+/* ------------------------------------------------------------------- */
+/* For Query String Build Utils                                        */
 /* ------------------------------------------------------------------- */
 
 // Specify the table-alias joins for query.
-func (b *QuerierImpl) Joins(tables pd.Joins) pd.QueryBuilder {
+func (b *QueryBuilder) Joins(tables pd.Joins) *QueryBuilder {
 	b.joins = tables
 	return b
 }
 
 // Specify the target output fields name for query.
-func (b *QuerierImpl) Tags(tag ...string) pd.QueryBuilder {
+func (b *QueryBuilder) Tags(tag ...string) *QueryBuilder {
 	b.tags = tag
 	return b
 }
 
 // Specify the target output params for single query, the
 // outs length must same as Tags length.
-func (b *QuerierImpl) Outs(outs ...any) pd.QueryBuilder {
+func (b *QueryBuilder) Outs(outs ...any) *QueryBuilder {
 	b.outs = outs
 	return b
 }
 
 // Specify the target column and output param for single query.
-func (b *QuerierImpl) TagOut(tag string, out any) pd.QueryBuilder {
+func (b *QueryBuilder) TagOut(tag string, out any) *QueryBuilder {
 	return b.Tags(tag).Outs(out)
 }
 
 // Specify the target columns and struct fields for single query.
 //
-//	Set BuilderImpl.ParseOut() get more info.
-func (b *QuerierImpl) Parse(out any) pd.QueryBuilder {
+//	@Set BaseBuilder.ParseOut() get more info.
+func (b *QueryBuilder) Parse(out any) *QueryBuilder {
 	b.tags, b.outs = b.ParseOut(out)
 	return b
 }
@@ -114,7 +116,7 @@ func (b *QuerierImpl) Parse(out any) pd.QueryBuilder {
 //	}
 //	// => WHERE acc=? AND age>=? AND role<>?
 //	// => args ("123", 20, "admin")
-func (b *QuerierImpl) Wheres(where pd.Wheres) pd.QueryBuilder {
+func (b *QueryBuilder) Wheres(where pd.Wheres) *QueryBuilder {
 	b.wheres = where
 	return b
 }
@@ -122,13 +124,13 @@ func (b *QuerierImpl) Wheres(where pd.Wheres) pd.QueryBuilder {
 // Specify the where in condition with field and args for query.
 //
 //	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
-func (b *QuerierImpl) WhereIn(field string, args []any) pd.QueryBuilder {
+func (b *QueryBuilder) WhereIn(field string, args []any) *QueryBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (b *QuerierImpl) WhereSep(sep string) pd.QueryBuilder {
+func (b *QueryBuilder) WhereSep(sep string) *QueryBuilder {
 	switch s := strings.ToUpper(sep); s {
 	case "AND", "OR", " " /* for none where connector */ :
 		b.sep = s
@@ -140,7 +142,7 @@ func (b *QuerierImpl) WhereSep(sep string) pd.QueryBuilder {
 //
 //	builder.OrderBy("id")          // => ORDER BY id DESC
 //	builder.OrderBy("slug", false) // => ORDER BY slug ASC
-func (b *QuerierImpl) OrderBy(field string, desc ...bool) pd.QueryBuilder {
+func (b *QueryBuilder) OrderBy(field string, desc ...bool) *QueryBuilder {
 	b.order = b.FormatOrder(field, desc...)
 	return b
 }
@@ -150,7 +152,7 @@ func (b *QuerierImpl) OrderBy(field string, desc ...bool) pd.QueryBuilder {
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
 //	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
 //	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
-func (b *QuerierImpl) Like(field, filter string, pattern ...string) pd.QueryBuilder {
+func (b *QueryBuilder) Like(field, filter string, pattern ...string) *QueryBuilder {
 	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
@@ -158,13 +160,13 @@ func (b *QuerierImpl) Like(field, filter string, pattern ...string) pd.QueryBuil
 // Specify the limit result for query.
 //
 //	builder.Limit(20) // => LIMIT 20
-func (b *QuerierImpl) Limit(limit int) pd.QueryBuilder {
+func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 	b.limit = limit
 	return b
 }
 
 // Reset builder datas for next prepare and build.
-func (b *QuerierImpl) Reset() pd.QueryBuilder {
+func (b *QueryBuilder) Reset() *QueryBuilder {
 	clear(b.tags)
 	clear(b.wheres)
 	clear(b.outs)
@@ -183,7 +185,7 @@ func (b *QuerierImpl) Reset() pd.QueryBuilder {
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
 //		LIMIT limit.
-func (b *QuerierImpl) Build(debug ...bool) (string, []any) {
+func (b *QueryBuilder) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 
 	tags := strings.Join(b.tags, ",")                          // out1,out2,out3...

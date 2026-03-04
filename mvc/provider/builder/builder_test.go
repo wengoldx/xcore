@@ -20,7 +20,7 @@ import (
 )
 
 /* ------------------------------------------------------------------- */
-/* For BuilderImpl Tests                                               */
+/* For BaseBuilder Tests                                               */
 /* ------------------------------------------------------------------- */
 
 func TestFormatJoins(t *testing.T) {
@@ -31,11 +31,11 @@ func TestFormatJoins(t *testing.T) {
 		wt.NewCase("Check all emptys  ", "", pd.Joins{"": ""}),
 	}
 
-	builder := &BuilderImpl{}
+	builder := &BaseBuilder{}
 	for _, c := range cases {
 		rst := builder.FormatJoins(c.Params.(pd.Joins))
 		if want := c.Want.(string); rst != want {
-			t.Fatal("BuilderImpl.FormatJoins error > want:", want, "but result is", rst)
+			t.Fatal("BaseBuilder.FormatJoins error > want:", want, "but result is", rst)
 		}
 	}
 }
@@ -58,12 +58,12 @@ func TestFormatLike(t *testing.T) {
 		wt.NewCase("Check emptys", "", LikeData{"", "", []string{}}),
 	}
 
-	builder := &BuilderImpl{}
+	builder := &BaseBuilder{}
 	for _, c := range cases {
 		param := c.Params.(LikeData)
 		rst := builder.FormatLike(param.Field, param.Filter, param.Pattern...)
 		if want := c.Want.(string); rst != want {
-			t.Fatal("BuilderImpl.FormatLike error > want:", want, "but result is", rst)
+			t.Fatal("BaseBuilder.FormatLike error > want:", want, "but result is", rst)
 		}
 	}
 }
@@ -85,7 +85,7 @@ func TestParseOut(t *testing.T) {
 	data := &MyTestData{}
 	fmt.Println("MyTestData json tag:")
 
-	builder := &BuilderImpl{}
+	builder := &BaseBuilder{}
 	tags, outs := builder.ParseOut(data)
 	for index, tag := range tags {
 		fmt.Println(fmt.Sprintf("% 12s", tag), "- out:", outs[index])
@@ -128,7 +128,7 @@ func TestSQLCreator(t *testing.T) {
 	})
 
 	for i := 0; i < 10; i++ {
-		fields := creator.Generate()
+		fields := creator.CreateItem()
 		*(fields[0].(*string)) = "zhangsan" + strconv.Itoa(i)
 		*(fields[1].(*int64)) = 19 + int64(i)
 		*(fields[2].(*[]string)) = []string{"label-" + strconv.Itoa(i)}

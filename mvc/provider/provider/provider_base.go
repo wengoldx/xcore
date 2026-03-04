@@ -23,14 +23,14 @@ import (
 
 // Base provider for simple access database datas.
 type BaseProvider struct {
-	client  pd.DBClient    // Database conncet client.
-	Builder pd.BaseBuilder // Base builder as utils tools.
+	client  pd.DBClient         // Database conncet client.
+	Builder builder.BaseBuilder // Base builder as utils tools.
 }
 
 // Create a BaseProvider with given database client.
 func NewBaseProvider(client pd.DBClient) *BaseProvider {
 	// FIXME: the client maybe nil!
-	return &BaseProvider{client, &builder.BuilderImpl{}}
+	return &BaseProvider{client, builder.BaseBuilder{}}
 }
 
 var _ pd.Provider = (*BaseProvider)(nil)

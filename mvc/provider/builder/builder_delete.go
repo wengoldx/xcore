@@ -24,11 +24,8 @@ import (
 //	DELETE FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
-//
-// See QuerierImpl, InserterImpl, UpdaterImpl.
-type DeleterImpl struct {
-	BuilderImpl
-
+type DeleteBuilder struct {
+	BaseBuilder
 	wheres pd.Wheres // Where conditions and args values.
 	sep    string    // Where conditions connector, one of 'AND', 'OR', ' ', default ''.
 	ins    string    // Where in conditions.
@@ -36,23 +33,25 @@ type DeleterImpl struct {
 	limit  int       // Limit number.
 }
 
-var _ pd.SQLBuilder = (*DeleterImpl)(nil)
-var _ pd.DeleteBuilder = (*DeleterImpl)(nil)
+var _ pd.SQLBuilder = (*DeleteBuilder)(nil)
 
 // Create a DeleteBuilder instance to build a query string.
-func NewDelete(table string) pd.DeleteBuilder {
-	return &DeleterImpl{BuilderImpl: NewBuilder(table)}
+func NewDelete(table string) *DeleteBuilder {
+	return &DeleteBuilder{BaseBuilder: *NewBuilder(table)}
 }
 
 /* ------------------------------------------------------------------- */
-/* SQL Action Utils By Using master Provider                           */
+/* For Provider Delete Utils                                           */
 /* ------------------------------------------------------------------- */
 
-func (b *DeleterImpl) Exec() error   { return b.provider.Exec(b) }   // Delete record without check.
-func (b *DeleterImpl) Delete() error { return b.provider.Delete(b) } // Delete record and check deleted counts.
+// Delete record without check.
+func (b *DeleteBuilder) Exec() error { return b.provider.Exec(b) }
+
+// Delete record and check deleted counts.
+func (b *DeleteBuilder) Delete() error { return b.provider.Delete(b) }
 
 /* ------------------------------------------------------------------- */
-/* For DeleteBuilder interface                                         */
+/* For Query String Build Utils                                        */
 /* ------------------------------------------------------------------- */
 
 // Specify the where conditions and args for query.
@@ -62,7 +61,7 @@ func (b *DeleterImpl) Delete() error { return b.provider.Delete(b) } // Delete r
 //	}
 //	// => WHERE acc=? AND age>=? AND role<>?
 //	// => args ("123", 20, "admin")
-func (b *DeleterImpl) Wheres(where pd.Wheres) pd.DeleteBuilder {
+func (b *DeleteBuilder) Wheres(where pd.Wheres) *DeleteBuilder {
 	b.wheres = where
 	return b
 }
@@ -70,13 +69,13 @@ func (b *DeleterImpl) Wheres(where pd.Wheres) pd.DeleteBuilder {
 // Specify the where in condition with field and args for query.
 //
 //	builder.WhereIn("id", []any{1, 2}) // => WHERE id IN (1, 2)
-func (b *DeleterImpl) WhereIn(field string, args []any) pd.DeleteBuilder {
+func (b *DeleteBuilder) WhereIn(field string, args []any) *DeleteBuilder {
 	b.ins = b.FormatWhereIn(field, args)
 	return b
 }
 
 // Specify the where in condition with field and args for query.
-func (b *DeleterImpl) WhereSep(sep string) pd.DeleteBuilder {
+func (b *DeleteBuilder) WhereSep(sep string) *DeleteBuilder {
 	switch s := strings.ToUpper(sep); s {
 	case "AND", "OR", " " /* for none where connector */ :
 		b.sep = s
@@ -89,7 +88,7 @@ func (b *DeleterImpl) WhereSep(sep string) pd.DeleteBuilder {
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
 //	builder.Like("acc", "zhang", "perfix") // => acc LIKE 'zhang%%'
 //	builder.Like("acc", "zhang", "suffix") // => acc LIKE '%%zhang'
-func (b *DeleterImpl) Like(field, filter string, pattern ...string) pd.DeleteBuilder {
+func (b *DeleteBuilder) Like(field, filter string, pattern ...string) *DeleteBuilder {
 	b.like = b.FormatLike(field, filter, pattern...)
 	return b
 }
@@ -97,13 +96,13 @@ func (b *DeleterImpl) Like(field, filter string, pattern ...string) pd.DeleteBui
 // Specify the limit result for query.
 //
 //	builder.Limit(20) // => LIMIT 20
-func (b *DeleterImpl) Limit(limit int) pd.DeleteBuilder {
+func (b *DeleteBuilder) Limit(limit int) *DeleteBuilder {
 	b.limit = limit
 	return b
 }
 
 // Reset builder datas for next prepare and build.
-func (b *DeleterImpl) Reset() pd.DeleteBuilder {
+func (b *DeleteBuilder) Reset() *DeleteBuilder {
 	clear(b.wheres)
 	b.sep, b.ins, b.like = "", "", ""
 	b.limit = 0
@@ -119,7 +118,7 @@ func (b *DeleterImpl) Reset() pd.DeleteBuilder {
 //	DELETE FROM table
 //		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
-func (b *DeleterImpl) Build(debug ...bool) (string, []any) {
+func (b *DeleteBuilder) Build(debug ...bool) (string, []any) {
 	sep := utils.Condition(b.sep == "", "AND", b.sep)
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 	limit := b.FormatLimit(b.limit)                            // LIMIT n
