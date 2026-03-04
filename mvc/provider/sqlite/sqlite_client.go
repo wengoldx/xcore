@@ -118,7 +118,7 @@ func Close(session ...string) error {
 //	type MyTable struct{ *provider.BaseProvider }
 //	var MyTableIns = MyTable{ *sqlite.NewBase()}
 //	// Call sqlite.New(), or sqlite.Open() to create sqlite client here!
-//	sqlite.SetClient(MyTableIns)
+//	sqlite.SetTables(MyTableIns)
 //
 // # WARNING:
 //
@@ -136,7 +136,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 //	type MyTable struct{ *provider.TableProvider }
 //	var MyTableIns = MyTable{ sqlite.NewTable("mytable", _logsql)}
 //	// Call sqlite.New(), or sqlite.Open() to create sqlite client here!
-//	sqlite.SetClient(MyTableIns)
+//	sqlite.SetTables(MyTableIns)
 //
 // # WARNING:
 //
@@ -155,7 +155,7 @@ func NewTable(table string, debug bool, session ...string) *provider.TableProvid
 // Call sqlite.Open(), or sqlite.OpenWithOptions() first to ensure the
 // DBClient client inited (not nil), later call this method to set tables
 // DBClient client if need!
-func SetClient(tables ...pd.Provider) {
+func SetTables(tables ...pd.Provider) {
 	client := Select() // use the default session.
 	for _, table := range tables {
 		table.SetClient(client)

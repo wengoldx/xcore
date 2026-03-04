@@ -112,7 +112,7 @@ func Close(session ...string) error {
 //	type MyTable struct{ *provider.BaseProvider }
 //	var MyTableIns = MyTable{ mssql.NewBase()}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
-//	mssql.SetClient(MyTableIns)
+//	mssql.SetTables(MyTableIns)
 //
 // # WARNING:
 //
@@ -130,7 +130,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 //	type MyTable struct{ *provider.TableProvider }
 //	var MyTableIns = MyTable{ mssql.NewTable("mytable", _logsql)}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
-//	mssql.SetClient(MyTableIns)
+//	mssql.SetTables(MyTableIns)
 //
 // # WARNING:
 //
@@ -149,7 +149,7 @@ func NewTable(table string, debug bool, session ...string) *provider.TableProvid
 // Call mssql.Open(), or mssql.OpenWithOptions() first to ensure the
 // DBClient client inited (not nil), later call this method to set tables
 // DBClient client if need!
-func SetClient(tables ...pd.Provider) {
+func SetTables(tables ...pd.Provider) {
 	client := Select() // use the default session.
 	for _, table := range tables {
 		table.SetClient(client)

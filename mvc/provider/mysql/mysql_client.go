@@ -118,7 +118,7 @@ func Close(session ...string) error {
 //	type MyTable struct{ (*provider).BaseProvider }
 //	var MyTableIns = MyTable{ *mysql.NewBase()}
 //	// Call mysql.New(), or mysql.Open() to create mysql client here!
-//	mysql.SetClient(MyTableIns)
+//	mysql.SetTables(MyTableIns)
 //
 // # WARNING:
 //
@@ -136,7 +136,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 //	type MyTable struct{ *provider.TableProvider }
 //	var MyTableIns = MyTable{ mysql.NewTable("mytable", _logsql)}
 //	// Call mysql.New(), or mysql.Open() to create mysql client here!
-//	mysql.SetClient(MyTableIns)
+//	mysql.SetTables(MyTableIns)
 //
 // # WARNING:
 //
@@ -155,7 +155,7 @@ func NewTable(table string, debug bool, session ...string) *provider.TableProvid
 // Call mysql.Open(), or mysql.OpenWithOptions() first to ensure the
 // DBClient client inited (not nil), later call this method to set tables
 // DBClient client if need!
-func SetClient(tables ...pd.Provider) {
+func SetTables(tables ...pd.Provider) {
 	client := Select() // use the default session.
 	for _, table := range tables {
 		table.SetClient(client)
