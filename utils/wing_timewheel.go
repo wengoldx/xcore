@@ -51,7 +51,7 @@ func NewTimeWheel() *TimeWheel {
 	return wheel
 }
 
-// AddDelayTask insert one new delay task to delay queue
+// Insert one new delay task to delay queue
 func (d *TimeWheel) AddDelayTask(exectime time.Duration, data any, f ExecFunc) error {
 	d.Lock()
 	defer d.Unlock()
@@ -73,7 +73,7 @@ func (d *TimeWheel) AddDelayTask(exectime time.Duration, data any, f ExecFunc) e
 	return nil
 }
 
-// timeLoop move the scanner once per second
+// Move the scanner once per second
 func (d *TimeWheel) timeLoop() {
 	t := time.NewTicker(1 * time.Second)
 	d.taskExec()
@@ -93,7 +93,7 @@ func (d *TimeWheel) timeLoop() {
 	}
 }
 
-// taskExec execute the task with the current index and cycle number is 0
+// Execute the task with the current index and cycle number is 0
 func (d *TimeWheel) taskExec() {
 	d.Lock()
 	tasks := d.slots[d.current_index]

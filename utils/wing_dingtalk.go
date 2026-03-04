@@ -146,11 +146,8 @@ type DTMsgFeedCard struct {
 //
 // ---
 //
-//	sender := comm.DTalkSender{
-//		WebHook: "https://oapi.dingtalk.com/robot/send?access_token=xxx",
-//		Keyword: "FILTERKEY",
-//		Secure: "SECxxxxxxxxxxxxxxxxxxxxxxxxxx"
-//	}
+//	sender := utils.NewDingTalk("https://oapi.dingtalk.com/robot/send?access_token=xxx",
+//		"FILTERKEY", "SECxxxxxxxxxxxxxxxxxxxxxxxxxx")
 //
 //	// at anyones of chat's group members by user phone number
 //	atMobiles := []string{"130xxxxxxxx","150xxxxxxxx"}
@@ -190,29 +187,34 @@ type DTMsgFeedCard struct {
 //	sender.SendText("message FILTERKEY2 content", nil, nil, true, true)
 //	sender.SendText("message content FILTERKEY2", nil, nil, false, true)
 type DTalkSender struct {
-	WebHook string // custom group chat robot access webhook
-	Keyword string // message content keyword filter
-	Secure  string // robot secure signature
+	webhook string // custom group chat robot access webhook
+	keyword string // message content keyword filter
+	secure  string // robot secure signature
+}
+
+// Create a DTalkSender object to notify message.
+func NewDingTalk(hook, key, secure string) *DTalkSender {
+	return &DTalkSender{webhook: hook, keyword: key, secure: secure}
 }
 
 // SetSecure set DingTalk sender secure signature, it may remove
 // all leading and trailing white space.
 func (s *DTalkSender) SetSecure(secure string) {
-	s.Secure = strings.TrimSpace(secure)
+	s.secure = strings.TrimSpace(secure)
 }
 
 // UsingKey using keyword to check message content if valid, it
 // may remove all leading and trailing white space.
 func (s *DTalkSender) UsingKey(keyword string) {
-	s.Keyword = strings.TrimSpace(keyword)
+	s.keyword = strings.TrimSpace(keyword)
 }
 
 // signURL sign timestamp and signature datas with send webhook
 func (s *DTalkSender) signURL() string {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	signstr := fmt.Sprintf("%d\n%s", timestamp, s.Secure)
-	signtrue := secure.SignSHA256(s.Secure, signstr)
-	return fmt.Sprintf("%s&timestamp=%d&sign=%s", s.WebHook, timestamp, signtrue)
+	signstr := fmt.Sprintf("%d\n%s", timestamp, s.secure)
+	signtrue := secure.SignSHA256(s.secure, signstr)
+	return fmt.Sprintf("%s&timestamp=%d&sign=%s", s.webhook, timestamp, signtrue)
 }
 
 // checkKeyAndURL sign post url when using secure, or check keyword
@@ -225,14 +227,14 @@ func (s *DTalkSender) checkKeyAndURL(content string, isSecure ...bool) (string, 
 	}
 
 	// sign post url when using secure token
-	posturl := s.WebHook
+	posturl := s.webhook
 	if Variable(isSecure, false) {
 		posturl = s.signURL()
 	}
 
 	// check the message content if contain keyword whatever
 	// using secure token or not
-	if s.Keyword != "" && !strings.Contains(content, s.Keyword) {
+	if s.keyword != "" && !strings.Contains(content, s.keyword) {
 		logger.E("Empty keyword, or not found keyword in message content!")
 		return "", "", invar.ErrInvalidToken
 	}
@@ -520,7 +522,7 @@ func (s *DTalkSender) SendFeedCard(links []DTFeedLink, isSecure ...bool) error {
 // )
 //
 // func main() {
-// 	sender := comm.DTalkSender{
+// 	sender := utils.DTalkSender{
 // 		WebHook: "https://oapi.dingtalk.com/robot/send?access_token=xxxxxx",
 // 		Keyword: "BUILD",
 // 		Secure:  "SECxxxxxxxxxxxx",
@@ -534,12 +536,12 @@ func (s *DTalkSender) SendFeedCard(links []DTFeedLink, isSecure ...bool) error {
 // 	messageurl := "https://www.baidu.com"
 // 	pictureurl := "https://himg.bdimg.com/sys/portraitn/item/423bb6dceedab9abcbbe9bf4"
 // 	pictureurl2 := "https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png"
-// 	btns := []comm.DTButton{
+// 	btns := []utils.DTButton{
 // 		{Title: "Go Baidu", ActionURL: "https://www.baidu.com"},
 // 		{Title: "Go Fanyi", ActionURL: "https://fanyi.baidu.com"},
 // 		{Title: "Go LanHu", ActionURL: "https://lanhuapp.com"},
 // 	}
-// 	links := []comm.DTFeedLink{
+// 	links := []utils.DTFeedLink{
 // 		{Title: "Item title BUILD", PicURL: pictureurl2, MsgURL: "https://www.baidu.com"},
 // 		{Title: "Item title 1", PicURL: pictureurl2, MsgURL: "https://www.baidu.com"},
 // 		{Title: "Item title 2", PicURL: pictureurl2, MsgURL: "https://fanyi.baidu.com"},

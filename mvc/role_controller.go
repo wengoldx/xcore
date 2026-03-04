@@ -131,7 +131,7 @@ var ValidateHandler ValidateHandlerFunc
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V2.0' header for GET http method
+// This method only suport 'WENGOLD-V2.0' header for GET http method
 // without any input params.
 //
 //	@return 401: Invalid author header or permission denied.
@@ -171,7 +171,7 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V2.0' header for 'GET' http method,
+// This method only suport 'WENGOLD-V2.0' header for 'GET' http method,
 // and parse simple input params from url.
 //
 //	@return 401: Invalid author header or permission denied.
@@ -188,7 +188,7 @@ func (c *WRoleController) DoAfterParsed(ps any, nextHander NextHander, opt ...Op
 //
 // # WARNING:
 //
-// This function not check 'WENGOLD-V2.0' header.
+// This method not check 'WENGOLD-V2.0' header.
 //
 //	@Return 400: Failed parse url params.
 //	@Return 404: Case exception in server.
@@ -200,7 +200,7 @@ func (c *WRoleController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V2.0' header for POST http method.
+// This method only suport 'WENGOLD-V2.0' header for POST http method.
 //
 //	@return 401: Invalid author header or permission denied.
 //	@Return 400: Failed parse input params or validate error.
@@ -216,7 +216,7 @@ func (c *WRoleController) DoAfterValidated(ps any, nextHander NextHander, opt ..
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V2.0' header for POST http method.
+// This method only suport 'WENGOLD-V2.0' header for POST http method.
 //
 //	@return 401: Invalid author header or permission denied.
 //	@Return 400: Failed parse input params.

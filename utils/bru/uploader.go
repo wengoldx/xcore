@@ -213,7 +213,7 @@ func (t *BRUploader) MergeChunks(se *Session, outfile string) int {
 	}
 
 	// 3. check merged file md5 hash code.
-	if code, err := utils.FileAbstract(outfile); err != nil {
+	if code, err := utils.HashFile(outfile); err != nil {
 		logger.E("Validate file:", outfile, "err:", err)
 		return invar.E404Exception
 	} else if code != hash {

@@ -44,8 +44,9 @@ const (
 
 // SmsSender sender, including smtp authtication and user info
 type SmsSender struct {
-	accessSecret, accessKeyID string
-	requestURLFormat          string
+	accessSecret     string
+	accessKeyID      string
+	requestURLFormat string
 }
 
 // SmsContent sms template
@@ -65,7 +66,12 @@ type respResult struct {
 	Code string `describtion:"Code"`
 }
 
-// encodeURL replace encode string to use in web transation
+// Create a sms sender with cloud service secure datas for send sms message.
+func NewSmsSender(secret, keyid, requrl string) *SmsSender {
+	return &SmsSender{accessSecret: secret, accessKeyID: keyid, requestURLFormat: requrl}
+}
+
+// Replace encode string to use in web transation
 func (s *SmsSender) encodeURL(src string) string {
 	ue := url.QueryEscape(src)
 	ue = strings.Replace(ue, "+", "%%20", -1)
@@ -75,7 +81,7 @@ func (s *SmsSender) encodeURL(src string) string {
 	return ue
 }
 
-// requestRemoteSend executes http get method to request remote send
+// Executes http get method to request remote send
 func (s *SmsSender) requestRemoteSend(requesturl string) ([]byte, error) {
 	u, err := url.Parse(requesturl)
 	if err != nil {
@@ -105,7 +111,7 @@ func (s *SmsSender) requestRemoteSend(requesturl string) ([]byte, error) {
 	return rst, nil
 }
 
-// getQueryString parse sms request url query string
+// Parse sms request url query string
 func (s *SmsSender) getQueryString(phones, signname, tplcode, content string) string {
 	signnonce := uuid.NewV4()
 	timestamp := url.QueryEscape(time.Now().UTC().Format(time.RFC3339))
@@ -120,7 +126,7 @@ func (s *SmsSender) getQueryString(phones, signname, tplcode, content string) st
 	)
 }
 
-// Send sends
+// Send sms message to target phone with sign options.
 func (s *SmsSender) Send(phones, signname, tplcode, content string) error {
 	querystr := s.getQueryString(phones, signname, tplcode, content)
 	signstr := fmt.Sprintf("GET&%%2F&%s", s.encodeURL(querystr))
@@ -150,7 +156,7 @@ func (s *SmsSender) Send(phones, signname, tplcode, content string) error {
 	return nil
 }
 
-// SendCode send verify sms witch code
+// Send verify sms witch code.
 func (s *SmsSender) SendCode(sms SmsContent, phones string, code string) error {
 	tplcode := sms.TemplateCode
 	signName := url.QueryEscape(sms.SignName)
@@ -161,12 +167,4 @@ func (s *SmsSender) SendCode(sms SmsContent, phones string, code string) error {
 	}
 	logger.I("Send verify sms code:", code, "to:", phones)
 	return nil
-}
-
-// NewSmsSender create a sms sender for given cloud service
-func NewSmsSender(secret, keyid, requrl string) *SmsSender {
-	sender := &SmsSender{
-		accessSecret: secret, accessKeyID: keyid, requestURLFormat: requrl,
-	}
-	return sender
 }

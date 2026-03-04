@@ -254,7 +254,7 @@ func TrimEmpty(src []string) []string {
 //		Name string `json:"name"`
 //	}
 //	d := Sample{ Name : "name_value" }
-//	md, _ := comm.ToMap(d)
+//	md, _ := utils.ToMap(d)
 //	// md data format is {
 //	//     "name" : "name_value"
 //	// }
@@ -424,7 +424,7 @@ func GetSortKey(str string) string {
 //		Bland string
 //	}
 //	car := &Car{Bland : "H5"}
-//	if comm.Instanceof(car, reflect.TypeOf(&Car{})) {
+//	if utils.Instanceof(car, reflect.TypeOf(&Car{})) {
 //		// intvalue is int, but target type is string
 //	}
 func InstanceOf(object any, tagtype reflect.Type) bool {

@@ -35,9 +35,7 @@ import (
 //		</p>
 //		`
 //
-//	 mailagent = &comm.MailAgent{
-//	     Acc: account, Pwd: password, Host: smtphost, Port: smtpport,
-//	 }
+//	 mailagent = &utils.NewMailAgent(account, password, smtphost, smtpport)
 //	 subject := mailTempleteSubject
 //	 message := fmt.Sprintf(mailTemplateFormat, account, link, who,
 //	     time.Now().Format(templateTimeFormat))
@@ -45,10 +43,10 @@ import (
 //	 // return ma.SendMail(to, subject, message, fileName)
 //	 return ma.SendMail(to, subject, message)
 type MailAgent struct {
-	Acc  string `json:"acc"`  // username - mail address
-	Pwd  string `json:"pwd"`  // account password
-	Host string `json:"host"` // stmp/pop3 host
-	Port int    `json:"port"` // stmp/pop3 port
+	acc  string // username - mail address
+	pwd  string // account password
+	host string // stmp/pop3 host
+	port int    // stmp/pop3 port
 }
 
 // EmailContent email template
@@ -57,10 +55,15 @@ type EmailContent struct {
 	Body    string // email body content
 }
 
+// Create a MailAgent object for send email.
+func NewMailAgent(acc, pwd, host string, port int) *MailAgent {
+	return &MailAgent{acc: acc, pwd: pwd, host: host, port: port}
+}
+
 // SendMail send email by mail account, it may set attachment from local file
 func (a *MailAgent) SendMail(to []string, subject, body string, attach ...string) error {
 	m := gomail.NewMessage()
-	m.SetHeader("From", a.Acc)
+	m.SetHeader("From", a.acc)
 	m.SetHeader("To", to[0])
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
@@ -68,7 +71,7 @@ func (a *MailAgent) SendMail(to []string, subject, body string, attach ...string
 		m.Attach(att)
 	}
 
-	d := gomail.NewDialer(a.Host, a.Port, a.Acc, a.Pwd)
+	d := gomail.NewDialer(a.host, a.port, a.acc, a.pwd)
 	if err := d.DialAndSend(m); err != nil {
 		return err
 	}

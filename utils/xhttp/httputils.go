@@ -273,7 +273,7 @@ func Get[T any](tagurl string, out *T, params ...any) error {
 //	err := httputil.Post(tagurl, params, &outbytes)
 //
 //	var outstring string   // get string response.
-//	err := httputil.Post(tagurl, params, &outstring, comm.ContentTypeForm)
+//	err := httputil.Post(tagurl, params, &outstring, utils.ContentTypeForm)
 //
 //	var outstruct MyStruct // get srtuct response.
 //	err := httputil.Post(tagurl, params, &outstruct)

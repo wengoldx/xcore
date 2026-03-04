@@ -32,7 +32,11 @@ type FileValueTypes interface {
 	string | *os.File
 } 
 
-// Check the file path (or file object) whether point to a file.
+// Check the file path (or file object) whether point to a valid file.
+//
+// # WARNING:
+//	- This method recommend for file checking, not for folder.
+//	- Use IsDir() to check valid folder.
 func IsFile[T FileValueTypes](file T) bool {
 	switch ft := any(file).(type) {
 	case string:
@@ -47,7 +51,11 @@ func IsFile[T FileValueTypes](file T) bool {
 	return false
 }
 
-// Check the dir path (or file object) whether point to a directory.
+// Check the dir path (or file object) whether point to a valid folder.
+//
+// # WARNING:
+//	- This method recommend for folder checking, not for file.
+//	- Use IsFile() to check valid file.
 func IsDir[T FileValueTypes](dir T) bool {
 	switch pt := any(dir).(type) {
 	case string:
@@ -62,16 +70,11 @@ func IsDir[T FileValueTypes](dir T) bool {
 	return false
 }
 
-// Check the file paths whether point to exist file or directory,
-// and return the false when anyone file path unexist.
+// Check the all file paths whether point to valid file or folder,
+// it will return false when anyone unexist.
 //
-// # WARNING:
-// 
-// This method mark the path exist when case error except NotExist!
-//
-//	@See use IsFile() to check exist file exactly.
-//	@See use IsDir()  to check exist directory exactly.
-func IsExistFiles(fps ...string) bool {
+//	@See Use IsFile() or IsDir() to check valid file or folder exactly!
+func IsExists(fps ...string) bool {
 	for _, fp := range fps {
 		if _, err := os.Stat(fp); err != nil {
 			if os.IsNotExist(err) {
@@ -83,26 +86,8 @@ func IsExistFiles(fps ...string) bool {
 	return true
 }
 
-// Check the dirpath whether point to a exist directory, then
-// create the directories if unexist, it maybe return error when
-// dirpath point to a exist file.
-func EnsurePath(dirpath string) error {
-	if info, err := os.Stat(dirpath); err != nil {
-		if os.IsNotExist(err) {
-			return MakeDirs(dirpath)
-		}
-		return err
-	} else if !info.IsDir() {
-		return invar.NewError("Exist file, invalid directory!")
-	}
-	return nil
-}
-
-// Create a new directories with permission bits, by default perm is 0777.
-//
-// # WARNING:
-//	- This function not validate dirpath, please ensure it valid.
-//	- Use EnsurePath() to check and create directories.
+// Create the paths with optional permission if unexist, the default
+// permission is 0777.
 func MakeDirs(dirpath string, perm ...os.FileMode) error {
 	if len(perm) > 0 && perm[0] != 0 {
 		return os.MkdirAll(dirpath, perm[0])
@@ -111,6 +96,9 @@ func MakeDirs(dirpath string, perm ...os.FileMode) error {
 }
 
 // Create a new file with append option.
+//
+// # WARNING:
+// - The caller must call file.Close() after writing finished.
 func OpenFile(fp string, append bool) (*os.File, error) {
 	if append {
 		return OpenWriteFile(fp)
@@ -124,9 +112,8 @@ func OpenFile(fp string, append bool) (*os.File, error) {
 // # WARNING:
 // - The caller must call file.Close() after writing finished.
 func OpenWriteFile(fp string, perm ...uint32) (*os.File, error) {
-	pv := Variable(perm, 0666)
 	flag := os.O_CREATE | os.O_WRONLY | os.O_APPEND
-	return os.OpenFile(fp, flag, os.FileMode(pv))
+	return os.OpenFile(fp, flag, os.FileMode(Variable(perm, 0666)))
 }
 
 // Create a new writonly file with permission bits, by default perm is 0666,
@@ -135,9 +122,8 @@ func OpenWriteFile(fp string, perm ...uint32) (*os.File, error) {
 // # WARNING:
 //	- The caller must call file.Close() after writing finished.
 func OpenTruncFile(fp string, perm ...uint32) (*os.File, error) {
-	pv := Variable(perm, 0666)
 	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	return os.OpenFile(fp, flag, os.FileMode(pv))
+	return os.OpenFile(fp, flag, os.FileMode(Variable(perm, 0666)))
 }
 
 // Read the multipart file datas which uploaded by http.
@@ -155,6 +141,9 @@ func ReadMultipartFile(header *multipart.FileHeader) ([]byte, error) {
 }
 
 // Read json file content and unmarshal to json object.
+//
+//	out := &Content{}
+//	err := utils.ReadJosnFile("./content.json", out)
 func ReadJsonFile(jsonfile string, out any) error {
 	if !IsFile(jsonfile) {
 		return invar.ErrFileNotFound
@@ -171,9 +160,9 @@ func ReadJsonFile(jsonfile string, out any) error {
 	return nil
 }
 
-// Read file content and output as string.
-func ReadFileString(txtfile string) string {
-	if IsFile(txtfile) {
+// Read text file content and output as string.
+func ReadTextFile(txtfile string) string {
+	if !IsFile(txtfile) {
 		buf, err := os.ReadFile(txtfile);
 		if err != nil {
 			logger.E("Read", txtfile, "err:", err)
@@ -188,11 +177,9 @@ func ReadFileString(txtfile string) string {
 
 // Save the multipart file datas to given local file path.
 func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
-	if !IsFile(dirpath) {
-		if err := MakeDirs(dirpath); err != nil {
-			logger.E("Make paths:", dirpath, "err:", err)
-			return  err
-		}
+	if err := MakeDirs(dirpath); err != nil {
+		logger.E("Make paths:", dirpath, "err:", err)
+		return  err
 	}
 
 	dstfile := filepath.Join(dirpath, filename)
@@ -212,16 +199,14 @@ func SaveMultipartFile(dirpath, filename string, file multipart.File) error {
 }
 
 // Save the multipart file datas to given local file path from files header.
-func SaveByFileHeader(dirpath, filename string, header *multipart.FileHeader)  error {
+func SaveHeaderFile(dirpath, filename string, header *multipart.FileHeader)  error {
 	partfile, err := header.Open()
 	if err != nil {
 		logger.E("Open multipart file by header, err:", err)
 		return  err
 	}
 	defer partfile.Close()
-
-	fn := header.Filename
-	return SaveMultipartFile(dirpath, fn, partfile)
+	return SaveMultipartFile(dirpath, header.Filename, partfile)
 }
 
 // Marshal struct data to json string and save to file.
@@ -237,12 +222,11 @@ func SaveJsonFile(jsonfile string, data any) error {
 // the datas to file, the function will auto create the unexist directories.
 func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 	dirpath, filename = filepath.Clean(dirpath), NormalizePath(filename)
-
 	if len(datas) == 0 {
 		return nil // non-need write anything.
 	} else if filename == "" || filename == "." || filename == ".." {
-		return invar.NewError("Invalid filename '" + filename + "'")
-	} else if err := EnsurePath(dirpath); err != nil {
+		return invar.NewError("Invalid file name '" + filename + "'")
+	} else if err := MakeDirs(dirpath); err != nil {
 		return err
 	}
 
@@ -272,9 +256,6 @@ func SaveB64File(dirpath, filename string, b64datas string) error {
 	}
 	return SaveFile(dirpath, filename, datas)
 }
-
-
-
 
 // Delete the target exist file, it will not do anything when file path
 // point to a exist directoy, or the file unexist.
@@ -306,20 +287,14 @@ func DeleteFolder(dirpath string) error {
 	return nil
 }
 
-// Read file content and encode datas as md5 abstract string.
-func FileAbstract(fp string) (string, error) {
-	h := md5.New()
-	if file, err := os.Open(fp); err != nil {
-		return "", err
-	} else {
-		defer file.Close()
-		if _, err = io.Copy(h, file); err != nil {
-			return "", err
-		}
-	}
-
-	cipher := h.Sum(nil)
-	return hex.EncodeToString(cipher), nil
+// Normalize the given path, it will remove the separator both perfix and tail.
+//
+//	path: '  /  1//2\\3/..///4/./5/6\\\\' -> '1/2/4/5/6'
+//	path: ''                              -> '.'
+func NormalizePath(fp string) string {
+	separator := string(os.PathSeparator)
+	normailze := strings.Trim(filepath.Clean(strings.TrimSpace(fp)), separator)
+	return strings.TrimSpace(normailze) 
 }
 
 // Return file suffix without prefix . char, it maybe return empty if
@@ -331,16 +306,6 @@ func FileSuffix(filename string, orignl ...bool) string {
 		return strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
 	}
 	return strings.TrimPrefix(filepath.Ext(filename), ".")
-}
-
-// Normalize the given path, it will remove the separator both perfix and tail.
-//
-//	path: '  /  1//2\\3/..///4/./5/6\\\\' -> '1/2/4/5/6'
-//	path: ''                              -> '.'
-func NormalizePath(fp string) string {
-	separator := string(os.PathSeparator)
-	normailze := strings.Trim(filepath.Clean(strings.TrimSpace(fp)), separator)
-	return strings.TrimSpace(normailze) 
 }
 
 // Split the given file path to dir and base name, the dir called
@@ -410,6 +375,23 @@ func CopyFileTo(src string, dir string) error {
 	return CopyFile(src, dst)
 }
 
+// Read file content and encode datas as md5 abstract string.
+//
+//	@See Use secure.ToMD5Lower() to hash file content.
+func HashFile(fp string) (string, error) {
+	h := md5.New()
+	if file, err := os.Open(fp); err != nil {
+		return "", err
+	} else {
+		defer file.Close()
+		if _, err = io.Copy(h, file); err != nil {
+			return "", err
+		}
+	}
+
+	cipher := h.Sum(nil)
+	return hex.EncodeToString(cipher), nil
+}
 
 
 /* ------------------------------------------------------------------- */

@@ -137,7 +137,7 @@ var GRoleHandlerFunc RoleHandlerFunc
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V1.2' header for 'GET' http method
+// This method only suport 'WENGOLD-V1.2' header for 'GET' http method
 // without any input params.
 //
 //	@Return 401, 403 codes returned on error.
@@ -150,7 +150,7 @@ func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V1.2' header for GET http method,
+// This method only suport 'WENGOLD-V1.2' header for GET http method,
 // and parse simple input params from url.
 //
 //	@Return 400, 401, 404 codes returned on error.
@@ -165,7 +165,7 @@ func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Opti
 //
 // # WARNING:
 //
-// This function not check 'WENGOLD-V1.2' header.
+// This method not check 'WENGOLD-V1.2' header.
 //
 //	@Return 400, 404 codes returned on error.
 func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
@@ -176,7 +176,7 @@ func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V1.2' header for POST http method.
+// This method only suport 'WENGOLD-V1.2' header for POST http method.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...Option) {
@@ -190,7 +190,7 @@ func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...O
 //
 // # WARNING:
 //
-// This function only suport 'WENGOLD-V1.2' header for POST http method.
+// This method only suport 'WENGOLD-V1.2' header for POST http method.
 //
 //	@Return 400, 401, 403, 404 codes returned on error.
 func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...Option) {

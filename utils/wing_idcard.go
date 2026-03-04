@@ -38,7 +38,7 @@ const _validateCodes = "10X98765432"
 
 var _validateWeights = []int{7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2}
 
-// Verify ID Card internal, just simple validate card number only
+// Verify ID Card internal, just simple validate card number only.
 func IsVaildIDCard(card string) bool {
 	card = strings.ToUpper(card)
 	if cardlen := len(card); cardlen != 18 {
@@ -54,7 +54,7 @@ func IsVaildIDCard(card string) bool {
 	return validateCardNumbers(num, last)
 }
 
-// Return birthday as time from given ID Card string
+// Return birthday as time from given ID Card string.
 func CardBirthday(card string) (*time.Time, error) {
 	if len(card) != 18 {
 		return nil, invar.ErrInvalidParams
@@ -69,7 +69,7 @@ func CardBirthday(card string) (*time.Time, error) {
 	return &bt, nil
 }
 
-// Return gender from given ID Card string, true is male, false is female
+// Return gender from given ID Card string, true is male, false is female.
 func CardGender(card string) (bool, error) {
 	if len(card) != 18 {
 		return false, invar.ErrInvalidParams
@@ -83,7 +83,7 @@ func CardGender(card string) (bool, error) {
 	return genderMask%2 == 1 /* male: 1, female: 2 */, nil
 }
 
-// Validate card number self if valide by last code char
+// Validate card number self if valide by last code char.
 // see more http://www.360doc.com/content/22/0112/12/74433059_1012930821.shtml
 func validateCardNumbers(num, last string) bool {
 	sum := 0
@@ -103,7 +103,7 @@ func validateCardNumbers(num, last string) bool {
 
 /* ========== Foreign-Relate passport authentication ========== */
 
-// All nations informations on ISO 3166-1
+// All nations informations on ISO 3166-1.
 //	@See more visit https://baike.baidu.com/item/ISO%203166-1/5269555?fr=ge_ala
 var _nations = NewSets([]string{
 	"AFG", "ALA", "ALB", "DZA", "ASM", "AND", "AGO", "AIA", "ATA", "ATG", "ARG", "ARM", "ABW", "AUS", "AUT",
@@ -125,7 +125,7 @@ var _nations = NewSets([]string{
 	"ESH", "YEM", "YUG", "ZMB", "ZWE",
 }...)
 
-// Verify Nation abbreviation if validate on 3 chars
+// Verify Nation abbreviation if validate on 3 chars.
 func IsVaildNation(abbr string) bool {
 	return _nations.Contain(strings.ToUpper(abbr))
 }

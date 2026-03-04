@@ -410,7 +410,7 @@ func (c *WingController) GetMultiFiles(key string, next FilesFunc) {
 //	@Return 400 code returned on error.
 //
 // # NOTICE:
-//	- This function not check 'WENGOLD-V*' header.
+//	- This method not check 'WENGOLD-V*' header.
 //	- Use AuthController, RoleController to check header and token.
 //
 // # WARNING:
@@ -425,7 +425,7 @@ func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts ...Option
 //	@Return 400, 404 codes returned on error.
 //
 // # NOTICE:
-//	- This function not check 'WENGOLD-V*' header.
+//	- This method not check 'WENGOLD-V*' header.
 //	- Use AuthController, RoleController to check header and token.
 func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(true, opts...))
@@ -436,7 +436,7 @@ func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, opts ...Opt
 //	@Return 400, 404 codes returned on error.
 //
 // # NOTICE:
-//	- This function not check 'WENGOLD-V*' header.
+//	- This method not check 'WENGOLD-V*' header.
 //	- Use AuthController, RoleController to check header and token.
 func (c *WingController) DoAfterUnmarshal(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(false, opts...))
