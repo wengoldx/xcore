@@ -19,7 +19,7 @@ import "github.com/wengoldx/xcore/invar"
 // parser function to parse each item on scaning.
 type Creator interface {
 	CreateItem() (any, []any) // New a item and return out params.
-	ParseItem(iv any) error   // Parse item values after row scaned.
+	AppendItem(iv any) error  // Parse item values after row scaned.
 }
 
 type GetterFunc[T any] func(iv *T) []any
@@ -32,24 +32,20 @@ type ParserFunc[T any] func(iv *T) error
 //	}
 //	
 //	// UseAage 1: only for query array records.
-//	err := h.Querier().Tags("uid", "email").Wheres(...).
-//		Array(pd.NewCreator(func(iv *types.Account) []any {
-//			datas = append(datas, iv)
-//			return []any{&iv.UID, &iv.Email}
-//		}))
+//	h.Querier().Tags("uid", "email").Wheres(...).
+//	  Array(pd.NewCreator(&datas, func(iv *types.Account) []any {
+//		  return []any{&iv.UID, &iv.Email}
+//	  }))
 //
 //	// UseAage 2: query array records and parse item value on scaning.
-//	err := h.Querier().Tags("uid", "email").Wheres(...).
-//		Array(pd.NewCreator(func(iv *types.Account) []any {
-//			datas = append(datas, iv)
-//			return []any{&iv.UID, &iv.Email}
-//		}, func(iv *types.Account) {
-//			if iv.UID == "zhangsan" {
-//				iv.Email = decode(iv.Email)
-//			}
-//		}))
-func NewCreator[T any](getter GetterFunc[T], parser ...ParserFunc[T]) *ItemCreator[T] {
-	creator := &ItemCreator[T]{getFunc : getter}
+//	h.Querier().Tags("uid", "email").Wheres(...).
+//	  Array(pd.NewCreator(&datas, func(iv *types.Account) []any {
+//		  return []any{&iv.UID, &iv.Email}
+//	  }, func(iv *types.Account) {
+//		  iv.Email = decode(iv.Email)
+//	  }))
+func NewCreator[T any](outs *[]*T, getter GetterFunc[T], parser ...ParserFunc[T]) *ItemCreator[T] {
+	creator := &ItemCreator[T]{outs:outs, getFunc : getter}
 	if len(parser) > 0 && parser[0] != nil {
 		creator.parseFunc = parser[0]
 	}
@@ -58,6 +54,7 @@ func NewCreator[T any](getter GetterFunc[T], parser ...ParserFunc[T]) *ItemCreat
 
 // Row record data struct creator, for create and parse item.
 type ItemCreator[T any] struct {
+	outs      *[]*T
 	getFunc   GetterFunc[T]
 	parseFunc ParserFunc[T]
 }
@@ -71,14 +68,14 @@ func (ic *ItemCreator[T]) CreateItem() (any, []any) {
  }
 
 // Parse item scaned values if parser exist.
-func (ic *ItemCreator[T]) ParseItem(iv any) error {
-	if ic.parseFunc == nil {
-		return nil
-	}
-
+func (ic *ItemCreator[T]) AppendItem(iv any) error {
 	if iv != nil {
 		if item, ok := iv.(*T); ok {
-			return ic.parseFunc(item)
+			*ic.outs = append(*ic.outs, item)
+			if ic.parseFunc != nil {
+				return ic.parseFunc(item)
+			}
+			return nil
 		}
 	}
 	return invar.ErrInvalidData

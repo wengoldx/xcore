@@ -201,7 +201,7 @@ func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 		if err := rows.Scan(outs...); err != nil {
 			return err
 		}
-		return creator.ParseItem(item)
+		return creator.AppendItem(item)
 	})
 }
 

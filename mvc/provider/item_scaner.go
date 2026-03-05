@@ -25,10 +25,10 @@ type Scaner interface {
 // New a Scaner instance to get single column all values.
 //
 //	emails := []string{}
-//	err := h.Querier().Tags("uid").Wheres(...).
-//		Column(pd.NewScaner(&datas, func(iv *string) {
-//			*iv = decode(*iv)
-//		}))
+//	h.Querier().Tags("uid").Wheres(...).
+//	  Column(pd.NewScaner(&emails, func(iv *string) {
+//		  *iv = decode(*iv)
+//	  }))
 func NewScaner[T any](outs *[]T, parser ...ParserFunc[T]) Scaner {
 	scaner := &ItemScaner[T]{outs:outs}
 	if len(parser) > 0 && parser[0] != nil {
@@ -56,7 +56,7 @@ func (ic *ItemScaner[T]) AppendItem(iv any) error {
 	if iv != nil {
 		if item, ok := iv.(*T); ok {
 			if ic.parseFunc != nil {
-				if err := ic.parseFunc(item); err != nil {
+				if err := ic.parseFunc(item); err != nil{
 					return err
 				}
 			}

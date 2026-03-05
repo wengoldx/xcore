@@ -13,6 +13,7 @@ package builder
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	pd "github.com/wengoldx/xcore/mvc/provider"
@@ -81,6 +82,10 @@ type MyTestData struct {
 	NilPtr *MyTestDoc `column:"nilptr"`
 }
 
+func (m *MyTestDoc) String() string {
+	return m.Doc
+}
+
 func TestParseOut(t *testing.T) {
 	data := &MyTestData{}
 	fmt.Println("MyTestData json tag:")
@@ -120,25 +125,58 @@ func TestParseOut(t *testing.T) {
 	fmt.Println("     .NilPtr =", data.NilPtr)
 }
 
-func TestSQLCreator(t *testing.T) {
+func TestItemCreator(t *testing.T) {
 	datas := []*MyTestData{}
-	creator := pd.NewCreator(func(iv *MyTestData) []any {
-		datas = append(datas, iv)
+	creator := pd.NewCreator(&datas, func(iv *MyTestData) []any {
 		return []any{&iv.Name, &iv.Age, &iv.Labels, &iv.Doc, &iv.DocPtr, &iv.NilPtr}
+	}, func(iv *MyTestData) error {
+		if iv.Age%2 == 0 {
+			iv.NilPtr = iv.DocPtr
+		}
+		return nil
 	})
 
 	for i := 0; i < 10; i++ {
-		_, fields := creator.CreateItem()
+		item, fields := creator.CreateItem()
 		*(fields[0].(*string)) = "zhangsan" + strconv.Itoa(i)
 		*(fields[1].(*int64)) = 19 + int64(i)
 		*(fields[2].(*[]string)) = []string{"label-" + strconv.Itoa(i)}
 		*(fields[3].(*MyTestDoc)) = MyTestDoc{Doc: "test doc"}
-		*(fields[4].(**MyTestDoc)) = &MyTestDoc{Doc: "test doc ptr"}
+		*(fields[4].(**MyTestDoc)) = &MyTestDoc{Doc: "test doc ptr!"}
 		*(fields[5].(**MyTestDoc)) = nil
+		/* Here for rows scaning... */
+		creator.AppendItem(item)
 	}
 
 	for _, data := range datas {
 		fmt.Println("Data:", data)
+		if data.Age%2 == 0 && data.NilPtr == nil {
+			t.Fatal("Parsed item value, not changed!")
+		}
+	}
+}
+
+func TestItemScaner(t *testing.T) {
+	datas := []string{}
+	scaner := pd.NewScaner(&datas, func(iv *string) error {
+		if strings.HasSuffix(*iv, "2") {
+			*iv = "changed!"
+		}
+		return nil
+	})
+
+	for i := 0; i < 5; i++ {
+		item := scaner.CreateItem()
+		*(item.(*string)) = "scaning " + strconv.Itoa(i)
+		/* Here for rows scaning... */
+		scaner.AppendItem(item)
+	}
+
+	for index, data := range datas {
+		fmt.Println("Data:", data)
+		if index == 2 && data != "changed!" {
+			t.Fatal("Parsed item value, not changed!")
+		}
 	}
 }
 
