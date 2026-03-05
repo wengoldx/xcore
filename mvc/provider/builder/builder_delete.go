@@ -36,8 +36,8 @@ type DeleteBuilder struct {
 var _ pd.SQLBuilder = (*DeleteBuilder)(nil)
 
 // Create a DeleteBuilder instance to build a query string.
-func NewDelete(table string) *DeleteBuilder {
-	return &DeleteBuilder{BaseBuilder: *NewBuilder(table)}
+func NewDelete(table string, provider ...pd.ProviderUtils) *DeleteBuilder {
+	return &DeleteBuilder{BaseBuilder: *NewBuilder(table, provider...)}
 }
 
 /* ------------------------------------------------------------------- */

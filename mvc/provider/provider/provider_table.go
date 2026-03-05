@@ -12,11 +12,11 @@ package provider
 
 import (
 	"database/sql"
-	"errors"
 
 	"github.com/wengoldx/xcore/invar"
 	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/mvc/provider/builder"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // Table provider for using builder to build query string and args for
@@ -78,46 +78,27 @@ func WithDebug(debug bool) Option {
 
 // Create a query builder to query table records.
 func (p *TableProvider) Querier(t ...string) *builder.QueryBuilder {
-	builder := builder.NewQuery(p.getTable(t...))
-	builder.SetProvider(p)
-	return builder
+	return builder.NewQuery(utils.Variable(t, p.table), p)
 }
 
 // Create a insert builder to insert records to table.
 func (p *TableProvider) Inserter(t ...string) *builder.InsertBuilder {
-	builder := builder.NewInsert(p.getTable(t...))
-	builder.SetProvider(p)
-	return builder
+	return builder.NewInsert(utils.Variable(t, p.table), p)
 }
 
 // Create a update builder to update table records.
 func (p *TableProvider) Updater(t ...string) *builder.UpdateBuilder {
-	builder := builder.NewUpdate(p.getTable(t...))
-	builder.SetProvider(p)
-	return builder
+	return builder.NewUpdate(utils.Variable(t, p.table), p)
 }
 
 // Create a delete builder to delete table records.
 func (p *TableProvider) Deleter(t ...string) *builder.DeleteBuilder {
-	builder := builder.NewDelete(p.getTable(t...))
-	builder.SetProvider(p)
-	return builder
-}
-
-// Return target table name or current provider table name.
-func (p *TableProvider) getTable(t ...string) string {
-	if len(t) > 0 && t[0] != "" {
-		return t[0]
-	}
-	return p.table
+	return builder.NewDelete(utils.Variable(t, p.table), p)
 }
 
 /* ------------------------------------------------------------------- */
 /* Using Builder To Construct Query String For Database Access         */
 /* ------------------------------------------------------------------- */
-
-// Error indicate the SQLBuilder not matched the provider util method.
-var ErrInvalidBuilder = errors.New("invalid sql builder!")
 
 // Check the target record whether exist by the given QueryBuilder to
 // build query string, it no-need set any tags.
@@ -132,7 +113,7 @@ func (p *TableProvider) Has(b pd.SQLBuilder) (bool, error) {
 		query, args := qb.Tags("*").Build(p.debug)
 		return p.BaseProvider.Has(query, args...)
 	}
-	return false, ErrInvalidBuilder
+	return false, invar.ErrBadSQLBuilder
 }
 
 // Check the target record whether unexist by the given QueryBuilder to
@@ -161,7 +142,7 @@ func (p *TableProvider) Count(b pd.SQLBuilder) (int, error) {
 		query, args := qb.Tags("COUNT(*)").Build(p.debug)
 		return p.BaseProvider.Count(query, args...)
 	}
-	return 0, ErrInvalidBuilder
+	return 0, invar.ErrBadSQLBuilder
 }
 
 // Query one record by given builder builded query string, and read datas
@@ -174,7 +155,7 @@ func (p *TableProvider) OneScan(b pd.SQLBuilder, cb pd.ScanCallback) error {
 		query, args := qb.Build(p.debug)
 		return p.BaseProvider.One(query, cb, args...)
 	}
-	return ErrInvalidBuilder
+	return invar.ErrBadSQLBuilder
 }
 
 // Query the top one record and return the results without scaner
@@ -183,12 +164,12 @@ func (p *TableProvider) OneScan(b pd.SQLBuilder, cb pd.ScanCallback) error {
 func (p *TableProvider) OneDone(b pd.SQLBuilder, done ...pd.DoneCallback) error {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Build(p.debug)
-		if len(done) > 0 && done[0] != nil {
-			return p.BaseProvider.OneDone(query, qb.GetOuts(), done[0], args...)
+		if cb := utils.Variable(done, nil); cb != nil {
+			return p.BaseProvider.OneDone(query, qb.GetOuts(), cb, args...)
 		}
 		return p.BaseProvider.OneDone(query, qb.GetOuts(), nil, args...)
 	}
-	return ErrInvalidBuilder
+	return invar.ErrBadSQLBuilder
 }
 
 // Query records by given builder builded query string, and read datas
@@ -200,7 +181,7 @@ func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
 		query, args := qb.Build(p.debug)
 		return p.BaseProvider.Query(query, cb, args...)
 	}
-	return ErrInvalidBuilder
+	return invar.ErrBadSQLBuilder
 }
 
 // Query records by given builder builded query string, and read datas
@@ -272,7 +253,7 @@ func (p *TableProvider) Insert(b pd.SQLBuilder) (int64, error) {
 		}
 		return p.BaseProvider.ExecResult(query)
 	}
-	return 0, ErrInvalidBuilder
+	return 0, invar.ErrBadSQLBuilder
 }
 
 // Insert the given rows into target table, and check inserted result
@@ -294,7 +275,7 @@ func (p *TableProvider) InsertUncheck(b pd.SQLBuilder) error {
 		}
 		return p.Exec(b)
 	}
-	return ErrInvalidBuilder
+	return invar.ErrBadSQLBuilder
 }
 
 // Update target record by given builder to build a query string, it will
@@ -306,7 +287,7 @@ func (p *TableProvider) Update(b pd.SQLBuilder) error {
 		query, args := ub.Build(p.debug)
 		return p.BaseProvider.Update(query, args...)
 	}
-	return ErrInvalidBuilder
+	return invar.ErrBadSQLBuilder
 }
 
 // Delete records by the given builder to build a query string, it will
@@ -318,5 +299,5 @@ func (p *TableProvider) Delete(b pd.SQLBuilder) error {
 		query, args := rb.Build(p.debug)
 		return p.BaseProvider.Delete(query, args...)
 	}
-	return ErrInvalidBuilder
+	return invar.ErrBadSQLBuilder
 }

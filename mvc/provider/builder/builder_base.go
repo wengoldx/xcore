@@ -31,8 +31,8 @@ type BaseBuilder struct {
 }
 
 // Create a BaseBuilder instance to support sql build utils.
-func NewBuilder(table string) *BaseBuilder {
-	return &BaseBuilder{table: table}
+func NewBuilder(table string, provider ...pd.ProviderUtils) *BaseBuilder {
+	return &BaseBuilder{table: table, provider: utils.Variable(provider, nil)}
 }
 
 /* ------------------------------------------------------------------- */
@@ -87,7 +87,8 @@ func (b *BaseBuilder) FormatWheres(wheres pd.Wheres, sep ...string) (string, []a
 		conditions := []string{}
 		for condition, arg := range wheres {
 			conditions = append(conditions, condition) // append conditions whatever arg is nil.
-			if arg != nil {                            // filter out the nil args, it useful for where joins like 'a.acc=b.user'.
+			// filter out the nil args, it useful for where joins like 'a.acc=b.user' formats.
+			if arg != nil {
 				args = append(args, arg)
 			}
 		}

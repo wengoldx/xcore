@@ -189,16 +189,6 @@ func (c *WingController) ResponOK(silent ...bool) {
 	w.Write([]byte(""))
 }
 
-// ResponExErr sends a extend error as response data on 202 status code
-func (c *WingController) ResponExErr(errmsg invar.WExErr) {
-	ctl, act := c.GetControllerAndAction()
-	logger.E("Respone ERR-EX >", ctl+"."+act, "err:", errmsg.Message)
-
-	c.Ctx.Output.Status = invar.StatusExError
-	c.Data["json"] = errmsg
-	c.ServeJSON()
-}
-
 /* ------------------------------------------------------------------- */
 /* For Response Errors                                                 */
 /* ------------------------------------------------------------------- */

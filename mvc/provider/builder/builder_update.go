@@ -36,8 +36,8 @@ type UpdateBuilder struct {
 var _ pd.SQLBuilder = (*UpdateBuilder)(nil)
 
 // Create a UpdateBuilder instance to build a query string.
-func NewUpdate(table string) *UpdateBuilder {
-	return &UpdateBuilder{BaseBuilder: *NewBuilder(table)}
+func NewUpdate(table string, provider ...pd.ProviderUtils) *UpdateBuilder {
+	return &UpdateBuilder{BaseBuilder: *NewBuilder(table, provider...)}
 }
 
 /* ------------------------------------------------------------------- */

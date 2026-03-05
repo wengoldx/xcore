@@ -108,7 +108,7 @@ func LoadRSAKey(filepath string, bits ...int) (string, error) {
 func ParsePriKey(prikey string, pkcs8 ...bool) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode([]byte(prikey))
 	if block == nil {
-		return nil, invar.ErrBadPrivateKey
+		return nil, invar.ErrBadPriKey
 	}
 
 	if len(pkcs8) > 0 && pkcs8[0] {
@@ -130,7 +130,7 @@ func ParsePriKey(prikey string, pkcs8 ...bool) (*rsa.PrivateKey, error) {
 func ParsePubKey(pubkey string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pubkey))
 	if block == nil {
-		return nil, invar.ErrBadPublicKey
+		return nil, invar.ErrBadPubKey
 	}
 
 	pubif, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -145,7 +145,7 @@ func ParsePubKey(pubkey string) (*rsa.PublicKey, error) {
 func CertPubKey(certpem string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(certpem))
 	if block == nil {
-		return nil, invar.ErrBadPublicKey
+		return nil, invar.ErrBadPubKey
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)

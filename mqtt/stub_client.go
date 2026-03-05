@@ -14,7 +14,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -306,7 +305,7 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 
 	// Create client configs and fix the id as 'server@123456789'
 	if user, ok := cfgs.Users[svr]; !ok {
-		return errors.New("Not found mqtt user: " + svr)
+		return invar.ErrNotFound.Replic("mqtt user: " + svr)
 	} else {
 		stub.Options.Host = cfgs.Broker.Host
 		stub.Options.Port = cfgs.Broker.Port

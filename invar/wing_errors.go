@@ -16,201 +16,128 @@ import (
 
 // WingErr constom error with code, you can use it as standry error object.
 //
-//	// Simple to get standry error object
 //	var err error
 //	err = invar.ErrNotFound
-//
-// # WARNING:
-//
-// DO NOT change the error code and message text anyway!!
-type WingErr struct {
-	error     // Simple use WingErr value as error type
-	Code  int // Extend error code, start 0x1000
-}
+type WingErr struct{ error }
 
 var (
-	ErrNotFound            = WingErr{errors.New("notfound") /*                                     */, 0x1000}
-	ErrInvalidNum          = WingErr{errors.New("invalid number") /*                               */, 0x1001}
-	ErrInvalidAccount      = WingErr{errors.New("invalid account") /*                              */, 0x1002}
-	ErrInvalidToken        = WingErr{errors.New("invalid token") /*                                */, 0x1003}
-	ErrInvalidRole         = WingErr{errors.New("invalid role") /*                                 */, 0x1004}
-	ErrInvalidClient       = WingErr{errors.New("invalid client") /*                               */, 0x1005}
-	ErrInvalidDevice       = WingErr{errors.New("invalid device") /*                               */, 0x1006}
-	ErrInvalidParams       = WingErr{errors.New("invalid params") /*                               */, 0x1007}
-	ErrInvalidData         = WingErr{errors.New("invalid data") /*                                 */, 0x1008}
-	ErrInvalidState        = WingErr{errors.New("invalid state") /*                                */, 0x1009}
-	ErrInvalidPhone        = WingErr{errors.New("invalid phone") /*                                */, 0x100A}
-	ErrInvalidEmail        = WingErr{errors.New("invalid email") /*                                */, 0x100B}
-	ErrInvalidOptions      = WingErr{errors.New("invalid options") /*                              */, 0x100C}
-	ErrInvalidRedisOptions = WingErr{errors.New("invalid redis options") /*                        */, 0x100D}
-	ErrInvalidConfigs      = WingErr{errors.New("invalid config datas") /*                         */, 0x100E}
-	ErrInvaildExecTime     = WingErr{errors.New("invaild execute time") /*                         */, 0x100F}
-	ErrInvalidRealname     = WingErr{errors.New("invaild realname") /*                             */, 0x1010}
-	ErrTagOffline          = WingErr{errors.New("target offline") /*                               */, 0x1011}
-	ErrClientOffline       = WingErr{errors.New("client offline") /*                               */, 0x1012}
-	ErrDupRegister         = WingErr{errors.New("duplicated registration") /*                      */, 0x1013}
-	ErrDupLogin            = WingErr{errors.New("duplicated admin login") /*                       */, 0x1014}
-	ErrDupData             = WingErr{errors.New("duplicated data") /*                              */, 0x1015}
-	ErrDupAccount          = WingErr{errors.New("duplicated account") /*                           */, 0x1016}
-	ErrDupName             = WingErr{errors.New("duplicate name") /*                               */, 0x1017}
-	ErrDupKey              = WingErr{errors.New("duplicate key") /*                                */, 0x1018}
-	ErrTokenExpired        = WingErr{errors.New("token expired") /*                                */, 0x1019}
-	ErrBadPublicKey        = WingErr{errors.New("invalid public key") /*                           */, 0x101A}
-	ErrBadPrivateKey       = WingErr{errors.New("invalid private key") /*                          */, 0x101B}
-	ErrUnkownCharType      = WingErr{errors.New("unkown chars type") /*                            */, 0x101C}
-	ErrUnperparedState     = WingErr{errors.New("unperpared state") /*                             */, 0x101D}
-	ErrOrmNotUsing         = WingErr{errors.New("orm not using") /*                                */, 0x101E}
-	ErrNoneRowFound        = WingErr{errors.New("none row found") /*                               */, 0x101F}
-	ErrNotChanged          = WingErr{errors.New("not changed") /*                                  */, 0x1020}
-	ErrNotInserted         = WingErr{errors.New("not inserted") /*                                 */, 0x1021}
-	ErrSendFailed          = WingErr{errors.New("failed to send") /*                               */, 0x1022}
-	ErrAuthDenied          = WingErr{errors.New("permission denied") /*                            */, 0x1023}
-	ErrKeyLenSixteen       = WingErr{errors.New("require sixteen-length secret key") /*            */, 0x1024}
-	ErrOverTimes           = WingErr{errors.New("over retry times") /*                             */, 0x1025}
-	ErrSetFrameNil         = WingErr{errors.New("failed clear frame meta") /*                      */, 0x1026}
-	ErrOperationNotSupport = WingErr{errors.New("operation not support") /*                        */, 0x1027}
-	ErrSendHeadBytes       = WingErr{errors.New("failed send head bytes") /*                       */, 0x1028}
-	ErrSendBodyBytes       = WingErr{errors.New("failed send body bytes") /*                       */, 0x1029}
-	ErrReadBytes           = WingErr{errors.New("error read bytes") /*                             */, 0x102A}
-	ErrInternalServer      = WingErr{errors.New("internal server error") /*                        */, 0x102B}
-	ErrCreateByte          = WingErr{errors.New("failed create bytes: system protection") /*       */, 0x102C}
-	ErrFileNotFound        = WingErr{errors.New("file not found") /*                               */, 0x102D}
-	ErrDownloadFile        = WingErr{errors.New("failed download file") /*                         */, 0x102E}
-	ErrOpenSourceFile      = WingErr{errors.New("failed open source file") /*                      */, 0x102F}
-	ErrAlreadyConn         = WingErr{errors.New("already connected") /*                            */, 0x1030}
-	ErrEmptyReponse        = WingErr{errors.New("received empty response") /*                      */, 0x1031}
-	ErrReadConf            = WingErr{errors.New("failed load config file") /*                      */, 0x1032}
-	ErrUnexpectedDir       = WingErr{errors.New("expect file path not directory") /*               */, 0x1033}
-	ErrWriteMD5            = WingErr{errors.New("failed write to md5") /*                          */, 0x1034}
-	ErrWriteOut            = WingErr{errors.New("failed write out") /*                             */, 0x1035}
-	ErrHandleDownload      = WingErr{errors.New("failed handle download file") /*                  */, 0x1036}
-	ErrFullConnPool        = WingErr{errors.New("connection pool is full") /*                      */, 0x1037}
-	ErrPoolSize            = WingErr{errors.New("thread pool size value must be positive") /*      */, 0x1038}
-	ErrPoolFull            = WingErr{errors.New("pool is full, can not take any more") /*          */, 0x1039}
-	ErrCheckDB             = WingErr{errors.New("check database: failed retry many times") /*      */, 0x103A}
-	ErrFetchDB             = WingErr{errors.New("fetch database connection timeout") /*            */, 0x103B}
-	ErrReadFileBody        = WingErr{errors.New("failed read file content") /*                     */, 0x103C}
-	ErrNilFrame            = WingErr{errors.New("frame is null") /*                                */, 0x103D}
-	ErrNoStorage           = WingErr{errors.New("no storage server available") /*                  */, 0x103E}
-	ErrUnmatchLen          = WingErr{errors.New("unmatch download file length") /*                 */, 0x103F}
-	ErrCopyFile            = WingErr{errors.New("failed copy file") /*                             */, 0x1040}
-	ErrEmptyData           = WingErr{errors.New("empty data") /*                                   */, 0x1041}
-	ErrImgOverSize         = WingErr{errors.New("image file size over") /*                         */, 0x1042}
-	ErrAudioOverSize       = WingErr{errors.New("audio file size over") /*                         */, 0x1043}
-	ErrVideoOverSize       = WingErr{errors.New("video file size over") /*                         */, 0x1044}
-	ErrNoAssociatedExpire  = WingErr{errors.New("no associated expire") /*                         */, 0x1045}
-	ErrUnsupportFormat     = WingErr{errors.New("unsupported format data") /*                      */, 0x1046}
-	ErrUnsupportedFile     = WingErr{errors.New("unsupported file format") /*                      */, 0x1047}
-	ErrUnexistKey          = WingErr{errors.New("unexist key") /*                                  */, 0x1048}
-	ErrUnexistRedisKey     = WingErr{errors.New("unexist redis key") /*                            */, 0x1049}
-	ErrUnexistLifecycle    = WingErr{errors.New("unexist lifecycle configs") /*                    */, 0x104A}
-	ErrSetLifecycleTag     = WingErr{errors.New("failed set file lifecycle tag") /*                */, 0x104B}
-	ErrInactiveAccount     = WingErr{errors.New("inactive status account") /*                      */, 0x104C}
-	ErrCaseException       = WingErr{errors.New("case exception") /*                               */, 0x104D}
-	ErrBadDBConnect        = WingErr{errors.New("database not connnect") /*                        */, 0x104E}
-	ErrBadModelCreator     = WingErr{errors.New("bad model creator") /*                            */, 0x104F}
+	ErrNotFound           = WingErr{errors.New("notfound")}                                // Error: notfound.
+	ErrNotChanged         = WingErr{errors.New("not changed")}                             // Error: not changed.
+	ErrNotInserted        = WingErr{errors.New("not inserted")}                            // Error: not inserted.
+	ErrInvalidNum         = WingErr{errors.New("invalid number")}                          // Error: invalid number.
+	ErrInvalidAccount     = WingErr{errors.New("invalid account")}                         // Error: invalid account.
+	ErrInvalidToken       = WingErr{errors.New("invalid token")}                           // Error: invalid token.
+	ErrInvalidRole        = WingErr{errors.New("invalid role")}                            // Error: invalid role.
+	ErrInvalidClient      = WingErr{errors.New("invalid client")}                          // Error: invalid client.
+	ErrInvalidDevice      = WingErr{errors.New("invalid device")}                          // Error: invalid device.
+	ErrInvalidParams      = WingErr{errors.New("invalid params")}                          // Error: invalid params.
+	ErrInvalidData        = WingErr{errors.New("invalid data")}                            // Error: invalid data.
+	ErrInvalidState       = WingErr{errors.New("invalid state")}                           // Error: invalid state.
+	ErrInvalidPhone       = WingErr{errors.New("invalid phone")}                           // Error: invalid phone.
+	ErrInvalidEmail       = WingErr{errors.New("invalid email")}                           // Error: invalid email.
+	ErrInvalidOptions     = WingErr{errors.New("invalid options")}                         // Error: invalid options.
+	ErrInvalidConfigs     = WingErr{errors.New("invalid configs")}                         // Error: invalid configs.
+	ErrInvaildTime        = WingErr{errors.New("invaild time")}                            // Error: invaild time.
+	ErrInvalidName        = WingErr{errors.New("invaild name")}                            // Error: invaild name.
+	ErrInvalidFile        = WingErr{errors.New("invalid file")}                            // Error: invalid file.
+	ErrBadPubKey          = WingErr{errors.New("invalid public key")}                      // Error: invalid public key.
+	ErrBadPriKey          = WingErr{errors.New("invalid private key")}                     // Error: invalid private key.
+	ErrDupRegister        = WingErr{errors.New("duplicated registration")}                 // Error: duplicated registration.
+	ErrDupLogin           = WingErr{errors.New("duplicated login")}                        // Error: duplicated login.
+	ErrDupData            = WingErr{errors.New("duplicated data")}                         // Error: duplicated data.
+	ErrDupAccount         = WingErr{errors.New("duplicated account")}                      // Error: duplicated account.
+	ErrDupName            = WingErr{errors.New("duplicate name")}                          // Error: duplicate name.
+	ErrDupKey             = WingErr{errors.New("duplicate key")}                           // Error: duplicate key.
+	ErrDupEntry           = WingErr{errors.New("duplicate entry")}                         // Error: duplicate entry.
+	ErrBadDBConnect       = WingErr{errors.New("database not connnect")}                   // Error: database not connnect.
+	ErrBadSQLBuilder      = WingErr{errors.New("bad sql string builder")}                  // Error: bad sql string builder.
+	ErrBadModelCreator    = WingErr{errors.New("bad model creator")}                       // Error: bad model creator.
+	ErrTagOffline         = WingErr{errors.New("target offline")}                          // Error: target offline.
+	ErrClientOffline      = WingErr{errors.New("client offline")}                          // Error: client offline.
+	ErrTokenExpired       = WingErr{errors.New("token expired")}                           // Error: token expired.
+	ErrUnkownCharType     = WingErr{errors.New("unkown chars type")}                       // Error: unkown chars type.
+	ErrUnperparedState    = WingErr{errors.New("unperpared state")}                        // Error: unperpared state.
+	ErrOrmNotUsing        = WingErr{errors.New("orm not using")}                           // Error: orm not using.
+	ErrNoneRowFound       = WingErr{errors.New("none row found")}                          // Error: none row found.
+	ErrSendFailed         = WingErr{errors.New("failed to send")}                          // Error: failed to send.
+	ErrAuthDenied         = WingErr{errors.New("permission denied")}                       // Error: permission denied.
+	ErrKeyLenSixteen      = WingErr{errors.New("require sixteen-length secret key")}       // Error: require sixteen-length secret key.
+	ErrOverTimes          = WingErr{errors.New("over retry times")}                        // Error: over retry times.
+	ErrSetFrameNil        = WingErr{errors.New("failed clear frame meta")}                 // Error: failed clear frame meta.
+	ErrNotSupport         = WingErr{errors.New("operation not support")}                   // Error: operation not support.
+	ErrFailSendHead       = WingErr{errors.New("failed send head bytes")}                  // Error: failed send head bytes.
+	ErrFailSendBody       = WingErr{errors.New("failed send body bytes")}                  // Error: failed send body bytes.
+	ErrReadBytes          = WingErr{errors.New("error read bytes")}                        // Error: error read bytes.
+	ErrInternalServer     = WingErr{errors.New("internal server error")}                   // Error: internal server error.
+	ErrCreateByte         = WingErr{errors.New("failed create bytes: system protection")}  // Error: failed create bytes: system protection.
+	ErrFileNotFound       = WingErr{errors.New("file not found")}                          // Error: file not found.
+	ErrDownloadFile       = WingErr{errors.New("failed download file")}                    // Error: failed download file.
+	ErrOpenSourceFile     = WingErr{errors.New("failed open source file")}                 // Error: failed open source file.
+	ErrAlreadyConn        = WingErr{errors.New("already connected")}                       // Error: already connected.
+	ErrEmptyReponse       = WingErr{errors.New("received empty response")}                 // Error: received empty response.
+	ErrReadConf           = WingErr{errors.New("failed load config file")}                 // Error: failed load config file.
+	ErrUnexpectedDir      = WingErr{errors.New("expect file path not directory")}          // Error: expect file path not directory.
+	ErrWriteMD5           = WingErr{errors.New("failed write to md5")}                     // Error: failed write to md5.
+	ErrWriteOut           = WingErr{errors.New("failed write out")}                        // Error: failed write out.
+	ErrHandleDownload     = WingErr{errors.New("failed handle download file")}             // Error: failed handle download file.
+	ErrFullConnPool       = WingErr{errors.New("connection pool is full")}                 // Error: connection pool is full.
+	ErrPoolSize           = WingErr{errors.New("thread pool size value must be positive")} // Error: thread pool size value must be positive.
+	ErrPoolFull           = WingErr{errors.New("pool is full, can not take any more")}     // Error: pool is full, can not take any more.
+	ErrCheckDB            = WingErr{errors.New("check database: failed retry many times")} // Error: check database: failed retry many times.
+	ErrFetchDB            = WingErr{errors.New("fetch database connection timeout")}       // Error: fetch database connection timeout.
+	ErrReadFileBody       = WingErr{errors.New("failed read file content")}                // Error: failed read file content.
+	ErrNilFrame           = WingErr{errors.New("frame is null")}                           // Error: frame is null.
+	ErrNoStorage          = WingErr{errors.New("no storage server available")}             // Error: no storage server available.
+	ErrUnmatchLen         = WingErr{errors.New("unmatch download file length")}            // Error: unmatch download file length.
+	ErrCopyFile           = WingErr{errors.New("failed copy file")}                        // Error: failed copy file.
+	ErrEmptyData          = WingErr{errors.New("empty data")}                              // Error: empty data.
+	ErrImgOverSize        = WingErr{errors.New("image file size over")}                    // Error: image file size over.
+	ErrAudioOverSize      = WingErr{errors.New("audio file size over")}                    // Error: audio file size over.
+	ErrVideoOverSize      = WingErr{errors.New("video file size over")}                    // Error: video file size over.
+	ErrNoAssociatedExpire = WingErr{errors.New("no associated expire")}                    // Error: no associated expire.
+	ErrUnsupportFormat    = WingErr{errors.New("unsupported format data")}                 // Error: unsupported format data.
+	ErrUnsupportedFile    = WingErr{errors.New("unsupported file format")}                 // Error: unsupported file format.
+	ErrUnexistKey         = WingErr{errors.New("unexist key")}                             // Error: unexist key.
+	ErrUnexistRedisKey    = WingErr{errors.New("unexist redis key")}                       // Error: unexist redis key.
+	ErrUnexistLifecycle   = WingErr{errors.New("unexist lifecycle configs")}               // Error: unexist lifecycle configs.
+	ErrSetLifecycleTag    = WingErr{errors.New("failed set file lifecycle tag")}           // Error: failed set file lifecycle tag.
+	ErrInactiveAccount    = WingErr{errors.New("inactive status account")}                 // Error: inactive status account.
+	ErrCaseException      = WingErr{errors.New("case exception")}                          // Error: case exception.
 )
 
-// Create a WingErr from given message and code that the code maybe set to 0 when not set.
-func NewError(message string, code ...int) *WingErr {
-	if len(code) > 0 {
-		return &WingErr{errors.New(message), code[0]}
-	}
-	return &WingErr{errors.New(message), 0}
+// Create a WingErr from given message.
+func NewError(message string) *WingErr {
+	return &WingErr{errors.New(message)}
 }
 
-// Return WingErr object replica with additions message.
+// Return WingErr object replic with additions message.
 //
 //	err := invar.ErrNotFound.Replic("column xxx is missing")
 //	// err message is: notfound - column xxx is missing
 func (w *WingErr) Replic(additions ...string) *WingErr {
 	if len(additions) > 0 {
-		return NewError(w.Error()+" - "+strings.Join(additions, " "), w.Code)
+		return NewError(w.Error() + " - " + strings.Join(additions, " "))
 	}
-	return NewError(w.Error(), w.Code)
+	return NewError(w.Error())
 }
 
-// Return true if error message and code both matched.
-func (w *WingErr) Equal(o *WingErr) bool {
-	return EqualError(w.error, o.error) && w.Code == o.Code
+// Return true if tow error messages matched.
+func (w *WingErr) Equal(o error) bool {
+	return w.Error() == o.Error()
 }
 
-// Return WExErr extend error from WingErr object.
-//
-//	// Simple to get WExErr extend error
-//	var exerr *invar.WExErr
-//	exerr = invar.ErrNotFound.ToExErr()
-//
-//	// Directly using WingErr as error value
-//	var err error
-//	err := invar.ErrNotFound
-func (w *WingErr) ToExErr() *WExErr {
-	return NewExErr(w.Code, w.Error())
-}
-
-// Return HTTP response code and WExErr extend error.
-//
-//	// Using for Restful API to response custom status and message.
-//	http_resp_code, err := invar.ErrNotFound.StateError()
-func (w *WingErr) StateError() (int, *WExErr) {
-	return StatusExError, w.ToExErr()
-}
-
-// ----------------------------------------
-
-// Equal tow error if message same on char case
-func EqualError(a, b error) bool {
-	return a.Error() == b.Error()
-}
-
-// Equal tow error if message same ignoral char case
-func EqualErrorFold(a, b error) bool {
-	return strings.EqualFold(a.Error(), b.Error())
-}
-
-// Check if error message contain given error string
-func ErrorContain(s, sub error) bool {
-	return strings.Contains(s.Error(), sub.Error())
-}
-
-// Check if error message start given perfix
-func ErrorStart(s, sub error) bool {
-	return strings.HasPrefix(s.Error(), sub.Error())
-}
-
-// Check if error message start given perfix
-func ErrorEnd(s, sub error) bool {
-	return strings.HasSuffix(s.Error(), sub.Error())
+// Return true if error message contain the WingErr string.
+func (w *WingErr) SubOf(e error) bool {
+	return IsError(e, w.Error())
 }
 
 // Check if error message contain given string
-func IsError(e error, s string) bool {
-	esu, su := strings.ToLower(e.Error()), strings.ToLower(s)
-	return strings.Contains(esu, su)
+func IsError(e error, m string) bool {
+	es, ms := strings.ToLower(e.Error()), strings.ToLower(m)
+	return strings.Contains(es, ms)
 }
 
-// Check given error if duplicated errors
+// Check given error if contain 'duplicate' string for as deplicate error.
 func IsDupError(e error) bool {
-	return ErrorContain(e, ErrDupRegister) || IsError(e, "Duplicate entry") ||
-		ErrorContain(e, ErrDupData) || ErrorContain(e, ErrDupAccount) ||
-		ErrorContain(e, ErrDupName) || ErrorContain(e, ErrDupKey) ||
-		ErrorContain(e, ErrDupLogin)
-}
-
-// ----------------------------------------
-
-// WExErr extend error with code and error message.
-type WExErr struct {
-	Code    int    `json:"code"    description:"Extend error code"`
-	Message string `json:"message" description:"Extend error message"`
-}
-
-// Create a WExErr from given code and message
-func NewExErr(code int, message string) *WExErr {
-	return &WExErr{Code: code, Message: message}
-}
-
-// Create a WExErr from given code and message
-func StErr(code int, message string) (int, *WExErr) {
-	return StatusExError, NewExErr(code, message)
+	return IsError(e, "duplicate")
 }

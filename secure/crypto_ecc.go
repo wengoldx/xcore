@@ -205,7 +205,7 @@ func EccPubKey(pubkey string) (*ecdsa.PublicKey, error) {
 
 	pub, success := pubif.(*ecdsa.PublicKey)
 	if !success {
-		return nil, invar.ErrBadPublicKey
+		return nil, invar.ErrBadPubKey
 	}
 	return pub, nil
 }

@@ -30,9 +30,9 @@ import (
 // Try try-catch-finaly method
 func Try(do func(), catcher func(error), finaly ...func()) {
 	defer func() {
-		if i := recover(); i != nil {
-			execption := errors.New(fmt.Sprint(i))
-			logger.E("Catched exception:", i)
+		if e := recover(); e != nil {
+			execption := errors.New(fmt.Sprint(e))
+			logger.E("Catched exception:", e)
 			catcher(execption)
 			if len(finaly) > 0 {
 				finaly[0]()

@@ -41,8 +41,8 @@ type QueryBuilder struct {
 var _ pd.SQLBuilder = (*QueryBuilder)(nil)
 
 // Create a QueryBuilder instance to build a query string.
-func NewQuery(table string) *QueryBuilder {
-	return &QueryBuilder{BaseBuilder: *NewBuilder(table)}
+func NewQuery(table string, provider ...pd.ProviderUtils) *QueryBuilder {
+	return &QueryBuilder{BaseBuilder: *NewBuilder(table, provider...)}
 }
 
 // Return out params, maybe empty when called before Build().

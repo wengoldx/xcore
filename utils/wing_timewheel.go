@@ -57,7 +57,7 @@ func (d *TimeWheel) AddDelayTask(exectime time.Duration, data any, f ExecFunc) e
 	defer d.Unlock()
 	if exectime == 0 {
 		logger.E("Invaild Exec Time")
-		return invar.ErrInvaildExecTime
+		return invar.ErrInvaildTime
 	}
 
 	cycleNum := int64(exectime/(3600*time.Second)) - 1

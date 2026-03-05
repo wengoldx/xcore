@@ -31,8 +31,8 @@ type InsertBuilder struct {
 var _ pd.SQLBuilder = (*InsertBuilder)(nil)
 
 // Create a InsertBuilder instance to build a query string.
-func NewInsert(table string) *InsertBuilder {
-	return &InsertBuilder{BaseBuilder: *NewBuilder(table)}
+func NewInsert(table string, provider ...pd.ProviderUtils) *InsertBuilder {
+	return &InsertBuilder{BaseBuilder: *NewBuilder(table, provider...)}
 }
 
 /* ------------------------------------------------------------------- */

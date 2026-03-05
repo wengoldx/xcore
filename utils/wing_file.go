@@ -225,7 +225,7 @@ func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
 	if len(datas) == 0 {
 		return nil // non-need write anything.
 	} else if filename == "" || filename == "." || filename == ".." {
-		return invar.NewError("Invalid file name '" + filename + "'")
+		return invar.ErrInvalidFile.Replic(filename)
 	} else if err := MakeDirs(dirpath); err != nil {
 		return err
 	}
