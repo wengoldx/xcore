@@ -50,6 +50,7 @@ type ProviderUtils interface {
 	OneDone(b SQLBuilder, done ...DoneCallback) error // For Query.
 	Query(b SQLBuilder, cb ScanCallback) error        // For Query.
 	Array(b SQLBuilder, cr Creator) error             // For Query.
+	Column(b SQLBuilder, sr Scaner) error             // For Query.
 	Insert(b SQLBuilder) (int64, error)               // For Insert.
 	InsertCheck(b SQLBuilder) error                   // For Insert.
 	InsertUncheck(b SQLBuilder) error                 // For Insert.

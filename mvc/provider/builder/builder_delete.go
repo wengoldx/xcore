@@ -51,7 +51,7 @@ func (b *DeleteBuilder) Exec() error { return b.provider.Exec(b) }
 func (b *DeleteBuilder) Delete() error { return b.provider.Delete(b) }
 
 /* ------------------------------------------------------------------- */
-/* For Query String Build Utils                                        */
+/* For SQL String Build Utils                                          */
 /* ------------------------------------------------------------------- */
 
 // Specify the where conditions and args for query.

@@ -51,7 +51,7 @@ func (b *UpdateBuilder) Exec() error { return b.provider.Exec(b) }
 func (b *UpdateBuilder) Update() error { return b.provider.Update(b) }
 
 /* ------------------------------------------------------------------- */
-/* For Query String Build Utils                                        */
+/* For SQL String Build Utils                                          */
 /* ------------------------------------------------------------------- */
 
 // Specify the values of row to update.

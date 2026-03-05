@@ -204,7 +204,7 @@ func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
 }
 
 // Query records by given builder builded query string, and read datas
-// from ElemCreator instance.
+// from ItemCreator instance.
 //
 //	type MyAcc struct { Name string }
 //
@@ -212,15 +212,31 @@ func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
 //	creator := pd.NewCreator(func(iv *MyAcc) []any {
 //		datas= append(datas, iv)
 //		return []any{&iv.Name}
-//	})
-//	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
+//	}, /* func(iv *MyAcc) {} */) // or append parser function.
+//	h.Querier().Outs("name").Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
 func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 	return p.Query(b, func(rows *sql.Rows) error {
-		outs := creator.CreateItem()
+		item, outs := creator.CreateItem()
 		if err := rows.Scan(outs...); err != nil {
 			return err
 		}
-		return nil
+		return creator.ParseItem(item)
+	})
+}
+
+// Query single column values by given builder builded query string,
+// and read datas from ItemScaner instance.
+//
+//	names := []string{}
+//	scaner := pd.NewScaner(&names/* , func(iv *string) {} */)
+//	h.Querier().Outs("name").Wheres(pd.Wheres{"role=?": "admin"}).Column(scaner)
+func (p *TableProvider) Column(b pd.SQLBuilder, scaner pd.Scaner) error {
+	return p.Query(b, func(rows *sql.Rows) error {
+		out := scaner.CreateItem()
+		if err := rows.Scan(&out); err != nil {
+			return err
+		}
+		return scaner.AppendItem(out)
 	})
 }
 

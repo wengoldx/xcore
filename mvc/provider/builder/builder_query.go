@@ -73,8 +73,11 @@ func (b *QueryBuilder) Query(cb pd.ScanCallback) error { return b.provider.Query
 // Query the all records with the Creator utils.
 func (b *QueryBuilder) Array(cr pd.Creator) error { return b.provider.Array(b, cr) }
 
+// Query the all records with the Creator utils.
+func (b *QueryBuilder) Column(sr pd.Scaner) error { return b.provider.Column(b, sr) }
+
 /* ------------------------------------------------------------------- */
-/* For Query String Build Utils                                        */
+/* For SQL String Build Utils                                          */
 /* ------------------------------------------------------------------- */
 
 // Specify the table-alias joins for query.

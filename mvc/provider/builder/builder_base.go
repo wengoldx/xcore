@@ -36,14 +36,22 @@ func NewBuilder(table string) *BaseBuilder {
 }
 
 /* ------------------------------------------------------------------- */
-/* For BaseBuilder interface                                           */
+/* For Provider Utils                                                  */
 /* ------------------------------------------------------------------- */
 
 // Specify provider utils.
-func (b *BaseBuilder) SetProvider(p pd.ProviderUtils) { b.provider = p }
+func (b *BaseBuilder) SetProvider(p pd.ProviderUtils) {
+	b.provider = p
+}
 
 // Check provider utils whether inited.
-func (b *BaseBuilder) HasProvider() bool { return b.provider != nil }
+func (b *BaseBuilder) HasProvider() bool {
+	return b.provider != nil
+}
+
+/* ------------------------------------------------------------------- */
+/* For SQL String Build Utils                                          */
+/* ------------------------------------------------------------------- */
 
 // Format table joins to string for multi-table query, it will filter out the
 // empty table or alias join datas.

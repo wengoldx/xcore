@@ -52,7 +52,7 @@ func (b *InsertBuilder) InsertCheck() error { return b.provider.InsertCheck(b) }
 func (b *InsertBuilder) InsertUncheck() error { return b.provider.InsertUncheck(b) }
 
 /* ------------------------------------------------------------------- */
-/* For Query String Build Utils                                        */
+/* For SQL String Build Utils                                          */
 /* ------------------------------------------------------------------- */
 
 // Specify the values of row to insert.
