@@ -56,9 +56,7 @@ func (ic *ItemScaner[T]) AppendItem(iv any) error {
 	if iv != nil {
 		if item, ok := iv.(*T); ok {
 			if ic.parseFunc != nil {
-				if err := ic.parseFunc(item); err != nil{
-					return err
-				}
+				ic.parseFunc(item);
 			}
 			*ic.outs = append(*ic.outs, *item)
 			return nil

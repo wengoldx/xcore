@@ -23,7 +23,7 @@ type Creator interface {
 }
 
 type GetterFunc[T any] func(iv *T) []any
-type ParserFunc[T any] func(iv *T) error
+type ParserFunc[T any] func(iv *T)
 
 // New a Creator instance to generate target module items object.
 //
@@ -71,10 +71,10 @@ func (ic *ItemCreator[T]) CreateItem() (any, []any) {
 func (ic *ItemCreator[T]) AppendItem(iv any) error {
 	if iv != nil {
 		if item, ok := iv.(*T); ok {
-			*ic.outs = append(*ic.outs, item)
 			if ic.parseFunc != nil {
-				return ic.parseFunc(item)
+				ic.parseFunc(item)
 			}
+			*ic.outs = append(*ic.outs, item)
 			return nil
 		}
 	}

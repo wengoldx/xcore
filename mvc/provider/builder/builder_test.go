@@ -129,11 +129,10 @@ func TestItemCreator(t *testing.T) {
 	datas := []*MyTestData{}
 	creator := pd.NewCreator(&datas, func(iv *MyTestData) []any {
 		return []any{&iv.Name, &iv.Age, &iv.Labels, &iv.Doc, &iv.DocPtr, &iv.NilPtr}
-	}, func(iv *MyTestData) error {
+	}, func(iv *MyTestData) {
 		if iv.Age%2 == 0 {
 			iv.NilPtr = iv.DocPtr
 		}
-		return nil
 	})
 
 	for i := 0; i < 10; i++ {
@@ -158,11 +157,10 @@ func TestItemCreator(t *testing.T) {
 
 func TestItemScaner(t *testing.T) {
 	datas := []string{}
-	scaner := pd.NewScaner(&datas, func(iv *string) error {
+	scaner := pd.NewScaner(&datas, func(iv *string) {
 		if strings.HasSuffix(*iv, "2") {
 			*iv = "changed!"
 		}
-		return nil
 	})
 
 	for i := 0; i < 5; i++ {
