@@ -162,7 +162,7 @@ func ReadJsonFile(jsonfile string, out any) error {
 
 // Read text file content and output as string.
 func ReadTextFile(txtfile string) string {
-	if !IsFile(txtfile) {
+	if IsFile(txtfile) {
 		buf, err := os.ReadFile(txtfile);
 		if err != nil {
 			logger.E("Read", txtfile, "err:", err)
