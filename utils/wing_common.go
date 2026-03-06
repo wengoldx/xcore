@@ -230,7 +230,7 @@ func Distinct[T any](src []T) []T {
 	return NewSets(src...).Array()
 }
 
-// TrimEmpty remove empty string, it maybe return empty result array.
+// Remove empty string, it maybe return empty result array.
 func TrimEmpty(src []string) []string {
 	dst := []string{}
 	for _, str := range src {
@@ -239,6 +239,15 @@ func TrimEmpty(src []string) []string {
 		}
 	}
 	return dst
+}
+
+// Trim all leading and trailing white space chars of input strings.
+func TrimSpace(strs ...*string) {
+	for _, str := range strs {
+		if str != nil {
+			*str = strings.TrimSpace(*str)
+		}
+	}
 }
 
 // ----------------------------------------
