@@ -397,7 +397,7 @@ func (c *WingController) GetMultiFiles(key string, next FilesFunc) {
 
 // Do bussiness action after parsed url params and success validate.
 //
-//	@Return 400 code returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
 //
 // # NOTICE:
 //	- This method not check 'WENGOLD-V*' header.
@@ -412,7 +412,8 @@ func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts ...Option
 
 // Do bussiness action after success validate the given json or xml data.
 //
-//	@Return 400, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 404: Server internal error.
 //
 // # NOTICE:
 //	- This method not check 'WENGOLD-V*' header.
@@ -423,7 +424,8 @@ func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, opts ...Opt
 
 // Do bussiness action after success unmarshaled the given json or xml data.
 //
-//	@Return 400, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 404: Server internal error.
 //
 // # NOTICE:
 //	- This method not check 'WENGOLD-V*' header.
@@ -516,8 +518,8 @@ func (c *WingController) doAfterValidatedInner(ps any, nextFunc NextFunc, opts *
 
 // Do bussiness action after success unmarshal params or validate the unmarshaled json or xml data.
 //
-//	@Return 400: Invalid input params(Unmarshal error or invalid params value).
-//	@Return 404: Internale server error(not support content type unless json and xml).
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 404: Internale server error (not support content type unless json and xml).
 func (c *WingController) validateParams(ps any, opts *Options) bool {
 	switch opts.datatype {
 	case "json":
@@ -548,7 +550,7 @@ func (c *WingController) validateParams(ps any, opts *Options) bool {
 
 // Do bussiness action after success parsed and validate the params.
 //
-//	@Return 400: Invalid url params(Parse error or invalid params value).
+//	@Return 400: Invalid input params (error fields or validate error).
 func (c *WingController) validateUrlParams(ps any, validate bool) bool {
 	if !c.parseUrlParams(ps) {
 		c.E400Params("Failed parse url params!")

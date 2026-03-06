@@ -134,7 +134,7 @@ var ValidateHandler ValidateHandlerFunc
 // This method only suport 'WENGOLD-V2.0' header for GET http method
 // without any input params.
 //
-//	@return 401: Invalid author header or permission denied.
+//	@Return 401: Unsupport author header or invalid token.
 func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 	if ValidateHandler == nil {
 		c.E401Unauthed("Controller not set auth handler!")
@@ -174,9 +174,9 @@ func (c *WRoleController) AuthRequestHeader(silent ...bool) *WAuths {
 // This method only suport 'WENGOLD-V2.0' header for 'GET' http method,
 // and parse simple input params from url.
 //
-//	@return 401: Invalid author header or permission denied.
-//	@Return 400: Failed parse url params.
-//	@Return 404: Case exception in server.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 404: Server internal error.
 func (c *WRoleController) DoAfterParsed(ps any, nextHander NextHander, opt ...Option) {
 	opts := parseOptions(true, opt...)
 	if s := c.AuthRequestHeader(opts.Silent); s != nil {
@@ -190,8 +190,8 @@ func (c *WRoleController) DoAfterParsed(ps any, nextHander NextHander, opt ...Op
 //
 // This method not check 'WENGOLD-V2.0' header.
 //
-//	@Return 400: Failed parse url params.
-//	@Return 404: Case exception in server.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 404: Server internal error.
 func (c *WRoleController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
 	c.WingController.DoAfterParsed(ps, nextFunc, opt...)
 }
@@ -202,9 +202,9 @@ func (c *WRoleController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 //
 // This method only suport 'WENGOLD-V2.0' header for POST http method.
 //
-//	@return 401: Invalid author header or permission denied.
-//	@Return 400: Failed parse input params or validate error.
-//	@Return 404: Case exception in server.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 404: Server internal error.
 func (c *WRoleController) DoAfterValidated(ps any, nextHander NextHander, opt ...Option) {
 	opts := parseOptions(true, opt...)
 	if s := c.AuthRequestHeader(opts.Silent); s != nil {
@@ -218,9 +218,9 @@ func (c *WRoleController) DoAfterValidated(ps any, nextHander NextHander, opt ..
 //
 // This method only suport 'WENGOLD-V2.0' header for POST http method.
 //
-//	@return 401: Invalid author header or permission denied.
-//	@Return 400: Failed parse input params.
-//	@Return 404: Case exception in server.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 404: Server internal error.
 func (c *WRoleController) DoAfterUnmarshal(ps any, nextHander NextHander, opt ...Option) {
 	opts := parseOptions(false, opt...)
 	if s := c.AuthRequestHeader(opts.Silent); s != nil {

@@ -140,7 +140,8 @@ var GRoleHandlerFunc RoleHandlerFunc
 // This method only suport 'WENGOLD-V1.2' header for 'GET' http method
 // without any input params.
 //
-//	@Return 401, 403 codes returned on error.
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 403: API access permission denied.
 func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 	uuid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[0])
 	return uuid
@@ -153,7 +154,9 @@ func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 // This method only suport 'WENGOLD-V1.2' header for GET http method,
 // and parse simple input params from url.
 //
-//	@Return 400, 401, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Option) {
 	opts := parseOptions(true, opt...)
 	if uuid := c.AuthRequestHeader(opts.Silent); uuid != "" {
@@ -167,7 +170,8 @@ func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Opti
 //
 // This method not check 'WENGOLD-V1.2' header.
 //
-//	@Return 400, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 404: Server internal error.
 func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Option) {
 	c.WingController.DoAfterParsed(ps, nextFunc, opt...)
 }
@@ -178,7 +182,10 @@ func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 //
 // This method only suport 'WENGOLD-V1.2' header for POST http method.
 //
-//	@Return 400, 401, 403, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 403: API access permission denied.
+//	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...Option) {
 	opts := parseOptions(true, opt...)
 	if uuid, _ := c.innerAuthHeader(opts.Silent); uuid != "" {
@@ -192,7 +199,10 @@ func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...O
 //
 // This method only suport 'WENGOLD-V1.2' header for POST http method.
 //
-//	@Return 400, 401, 403, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 403: API access permission denied.
+//	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...Option) {
 	opts := parseOptions(false, opt...)
 	if uuid, _ := c.innerAuthHeader(opts.Silent); uuid != "" {
@@ -202,7 +212,10 @@ func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...O
 
 // Do bussiness action after success validate the given json or xml data.
 //
-//	@Return 400, 401, 403, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 403: API access permission denied.
+//	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, opts ...Option) {
 	options := parseOptions(true, opts...)
 	if uuid, pwd := c.innerAuthHeader(options.Silent); uuid != "" {
@@ -212,7 +225,10 @@ func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, opts
 
 // Do bussiness action after success unmarshaled the given json or xml data.
 //
-//	@Return 400, 401, 403, 404 codes returned on error.
+//	@Return 400: Invalid input params (error fields or validate error).
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 403: API access permission denied.
+//	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, opts ...Option) {
 	options := parseOptions(false, opts...)
 	if uuid, pwd := c.innerAuthHeader(options.Silent); uuid != "" {
@@ -226,8 +242,8 @@ func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, opts
 
 // Get authoration and token from http header, than verify it and return account secures.
 //
-//	@return 401: Unsupport author header or auth token failed.
-//	@return 403: Denied permission of user access the rest4 API.
+//	@Return 401: Unsupport author header or invalid token.
+//	@Return 403: API access permission denied.
 func (c *WAuthController) innerAuthHeader(silent bool) (string, string) {
 	if GAuthHandlerFunc == nil || GRoleHandlerFunc == nil {
 		c.E401Unauthed("Controller not set global handlers!")
