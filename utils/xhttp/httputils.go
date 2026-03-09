@@ -46,165 +46,17 @@ const (
 //	@See more [content-types](https://www.runoob.com/http/http-content-type.html).
 type SetRequest func(req *http.Request) (bool, error)
 
-// Read response body after executed request, it should return invar.ErrInvalidState
-// when response code is not http.StatusOK (200).
-func readResponse(resp *http.Response, parse bool) ([]byte, error) {
-	if resp.StatusCode != http.StatusOK {
-		logger.E("Http request failed, code:", resp.StatusCode)
-		return nil, invar.ErrInvalidState
+/* ------------------------------------------------------------------- */
+/* Export Global Utils                                                 */
+/* ------------------------------------------------------------------- */
+
+// Create and return header author callback.
+func AuthFunc(token string) SetRequest {
+	return func(req *http.Request) (bool, error) {
+		req.Header.Set("Author", "WENGOLD-V1.2")
+		req.Header.Set("Token", token)
+		return true, nil
 	}
-
-	// parse response data if require.
-	if parse {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			logger.E("Read response, err:", err)
-			return nil, err
-		} 
-		// log("Response:", string(body))
-		return body, nil
-	}
-
-	// return success without parse response
-	return nil, nil
-}
-
-// Unmarshal response body after execute request, it not check the body whether empty.
-func unmarshalResponse(body []byte, out any) error {
-	if err := json.Unmarshal(body, out); err != nil {
-		logger.E("Unmarshal response, err:", err)
-		return err
-	}
-	// logger.D("Response struct:", out)
-	return nil
-}
-
-// Post http request with json params.
-func postJson(tagurl string, params any, parse bool) ([]byte, error) {
-	payload, err := json.Marshal(params)
-	if err != nil {
-		logger.E("Marshal post datas, err:", err)
-		return nil, err
-	}
-
-	resp, err := http.Post(tagurl, ContentTypeJson, bytes.NewReader(payload))
-	if err != nil {
-		logger.E("Http post, err:", err)
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	return readResponse(resp, parse)
-}
-
-// Post http request with form valus as url.Values.
-func postForm(tagurl string, params url.Values, parse bool) ([]byte, error) {
-	resp, err := http.PostForm(tagurl, params)
-	if err != nil {
-		logger.E("Http post, err:", err)
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	return readResponse(resp, parse)
-}
-
-// Handle http GET method request and parse response data if required.
-//
-// # WARNING:
-//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
-func handleGet(tagurl string, parse bool, params ...any) ([]byte, error) {
-	if len(params) > 0 {
-		tagurl = fmt.Sprintf(tagurl, params...)
-	}
-
-	rawurl := EncodeUrl(tagurl)
-	logger.D("Http Get:", rawurl)
-
-	resp, err := http.Get(rawurl)
-	if err != nil {
-		logger.E("Failed http get, err:", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-	return readResponse(resp, parse)
-}
-
-// Handle http POST method request and parse response data if required.
-func handlePost(tagurl string, params any, parse bool, contentType ...string) ([]byte, error) {
-	ct :=ContentTypeJson
-	if len(contentType) > 0 && contentType[0] != "" {
-		ct = contentType[0]
-	}
-	logger.D("Http Post:", tagurl, "ContentType:", ct)
-
-	switch ct {
-	case ContentTypeJson:
-		return postJson(tagurl, params, parse)
-	case ContentTypeForm:
-		return postForm(tagurl, params.(url.Values), parse)
-	}
-	return nil, invar.ErrInvalidParams
-}
-
-// Excute http.Client.Do with request header set callback, and return response results.
-func clientDo[T any](req *http.Request, setRequestFunc SetRequest, out *T) error {
-	client := &http.Client{}
-
-	// use middle-ware to set request header
-	if setRequestFunc != nil {
-		ignoreTLS, err := setRequestFunc(req)
-		if err != nil {
-			logger.E("Set http header, err:", err)
-			return err
-		}
-
-		logger.I("Ignore TLS >", ignoreTLS)
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: ignoreTLS,
-			},
-		}
-	}
-
-	// execute http request
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.E("Execute client.DO, err:", err)
-		return err
-	}
-
-	defer resp.Body.Close()
-	datas, err :=  readResponse(resp, true)
-	if err != nil {
-		return err
-	}
-	return parseResp(datas, out)
-}
-
-// Parse the bytes response datas to templete out value.
-//
-// # WARNING:
-//	- The method only supput []byte, string, struct, []struct out data types.
-//	- The golang build in types array will case unmarshal error, such as []int, []string.
-func parseResp[T any](resp []byte, out *T) error {
-	if out != nil {
-		switch v := any(out).(type) {
-		case *[]byte :
-			*v = resp
-			return nil
-		case *string:
-			*v = strings.Trim(string(resp), "\"")
-			return nil
-		case any: // for struct and struct array!
-			vt := reflect.TypeOf(*out).Kind()
-			if vt == reflect.Struct || vt == reflect.Slice {
-				return unmarshalResponse(resp, out)
-			}
-		}
-		return invar.ErrUnsupportFormat
-	}
-	return nil
 }
 
 // Handle http GET method without parse any response datas.
@@ -247,12 +99,10 @@ func PEmit(tagurl string, params any, contentType ...string) (e error) {
 // Use GEmit() for execute GET http request without response data.
 func Get[T any](tagurl string, out *T, params ...any) error {
 	resp, err := handleGet(tagurl, true, params...)
-	if err != nil {
+	if err != nil || out == nil{
 		return err
-	} else if out != nil {
-		return parseResp(resp, out)
 	}
-	return nil
+	return parseResp(resp, out)
 }
 
 // Handle http POST method and return original response bytes,
@@ -282,12 +132,61 @@ func Get[T any](tagurl string, out *T, params ...any) error {
 func Post[T any](tagurl string, params any, out *T, contentType ...string) error {
 	isparse := out != nil
 	resp, err := handlePost(tagurl, params, isparse, contentType...)
+	if err != nil || !isparse{
+		return err
+	} 
+	return parseResp(resp, out)
+}
+
+// Handle http GET method with headers, but not parse any response datas.
+//
+//	err := httpx.CGEmit(tagurl, func(req *http.Request) (bool, error) {
+//		req.Header.Set("Author", "WENGOLD-V1.2")
+//		req.Header.Set("Token", token)
+//		return true, nil
+//	}, "get-form-params");
+func CGEmit(tagurl string, setRequestFunc SetRequest, params ...any) error {
+	rawurl := encodeRawUrl(tagurl, params...)
+	logger.D("Http Client Get:", rawurl)
+
+	// generate new request instanse.
+	req, err := http.NewRequest(http.MethodGet, rawurl, http.NoBody)
 	if err != nil {
 		return err
-	} else if isparse {
-		return parseResp(resp, out)
 	}
-	return nil
+	return clientEmit(req, setRequestFunc)
+}
+
+// Handle http POST method with headers, but not parse any response datas.
+//
+//	err := httpx.CPEmit(tagurl, func(req *http.Request) (bool, error) {
+//		req.Header.Set("Author", "WENGOLD-V1.2")
+//		req.Header.Set("Token", token)
+//		return true, nil
+//	}, params);
+func CPEmit(tagurl string, setRequestFunc SetRequest, datas ...any) error {
+	var body io.Reader
+	if len(datas) > 0 {
+		params, err := json.Marshal(datas[0])
+		if err != nil {
+			logger.E("Marshal post data err:", err)
+			return err
+		}
+		body = bytes.NewReader(params)
+	} else {
+		body = http.NoBody
+	}
+
+	// generate new request instanse
+	logger.D("Http Client Post:", tagurl)
+	req, err := http.NewRequest(http.MethodPost, tagurl, body)
+	if err != nil {
+		return err
+	}
+
+	// set json as default content type
+	req.Header.Set("Content-Type", ContentTypeJson)
+	return clientEmit(req, setRequestFunc)
 }
 
 // Handle http GET method by http.Client and return original response bytes,
@@ -382,5 +281,185 @@ func ClientPost[T any](tagurl string, setRequestFunc SetRequest, out *T, datas .
 	// set json as default content type
 	req.Header.Set("Content-Type", ContentTypeJson)
 	return clientDo(req, setRequestFunc, out)
+}
+
+/* ------------------------------------------------------------------- */
+/* Internal Utils Methods                                              */
+/* ------------------------------------------------------------------- */
+
+// Read response body after executed request, it should return invar.ErrInvalidState
+// when response code is not http.StatusOK (200).
+func readResponse(resp *http.Response, parse bool) ([]byte, error) {
+	if resp.StatusCode != http.StatusOK {
+		logger.E("Http request failed, code:", resp.StatusCode)
+		return nil, invar.ErrInvalidState
+	}
+
+	// parse response data if require.
+	if parse {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			logger.E("Read response, err:", err)
+			return nil, err
+		} 
+		return body, nil
+	}
+	return nil, nil // not parse!
+}
+
+// Unmarshal response body after execute request, it not check the body whether empty.
+func unmarshalResponse(body []byte, out any) error {
+	if err := json.Unmarshal(body, out); err != nil {
+		logger.E("Unmarshal response, err:", err)
+		return err
+	}
+	return nil
+}
+
+// Post http request with json params.
+func postJson(tagurl string, params any, parse bool) ([]byte, error) {
+	payload, err := json.Marshal(params)
+	if err != nil {
+		logger.E("Marshal post datas, err:", err)
+		return nil, err
+	}
+
+	ct := ContentTypeJson
+	resp, err := http.Post(tagurl, ct, bytes.NewReader(payload))
+	if err != nil {
+		logger.E("Http post, err:", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	return readResponse(resp, parse)
+}
+
+// Post http request with form valus as url.Values.
+func postForm(tagurl string, params url.Values, parse bool) ([]byte, error) {
+	resp, err := http.PostForm(tagurl, params)
+	if err != nil {
+		logger.E("Http post, err:", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	return readResponse(resp, parse)
+}
+
+// Encode text url to raw url.
+func encodeRawUrl(tagurl string, params ...any) string{
+	if len(params) > 0 {
+		tagurl = fmt.Sprintf(tagurl, params...)
+	}
+	return EncodeUrl(tagurl)
+}
+
+// Handle http GET method request and parse response data if required.
+//
+// # WARNING:
+//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
+func handleGet(tagurl string, parse bool, params ...any) ([]byte, error) {
+	rawurl := encodeRawUrl(tagurl, params...)
+	logger.D("Http Get:", rawurl)
+
+	resp, err := http.Get(rawurl)
+	if err != nil {
+		logger.E("Failed http get, err:", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	return readResponse(resp, parse)
+}
+
+// Handle http POST method request and parse response data if required.
+func handlePost(tagurl string, params any, parse bool, contentType ...string) ([]byte, error) {
+	ct :=ContentTypeJson
+	if len(contentType) > 0 && contentType[0] != "" {
+		ct = contentType[0]
+	}
+	logger.D("Http Post:", tagurl, "ContentType:", ct)
+
+	switch ct {
+	case ContentTypeJson:
+		return postJson(tagurl, params, parse)
+	case ContentTypeForm:
+		return postForm(tagurl, params.(url.Values), parse)
+	}
+	return nil, invar.ErrInvalidParams
+}
+
+// Excute http.Client.Do with request headers, but not read response results.
+func clientEmit(req *http.Request, setRequestFunc SetRequest) error {
+	resp, err := execClientDo(req, setRequestFunc)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return invar.ErrInvalidState
+	}
+	return nil
+}
+
+// Excute http.Client.Do with request headers, then read and return response results.
+func clientDo[T any](req *http.Request, setRequestFunc SetRequest, out *T) error {
+	resp, err := execClientDo(req, setRequestFunc)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	datas, err :=  readResponse(resp, true)
+	if err != nil {
+		return err
+	}
+	return parseResp(datas, out)
+}
+
+// Create a http client with callback to set request headers, then execute do and return response.
+func execClientDo(req *http.Request, setRequestFunc SetRequest) (*http.Response, error) {
+	client := &http.Client{}
+
+	// use middle-ware to set request header
+	if setRequestFunc != nil {
+		if ignore, err := setRequestFunc(req); err != nil {
+			return nil, err
+		} else if ignore { // ignore TLS!
+			logger.I("Http client ignore TLS!")
+			client.Transport = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: ignore},
+			}
+		}
+	}
+
+	// execute http client do.
+	return client.Do(req)
+}
+
+// Parse the bytes response datas to templete out value.
+//
+// # WARNING:
+//	- The method only supput []byte, string, struct, []struct out data types.
+//	- The golang build in types array will case unmarshal error, such as []int, []string.
+func parseResp[T any](resp []byte, out *T) error {
+	if out != nil {
+		switch v := any(out).(type) {
+		case *[]byte :
+			*v = resp
+			return nil
+		case *string:
+			*v = strings.Trim(string(resp), "\"")
+			return nil
+		case any: // for struct and struct array!
+			vt := reflect.TypeOf(*out).Kind()
+			if vt == reflect.Struct || vt == reflect.Slice {
+				return unmarshalResponse(resp, out)
+			}
+		}
+		return invar.ErrUnsupportFormat
+	}
+	return nil
 }
 

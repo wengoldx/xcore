@@ -183,7 +183,7 @@ func (s *SeedSign) ViaCode(sign, code string) bool {
 // Use ECC private cert file to encrypt plaintext as sign string.
 //
 // # WARNING:
-//	- Even use the same plaintext and ECC crtfile to sign, it allows
+//	- Even use the same plaintext and ECC crtfile to sign, it always
 //	output the different sign strings.
 func (s *SeedSign) EccSign(plaintext string, crtfile string) (string, error) {
 	prikey, err := LoadEccPemFile(crtfile)
@@ -205,7 +205,7 @@ func (s *SeedSign) EccVerify(plaintext, sign, pubpem string) (bool, error) {
 // Use RSA private key content to encrypt plaintext as sign string (formated as base64 string).
 //
 // # WARNING:
-//	- Use the same plaintext and RSA private key to sign, it allows
+//	- Use the same plaintext and RSA private key to sign, it always
 //	output the same sign strings.
 func (s *SeedSign) RsaSign(plaintext string, prikey string) (string, error) {
 	return RSASignB64(prikey, plaintext)
