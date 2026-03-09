@@ -123,6 +123,9 @@ func TestEccVerify(t *testing.T) {
 				t.Fatal("Verify sign text, err:", err)
 			} else if !verify {
 				t.Fatal("Failed verifid!")
+			} else {
+				t.Log("Source:", c.Case)
+				t.Log("Sign  :", sign)
 			}
 		})
 	}

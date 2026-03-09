@@ -133,6 +133,9 @@ func TestRSAVerify(t *testing.T) {
 				t.Fatal("RSA sign, err:", err)
 			} else if err := RSAVerify(pub, c.Case, sign); err != nil {
 				t.Fatal("RSA verify, err:", err)
+			} else {
+				t.Log("Source:", c.Case)
+				t.Log("Sign  :", ByteToBase64(sign))
 			}
 		})
 	}
