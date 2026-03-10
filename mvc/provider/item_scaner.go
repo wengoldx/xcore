@@ -11,8 +11,6 @@
 package pd
 
 import (
-	"fmt"
-
 	"github.com/wengoldx/xcore/invar"
 )
 
@@ -57,10 +55,8 @@ func (ic *ItemScaner[T]) CreateItem() any {
 
 // Parse item value and append into outs array.
 func (ic *ItemScaner[T]) AppendItem(iv any) error {
-	fmt.Printf("AppendItem:", iv)
 	if iv != nil {
 		if item, ok := iv.(*T); ok {
-			fmt.Printf("Item is *T, item:", item)
 			if ic.parseFunc != nil {
 				ic.parseFunc(item);
 			}
@@ -68,7 +64,6 @@ func (ic *ItemScaner[T]) AppendItem(iv any) error {
 			return nil
 		}
 	}
-	fmt.Printf("Not Append Item!")
 	return invar.ErrInvalidData
  }
 

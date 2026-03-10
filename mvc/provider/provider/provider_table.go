@@ -197,7 +197,7 @@ func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
 //	h.Querier().Outs("name").Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
 func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 	return p.Query(b, func(rows *sql.Rows) error {
-		item, outs := creator.CreateItem()
+		item, outs := creator.CreateItem() // item is *T type!
 		if err := rows.Scan(outs...); err != nil {
 			return err
 		}
@@ -213,7 +213,7 @@ func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 //	h.Querier().Outs("name").Wheres(pd.Wheres{"role=?": "admin"}).Column(scaner)
 func (p *TableProvider) Column(b pd.SQLBuilder, scaner pd.Scaner) error {
 	return p.Query(b, func(rows *sql.Rows) error {
-		out := scaner.CreateItem()
+		out := scaner.CreateItem() // out is *T type, outs all & pointers!
 		if err := rows.Scan(out); err != nil {
 			return err
 		}
