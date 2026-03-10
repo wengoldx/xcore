@@ -85,28 +85,3 @@ func DecClaims(keyword string, count ...int) ([]string, error) {
 	}
 	return sets, nil
 }
-
-// Encode account uuid, password and subject string
-//
-// Deprecated: Use secure.EncClaims() instead it.
-func EncJwtKeyword(uuid, pwd string, subject string) string {
-	sets := []string{uuid, pwd, subject}
-	orikey := strings.Join(sets, ";")
-	return EncodeBase64(orikey)
-}
-
-// Decode account uuid, password and subject from jwt keyword string
-//
-// Deprecated: Use secure.DecClaims() instead it.
-func DecJwtKeyword(keyword string) (string, string, string) {
-	orikeys, err := DecodeBase64(keyword)
-	if err != nil {
-		return "", "", ""
-	}
-
-	sets := strings.Split(orikeys, ";")
-	for i := len(sets); i < 3; i++ {
-		sets = append(sets, "")
-	}
-	return sets[0], sets[1], sets[2]
-}

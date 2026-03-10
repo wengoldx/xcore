@@ -15,12 +15,10 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/wengoldx/xcore/invar"
@@ -398,18 +396,6 @@ func HashFile(fp string) (string, error) {
 /* Deprecated Methods                                                  */
 /* ------------------------------------------------------------------- */
 
-// Deprecated: format the size number of len.
-func HumanReadable(len int64, during int64) string {
-	if len < 1024 {
-		return strconv.FormatInt(len*1000/during, 10) + "B       "
-	} else if len < 1048576 {
-		return strconv.FormatInt(len*1.0/1024*1000/during, 10) + "KB       "
-	} else if len < 1073741824 {
-		return fmt.Sprintf("%.2f", float64(len)/1048576*1000/float64(during)) + "MB       "
-	} else {
-		return fmt.Sprintf("%.2f", float64(len)/1073741824*1000/float64(during)) + "GB       "
-	}
-}
 
 // Deprecated: verify upload file and size, it support jpg/jpeg/JPG/JPEG/png/PNG/mp3/mp4 suffix.
 func VerifyFile(fh *multipart.FileHeader, maxBytes ...int64) (string, error) {

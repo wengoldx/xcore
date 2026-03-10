@@ -83,9 +83,6 @@ type AccConfs struct {
 		ApiIDViaCode string `json:"apiIDViaCode"` // Auth code to access API of identification check
 		PageLimits   int    `json:"pageLimits"`   // One times to get list item counts on a page
 	} `json:"secure"`
-
-	// Deprecated: Mall account settings, use Email.Sender[...] instead it!
-	MallAccs map[string]*MallAcc `json:"mallaccs"`
 }
 
 // Nacos config for mall account settings
