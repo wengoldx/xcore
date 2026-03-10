@@ -214,7 +214,7 @@ func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 func (p *TableProvider) Column(b pd.SQLBuilder, scaner pd.Scaner) error {
 	return p.Query(b, func(rows *sql.Rows) error {
 		out := scaner.CreateItem()
-		if err := rows.Scan(&out); err != nil {
+		if err := rows.Scan(out); err != nil {
 			return err
 		}
 		return scaner.AppendItem(out)
