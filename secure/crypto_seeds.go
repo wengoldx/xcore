@@ -13,6 +13,8 @@ package secure
 import (
 	"math/rand"
 	"strings"
+
+	"github.com/wengoldx/xcore/invar"
 )
 
 // Create a seeds mapping from the given distinct string, The SeedSign
@@ -180,26 +182,43 @@ func (s *SeedSign) ViaCode(sign, code string) bool {
 	return true
 }
 
+// Encode signature plaintexts as line by line.
+func (s *SeedSign) SignPlaintext(texts ...string) string {
+	valids := []string{}
+	for _, text := range texts {
+		if text = strings.TrimSpace(text); text != "" {
+			valids = append(valids, text)
+		}
+	}
+	return strings.Join(valids, "\n")
+}
+
 // Use ECC private cert file to encrypt plaintext as sign string.
 //
 // # WARNING:
 //	- Even use the same plaintext and ECC crtfile to sign, it always
 //	output the different sign strings.
-func (s *SeedSign) EccSign(plaintext string, crtfile string) (string, error) {
-	prikey, err := LoadEccPemFile(crtfile)
-	if err != nil {
-		return "", err
+func (s *SeedSign) EccSign(crtfile string, texts ...string) (string, error) {
+	if plaintext := s.SignPlaintext(texts...); plaintext != "" {
+		prikey, err := LoadEccPemFile(crtfile)
+		if err != nil {
+			return "", err
+		}
+		return EccSign(plaintext, prikey)
 	}
-	return EccSign(plaintext, prikey)
+	return "", invar.ErrEmptyData
 }
 
 // Use ECC public key pem content to verify plaintext and encrypted sign string.
-func (s *SeedSign) EccVerify(plaintext, sign, pubpem string) (bool, error) {
-	pubkey, err := EccPubKey(pubpem)
-	if err != nil {
-		return false, err
+func (s *SeedSign) EccVerify(sign, pubpem string, texts ...string) (bool, error) {
+	if plaintext := s.SignPlaintext(texts...); plaintext != "" {
+		pubkey, err := EccPubKey(pubpem)
+		if err != nil {
+			return false, err
+		}
+		return EccVerify(plaintext, sign, pubkey)
 	}
-	return EccVerify(plaintext, sign, pubkey)
+	return false, invar.ErrEmptyData
 }
 
 // Use RSA private key content to encrypt plaintext as sign string (formated as base64 string).
@@ -207,31 +226,22 @@ func (s *SeedSign) EccVerify(plaintext, sign, pubpem string) (bool, error) {
 // # WARNING:
 //	- Use the same plaintext and RSA private key to sign, it always
 //	output the same sign strings.
-func (s *SeedSign) RsaSign(plaintext string, prikey string) (string, error) {
-	return RSASignB64(prikey, plaintext)
+func (s *SeedSign) RsaSign(prikey string, texts ...string) (string, error) {
+	if plaintext := s.SignPlaintext(texts...); plaintext != "" {
+		return RSASignB64(prikey, plaintext)
+	}
+	return "", invar.ErrEmptyData
 }
 
 // Use RSA public key content to verify plaintext ena encrypted base64 sign string.
-func (s *SeedSign) RsaVerify(plaintext, sign, pubkey string) (bool, error) {
-	if signbytes, err := Base64ToByte(sign); err != nil {
-		return false, err
-	} else {
-		err = RSAVerify(pubkey, plaintext, signbytes)
-		return err == nil, err
-	}
-}
-
-// Encode signature plaintexts for next ECC or RSA sign and verfiy.
-func SignPlaintext(data string, extras ...string) string {
-	texts := []string{}
-	if data != "" {
-		texts = append(texts, data)
-	}
-
-	for _, text := range extras {
-		if text != "" {
-			texts = append(texts, text)
+func (s *SeedSign) RsaVerify(sign, pubkey string, texts ...string) (bool, error) {
+	if plaintext := s.SignPlaintext(texts...); plaintext != "" {
+		if signbytes, err := Base64ToByte(sign); err != nil {
+			return false, err
+		} else {
+			err = RSAVerify(pubkey, plaintext, signbytes)
+			return err == nil, err
 		}
 	}
-	return strings.Join(texts, "\n")
+	return false, invar.ErrEmptyData
 }

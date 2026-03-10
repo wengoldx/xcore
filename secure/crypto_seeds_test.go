@@ -59,27 +59,24 @@ func TestFilterDupChars(t *testing.T) {
 
 func TestSignPlaintext(t *testing.T) {
 	cases := []struct {
-		Case   string
-		Data   string
-		Extras []string
-		Want   string
+		Case  string
+		Texts []string
+		Want  string
 	}{
-		{"Append plaintexts     ", "data", []string{"123", "abc", "ABC"}, "data\n123\nabc\nABC"},
-		{"Append empty data     ", "", []string{"123", "abc", "ABC"}, "123\nabc\nABC"},
-		{"Append empty plaintext", "data", []string{"123", "", "ABC"}, "data\n123\nABC"},
-		{"Append empty start    ", "data", []string{"", "abc", "ABC"}, "data\nabc\nABC"},
-		{"Append empty end      ", "data", []string{"123", "abc", ""}, "data\n123\nabc"},
-		{"Append emptys         ", "", []string{"", "", ""}, ""},
-		{"All emptys            ", "", []string{}, ""},
+		{"Append plaintexts     ", []string{"123", "abc", "ABC"}, "123\nabc\nABC"},
+		{"Append empty start    ", []string{"", "abc", "ABC"}, "abc\nABC"},
+		{"Append empty plaintext", []string{"123", "", "ABC"}, "123\nABC"},
+		{"Append empty end      ", []string{"123", "abc", ""}, "123\nabc"},
+		{"Append emptys         ", []string{"", "", ""}, ""},
+		{"All emptys            ", []string{}, ""},
 	}
 
+	ss := SeedSign{}
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
-			code := SignPlaintext(c.Data, c.Extras...)
+			code := ss.SignPlaintext(c.Texts...)
 			if code != c.Want {
 				t.Fatal("Failed sign plaintexts!")
-			} else if SignPlaintext(c.Data) != c.Data {
-				t.Fatal("Failed sign data!")
 			}
 		})
 	}
@@ -124,16 +121,16 @@ func TestSignCode(t *testing.T) {
 
 func TestEccSignVerify(t *testing.T) {
 	crtfile := "./_test_ecc.pem"
-	plaintext := "This a plaintext!"
+	plaintext := []string{"This a plaintext!", "Second text"}
 	ss := SeedSign{}
 
 	NewEccPemFile(crtfile)
 	defer os.Remove(crtfile)
-	sign, _ := ss.EccSign(plaintext, crtfile)
+	sign, _ := ss.EccSign(crtfile, plaintext...)
 
 	// check output signs whether same!
 	for i := 0; i < 10; i++ {
-		sign2, _ := ss.EccSign(plaintext, crtfile)
+		sign2, _ := ss.EccSign(crtfile, plaintext...)
 		if sign == sign2 {
 			t.Fatal("Can not out the same signs!")
 		}
@@ -142,7 +139,7 @@ func TestEccSignVerify(t *testing.T) {
 	// verify sign and plaintext.
 	prikey, _ := LoadEccPemFile(crtfile)
 	pubpem, _ := EccPubString(&prikey.PublicKey)
-	valid, _ := ss.EccVerify(plaintext, sign, pubpem)
+	valid, _ := ss.EccVerify(sign, pubpem, plaintext...)
 	if !valid {
 		t.Fatal("Failed verify ECC sign!")
 	}
@@ -150,22 +147,22 @@ func TestEccSignVerify(t *testing.T) {
 }
 
 func TestRsaSignVerify(t *testing.T) {
-	plaintext := "This a plaintext!"
+	plaintext := []string{"This a plaintext!", "Second text"}
 	ss := SeedSign{}
 
 	pri, pub, _ := NewRSAKeys(2048)
-	sign, _ := ss.RsaSign(plaintext, pri)
+	sign, _ := ss.RsaSign(pri, plaintext...)
 
 	// check output signs whether same!
 	for i := 0; i < 10; i++ {
-		sign2, _ := ss.RsaSign(plaintext, pri)
+		sign2, _ := ss.RsaSign(pri, plaintext...)
 		if sign != sign2 {
 			t.Fatal("Can not out the same signs!")
 		}
 	}
 
 	// verify sign and plaintext.
-	valid, _ := ss.RsaVerify(plaintext, sign, pub)
+	valid, _ := ss.RsaVerify(sign, pub, plaintext...)
 	if !valid {
 		t.Fatal("Failed verify RSA sign!")
 	}
