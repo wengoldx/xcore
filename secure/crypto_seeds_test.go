@@ -132,7 +132,7 @@ func TestEccSignVerify(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		sign2, _ := ss.EccSign(crtfile, plaintext...)
 		if sign == sign2 {
-			t.Fatal("Can not out the same signs!")
+			t.Fatal("Exist same signs (ECC)!!")
 		}
 	}
 
@@ -150,14 +150,14 @@ func TestRsaSignVerify(t *testing.T) {
 	plaintext := []string{"This a plaintext!", "Second text"}
 	ss := SeedSign{}
 
-	pri, pub, _ := NewRSAKeys(2048)
+	pri, pub, _ := NewRSAKeys(1024)
 	sign, _ := ss.RsaSign(pri, plaintext...)
 
 	// check output signs whether same!
 	for i := 0; i < 10; i++ {
 		sign2, _ := ss.RsaSign(pri, plaintext...)
 		if sign != sign2 {
-			t.Fatal("Can not out the same signs!")
+			t.Fatal("Exist different signs (RSA)!!")
 		}
 	}
 
@@ -173,12 +173,9 @@ func TestViaSignOne(t *testing.T) {
 	signSeeds := "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
 	ss := NewSeedSign(signSeeds)
 
-	t.Run("Verify Manual2", func(t *testing.T) {
-		sign := "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
-		code := "5hUjz/MA"
-
-		if !ss.ViaCode(sign, code) {
-			t.Fatal("Verify sign&code failed!")
-		}
-	})
+	sign := "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
+	code := "5hUjz/MA"
+	if !ss.ViaCode(sign, code) {
+		t.Fatal("Verify sign&code failed!")
+	}
 }
