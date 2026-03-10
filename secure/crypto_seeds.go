@@ -70,6 +70,11 @@ func DefSeedSign() *SeedSign { return _defsign }
 // Use current SeedSign as the global singleton.
 func (s *SeedSign) AsDefault() { _defsign = s }
 
+func SeedESign(crt string, ts ...string) (string, error)    { return _defsign.EccSign(crt, ts...) }
+func SeedEVerify(s, pub string, ts ...string) (bool, error) { return _defsign.EccVerify(s, pub, ts...) }
+func SeedRSign(pri string, ts ...string) (string, error)    { return _defsign.RsaSign(pri, ts...) }
+func SeedRVerify(s, pub string, ts ...string) (bool, error) { return _defsign.RsaVerify(s, pub, ts...) }
+
 // Create seeds values and cached as a map, search by index.
 //
 // # WARNING:
