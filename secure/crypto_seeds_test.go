@@ -11,6 +11,7 @@
 package secure
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -178,4 +179,12 @@ func TestViaSignOne(t *testing.T) {
 	if !ss.ViaCode(sign, code) {
 		t.Fatal("Verify sign&code failed!")
 	}
+}
+func TestCodeToBytes(t *testing.T) {
+	code := "5hUjz/MA"
+	mapping := radixCodeCharBase64
+
+	num := CodeToNum(code, mapping)
+	fmt.Println("Num :", num)
+	fmt.Println("Code:", code, "-", NumToCode(num, mapping))
 }

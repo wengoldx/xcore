@@ -39,6 +39,7 @@ const (
 	radixCodeCharLoNum  = "0123456789abcdefghijklmnopqrstuvwxyz"
 	radixCodeCharUpNum  = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	radixCodeCharMap    = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	radixCodeCharBase64 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/-_="
 	passwordHashBytes   = 64 // default password hash length
 )
 
@@ -64,8 +65,21 @@ func init() {
 	}
 }
 
-// Create a code from given chars mapping, params src must over 0, mapping not empty.
-func genCodeFromMapping(src int64, mapping string) string {
+// Convert the number into a string of the specified radix.
+//
+// # WARNING:
+//
+// The 'mapping' must be a string of none-repeating chars, such as:
+//
+//	oauthCodeSeedsNum   = "0123456789"
+//	oauthCodeSeedsLower = "abcdefghijklmnopqrstuvwxyz"
+//	oauthCodeSeedsUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+//	oauthCodeSeedsChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+//	radixCodeCharLoNum  = "0123456789abcdefghijklmnopqrstuvwxyz"
+//	radixCodeCharUpNum  = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+//	radixCodeCharMap    = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+//	radixCodeCharBase64 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/-_="
+func NumToCode(src int64, mapping string) string {
 	radix := (int64)(len(mapping))
 	if src <= 0 || radix == 0 {
 		return "" // invalid input params
@@ -83,6 +97,21 @@ func genCodeFromMapping(src int64, mapping string) string {
 		code[i], code[l-i-1] = code[l-i-1], code[i]
 	}
 	return (string)(code)
+}
+
+// Convert the code string into a number by the specified radix.
+func CodeToNum(code string, mapping string) int64 {
+	num, radix := 0, len(mapping)
+	for i, cl := 0, len(code); i < cl; i++ {
+		rd, rv := (cl - i - 1), 1
+		for rd > 0 {
+			rv *= radix // the char toral radix.
+			rd--        // char radix index.
+		}
+		ri := strings.Index(mapping, code[i:i+1])
+		num += ri * rv
+	}
+	return int64(num)
 }
 
 // Create a new uuid in int64
@@ -111,7 +140,7 @@ func NewRUID(buflen ...int) string {
 }
 
 // Create a loop code with 6 digits.
-func NewLCode() string {
+func NewLoopCode() string {
 	code := fmt.Sprintf("%06d", _loop_id)
 
 	// use current second as increate seed.
@@ -129,27 +158,27 @@ func NewNano() string {
 
 // Create a code by using current nanosecond, e.g. M25eNdE4rF5
 func NewCode(src ...int64) string {
-	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), radixCodeCharMap)
+	return NumToCode(getVariable(src, time.Now().UnixNano()), radixCodeCharMap)
 }
 
 // Create a code formated only lower chars, e.g. mabendecrfdme
 func NewLowCode(src ...int64) string {
-	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), oauthCodeSeedsLower)
+	return NumToCode(getVariable(src, time.Now().UnixNano()), oauthCodeSeedsLower)
 }
 
 // Create a code formated only upper chars, e.g. MABENDECRFDME
 func NewUpCode(src ...int64) string {
-	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), oauthCodeSeedsUpper)
+	return NumToCode(getVariable(src, time.Now().UnixNano()), oauthCodeSeedsUpper)
 }
 
 // Create a code formated only number and lower chars, e.g. m25ende4rf5m
 func NewLowNum(src ...int64) string {
-	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), radixCodeCharLoNum)
+	return NumToCode(getVariable(src, time.Now().UnixNano()), radixCodeCharLoNum)
 }
 
 // Create a code formated only number and upper chars, e.g. M25ENDE4RF5M
 func NewUpNum(src ...int64) string {
-	return genCodeFromMapping(getVariable(src, time.Now().UnixNano()), radixCodeCharUpNum)
+	return NumToCode(getVariable(src, time.Now().UnixNano()), radixCodeCharUpNum)
 }
 
 func getVariable(vs []int64, def int64) int64 {
