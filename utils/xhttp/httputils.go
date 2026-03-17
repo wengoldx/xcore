@@ -40,7 +40,7 @@ const (
 // headers which such as username and passord of authentications or others.
 //
 //	@param req Http requester
-//	@return - bool  Retrun true for using TLS, or false by default not verify.
+//	@return - bool  Return true for ignore TLS, or false by default verify TLS.
 //			- error Exception message
 //
 //	@See more [content-types](https://www.runoob.com/http/http-content-type.html).
