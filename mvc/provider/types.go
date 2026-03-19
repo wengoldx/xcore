@@ -21,6 +21,9 @@ type ScanCallback func(rows *sql.Rows) error
 // A callback for format insert values as string to insert record.
 type InsertCallback func(index int) string
 
+// A callback for format insert rows as string to insert record.
+type InsertsCallback[T any] func(iv T) string
+
 // A callback for handle transaction by call provider.Trans().
 type TransCallback func(tx *sql.Tx) error
 

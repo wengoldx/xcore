@@ -85,14 +85,16 @@ func TxInsert(tx *sql.Tx, query string, out *int64, args ...any) error {
 	return nil
 }
 
-// Excute transaction step to insert multiple records.
+// Deprecated: Excute transaction step to insert multiple records.
 //
 //	query := "INSERT sametable (field1, field2) VALUES"
-//	err := mvc.TxInserts(tx, query, len(vs), func(index int) string {
+//	err := mvc.TxInserts2(tx, query, len(vs), func(index int) string {
 //		return fmt.Sprintf("(%v, %v)", v1, vs[index])
 //		// return fmt.Sprintf("('%s', '%s')", v1, vs[index])
 //	})
-func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
+//
+// # WARNING: Use TxInsert() instead it!!
+func TxInserts2(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
 	values := []string{}
 	for i := 0; i < cnt; i++ {
 		value := strings.TrimSpace(cb(i))
@@ -103,6 +105,30 @@ func TxInserts(tx *sql.Tx, query string, cnt int, cb InsertCallback) error {
 	query = query + " " + strings.Join(values, ",")
 	_, err := tx.Exec(query)
 	return err
+}
+
+// Excute transaction step to insert multiple records.
+//
+//	// type MyStruct {D1 int, D2 string}
+//	// datas := []*MyStruct{{1,"2"}, {3,"4"}}
+//	query := "INSERT sametable (field1, field2) VALUES"
+//	err := mvc.TxInserts(tx, query, datas, func(iv *MyStruct) string {
+//		return fmt.Sprintf("(%v, '%v')", iv.D1, iv.D2)
+//	})
+func TxInserts[T any](tx *sql.Tx, query string, rows []T, cb InsertsCallback[T]) error {
+	if cnt := len(rows); cnt > 0 {
+		values := []string{}
+		for i := 0; i < cnt; i++ {
+			value := strings.TrimSpace(cb(rows[i]))
+			if value != "" {
+				values = append(values, value)
+			}
+		}
+		query = query + " " + strings.Join(values, ",")
+		_, err := tx.Exec(query)
+		return err
+	}
+	return nil
 }
 
 // Excute transaction step to delete record and check result.
