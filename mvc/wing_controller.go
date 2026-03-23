@@ -13,6 +13,7 @@ package mvc
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"mime/multipart"
 	"reflect"
 	"strings"
@@ -373,12 +374,25 @@ func (c *WingController) RunDevMode(next func()) {
 }
 
 // Do next action after got the opened multipart file, and close it when exit method.
-func (c *WingController) GetSingleFile(key string, next FileFunc) {
+//
+// # WARNING
+//
+// Set maxsize (in bytes) to limit the upload file size, it will response 403 error
+// code when the file size overed the maxsize.
+// 
+// By default not check file size.
+func (c *WingController) GetSingleFile(key string, next FileFunc, maxsize ...int64) {
 	file, header, err := c.GetFile(key)
 	if err != nil {
 		logger.E("Get file by:", key, "err:", err)
 		c.E400Params()
 		return
+	} else if len(maxsize) > 0 && maxsize[0] > 0 {
+		if ms := maxsize[0]; header.Size >= ms {
+			errmsg := fmt.Sprintf("Over file size: %d / %d", header.Size, ms)
+			c.E403Denind(errmsg)
+			return
+		}
 	}
 	defer file.Close()
 	next(file, header)
