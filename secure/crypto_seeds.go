@@ -49,9 +49,6 @@ type SeedSign struct {
 	// Seeds map radix for get seed string in valid range,
 	// it inited when call secure.CreateSeeds().
 	radix int
-
-	// Seed distinct string weight as number radix.
-	weight int
 }
 
 // The default global singleton, call AsDefault() to init it.
@@ -112,8 +109,8 @@ func (s *SeedSign) createSeeds(src string) {
 		}
 	}
 
-	// init seeds radix and weight.
-	s.radix, s.weight = len(s.seeds), len(src)
+	// init seeds radix.
+	s.radix = len(s.seeds)
 }
 
 // Filter out all duplicate chars, remain the first one and remove
@@ -144,17 +141,13 @@ func (s *SeedSign) signSeed(sign string) string {
 
 // Convert sign string to number string.
 //
-//	input  sign: 'ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA='
-//	filter sign: 'ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgCrPIujfCcac1w6fzwcdzr1dTAvR2zXfn1yegPnsYDCA'
-//	sign number: '15115608664632950387939661776430574450461787917687735913042191198876924174783388143615726877377268237109403139476846863258949212453490920270920204581040'
+//	input sign: 'ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA='
+//	md5 sign  : '124833b4bc9944cd38cf26424e447a5f'
+//	sign num  : '1862935100180924569857379440623587583846348235555'
 func (s *SeedSign) signNum(sign string) string {
-	filters := []string{"-", "_", "+", "/", "="}
-	for _, filter := range filters {
-		sign = strings.ReplaceAll(sign, filter, "")
-	}
-
-	// convert long 61 radix string to number string.
-	if num, ok := new(big.Int).SetString(sign, s.weight); ok {
+	sign = MD5Lower(sign)             // encode sign to md5 lower string.
+	weight := len(radixCodeCharLoNum) // Fixed using 36 radix!
+	if num, ok := new(big.Int).SetString(sign, weight); ok {
 		return num.String()
 	}
 	return ""
@@ -179,15 +172,15 @@ func (s *SeedSign) signNum(sign string) string {
 //
 // Call secure.ViaSignCode() to verify sign and code whether matched.
 func (s *SeedSign) SignCode(sign string) string {
-	sl, seed := len(sign), s.signSeed(sign)
-	if radix := len(seed); sl > radix {
-		sl = radix
+	seed, num := s.signSeed(sign), s.signNum(sign)
+	weight := len(seed)
+	if nw := len(num); weight > nw {
+		weight = nw // use the minimum radix weight.
 	}
 
-	num := s.signNum(sign)
 	code := "" // random 4 group segements
 	for seg := 0; seg < 4; seg++ {
-		pos := rand.Intn(sl)
+		pos := rand.Intn(weight)
 		code += seed[pos:pos+1] + num[pos:pos+1]
 	}
 	return code // length 8 chars
@@ -206,10 +199,10 @@ func (s *SeedSign) ViaCode(sign, code string) bool {
 	}
 
 	seed, num := s.signSeed(sign), s.signNum(sign)
-	for index := 0; index < cl-1; index += 2 {
-		poschar, digital := code[index], code[index+1]
+	for i, weight := 0, len(seed); i < cl-1; i += 2 {
+		poschar, digital := code[i], code[i+1]
 		pos := strings.Index(seed, string(poschar))
-		if pos < 0 || pos >= sl {
+		if pos < 0 || pos >= weight {
 			return false
 		}
 

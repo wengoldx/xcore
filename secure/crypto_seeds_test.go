@@ -22,9 +22,9 @@ import (
 //	go test -v -cover
 // -------------------------------------------------------------------
 
-const _test_seed = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
+const _test_seed = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9" // "0123456789"
 const _test_sign = "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
-const _test_code = "o0r522w4"
+const _test_code = "O8E0H4O8" // "49254989"
 
 func TestNewSeedSign(t *testing.T) {
 	s1 := NewSeedSign(_test_seed)
@@ -187,17 +187,11 @@ func TestViaSignOne(t *testing.T) {
 	}
 }
 
-func TestCodeToBytes(t *testing.T) {
-	mapping := radixCodeCharBase64
-	num := CodeToNum(_test_code, mapping)
-	fmt.Println("Num :", num)
-	fmt.Println("Code:", _test_code, "-", NumToCode(num, mapping))
-}
-
 func TestSignToNum(t *testing.T) {
 	ss := NewSeedSign(_test_seed)
 
-	num, sign := "", _test_sign
+	badchars := "!@#$%^&*()_+}{\":?><~}`-=[]\\;',./ "
+	num, sign := "", _test_sign+badchars
 	fmt.Println("sign src:", sign)
 	for i := 0; i < 5; i++ { // test 5 times.
 		if num == "" {
