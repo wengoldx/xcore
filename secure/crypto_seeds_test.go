@@ -22,10 +22,13 @@ import (
 //	go test -v -cover
 // -------------------------------------------------------------------
 
+const _test_seed = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
+const _test_sign = "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
+const _test_code = "o0r522w4"
+
 func TestNewSeedSign(t *testing.T) {
-	signSeeds := "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
-	s1 := NewSeedSign(signSeeds)
-	s2 := NewSeedSign(signSeeds)
+	s1 := NewSeedSign(_test_seed)
+	s2 := NewSeedSign(_test_seed)
 
 	for i, seed := range s1.seeds {
 		if seed2, ok := s2.seeds[i]; !ok || seed != seed2 {
@@ -95,9 +98,7 @@ func TestSignCode(t *testing.T) {
 		{"Verify RSA chinese  ", "RSA", "中文编码字符串签名测试"},
 	}
 
-	signSeeds := "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
-	ss := NewSeedSign(signSeeds)
-
+	ss := NewSeedSign(_test_seed)
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
 			sign := ""
@@ -170,21 +171,40 @@ func TestRsaSignVerify(t *testing.T) {
 	t.Log("Passed ECC sign & verify!")
 }
 
-func TestViaSignOne(t *testing.T) {
-	signSeeds := "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
-	ss := NewSeedSign(signSeeds)
+func TestGenCode(t *testing.T) {
+	ss := NewSeedSign(_test_seed)
+	for i := 0; i < 10; i++ { // test 10 times.
+		code := ss.SignCode(_test_sign)
+		fmt.Println("Code:", code)
+	}
+}
 
-	sign := "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
-	code := "5hUjz/MA"
-	if !ss.ViaCode(sign, code) {
+func TestViaSignOne(t *testing.T) {
+	ss := NewSeedSign(_test_seed)
+	fmt.Println("code:", ss.SignCode(_test_sign))
+	if !ss.ViaCode(_test_sign, _test_code) {
 		t.Fatal("Verify sign&code failed!")
 	}
 }
-func TestCodeToBytes(t *testing.T) {
-	code := "5hUjz/MA"
-	mapping := radixCodeCharBase64
 
-	num := CodeToNum(code, mapping)
+func TestCodeToBytes(t *testing.T) {
+	mapping := radixCodeCharBase64
+	num := CodeToNum(_test_code, mapping)
 	fmt.Println("Num :", num)
-	fmt.Println("Code:", code, "-", NumToCode(num, mapping))
+	fmt.Println("Code:", _test_code, "-", NumToCode(num, mapping))
+}
+
+func TestSignToNum(t *testing.T) {
+	ss := NewSeedSign(_test_seed)
+
+	num, sign := "", _test_sign
+	fmt.Println("sign src:", sign)
+	for i := 0; i < 5; i++ { // test 5 times.
+		if num == "" {
+			num = ss.signNum(sign)
+		} else if num != ss.signNum(sign) {
+			t.Fatal("Sign number not matched!")
+		}
+		fmt.Println("sign num:", num)
+	}
 }

@@ -11,6 +11,7 @@
 package secure
 
 import (
+	"math/big"
 	"math/rand"
 	"strings"
 
@@ -36,7 +37,7 @@ import (
 //	     |       |                                         |
 //	     |       +--------------+           +--------------+
 //	     |                       \_________/
-//	like 'vWUABrs2'                    |
+//	like 'o0r522w4'                    |
 //	8 chars string           SeedSign.ViaCode()
 //
 // The SeedSign better for both side all own the same plaintext datas.
@@ -48,6 +49,9 @@ type SeedSign struct {
 	// Seeds map radix for get seed string in valid range,
 	// it inited when call secure.CreateSeeds().
 	radix int
+
+	// Seed distinct string weight as number radix.
+	weight int
 }
 
 // The default global singleton, call AsDefault() to init it.
@@ -70,10 +74,20 @@ func DefSeedSign() *SeedSign { return _defsign }
 // Use current SeedSign as the global singleton.
 func (s *SeedSign) AsDefault() { _defsign = s }
 
+// # WARING:
+//
+// Seed signature utils which using the inited default SeedSign instance,
+// so, call secure.NewSeedSign(src).AsDefault() first, then call this utils
+// methods to sign code and verify!
+//
+// Utils Methods Start >>
+
 func SeedESign(crt string, ts ...string) (string, error)    { return _defsign.EccSign(crt, ts...) }
 func SeedEVerify(s, pub string, ts ...string) (bool, error) { return _defsign.EccVerify(s, pub, ts...) }
 func SeedRSign(pri string, ts ...string) (string, error)    { return _defsign.RsaSign(pri, ts...) }
 func SeedRVerify(s, pub string, ts ...string) (bool, error) { return _defsign.RsaVerify(s, pub, ts...) }
+
+// Utils Methods End <<
 
 // Create seeds values and cached as a map, search by index.
 //
@@ -98,8 +112,8 @@ func (s *SeedSign) createSeeds(src string) {
 		}
 	}
 
-	// init seeds radix
-	s.radix = len(s.seeds)
+	// init seeds radix and weight.
+	s.radix, s.weight = len(s.seeds), len(src)
 }
 
 // Filter out all duplicate chars, remain the first one and remove
@@ -120,12 +134,30 @@ func (s *SeedSign) filterDupChars(src string) string {
 }
 
 // Get verify seed by sign string sum number.
-func (s *SeedSign) getSignSeed(sign string) string {
+func (s *SeedSign) signSeed(sign string) string {
 	sum := 0
 	for _, char := range sign {
 		sum += int(char)
 	}
 	return s.seeds[sum%s.radix]
+}
+
+// Convert sign string to number string.
+//
+//	input  sign: 'ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA='
+//	filter sign: 'ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgCrPIujfCcac1w6fzwcdzr1dTAvR2zXfn1yegPnsYDCA'
+//	sign number: '15115608664632950387939661776430574450461787917687735913042191198876924174783388143615726877377268237109403139476846863258949212453490920270920204581040'
+func (s *SeedSign) signNum(sign string) string {
+	filters := []string{"-", "_", "+", "/", "="}
+	for _, filter := range filters {
+		sign = strings.ReplaceAll(sign, filter, "")
+	}
+
+	// convert long 61 radix string to number string.
+	if num, ok := new(big.Int).SetString(sign, s.weight); ok {
+		return num.String()
+	}
+	return ""
 }
 
 // Return a random code from sign string of ECC or RSA.
@@ -147,15 +179,16 @@ func (s *SeedSign) getSignSeed(sign string) string {
 //
 // Call secure.ViaSignCode() to verify sign and code whether matched.
 func (s *SeedSign) SignCode(sign string) string {
-	sl, seed := len(sign), s.getSignSeed(sign)
+	sl, seed := len(sign), s.signSeed(sign)
 	if radix := len(seed); sl > radix {
 		sl = radix
 	}
 
+	num := s.signNum(sign)
 	code := "" // random 4 group segements
 	for seg := 0; seg < 4; seg++ {
 		pos := rand.Intn(sl)
-		code += seed[pos:pos+1] + sign[pos:pos+1]
+		code += seed[pos:pos+1] + num[pos:pos+1]
 	}
 	return code // length 8 chars
 }
@@ -172,7 +205,7 @@ func (s *SeedSign) ViaCode(sign, code string) bool {
 		return false
 	}
 
-	seed := s.getSignSeed(sign)
+	seed, num := s.signSeed(sign), s.signNum(sign)
 	for index := 0; index < cl-1; index += 2 {
 		poschar, digital := code[index], code[index+1]
 		pos := strings.Index(seed, string(poschar))
@@ -180,7 +213,7 @@ func (s *SeedSign) ViaCode(sign, code string) bool {
 			return false
 		}
 
-		if sign[pos] != digital {
+		if num[pos] != digital {
 			return false
 		}
 	}

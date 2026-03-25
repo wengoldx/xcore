@@ -101,7 +101,7 @@ func NumToCode(src int64, mapping string) string {
 
 // Convert the code string into a number by the specified radix.
 func CodeToNum(code string, mapping string) int64 {
-	num, radix := 0, len(mapping)
+	num, radix := int64(0), len(mapping)
 	for i, cl := 0, len(code); i < cl; i++ {
 		rd, rv := (cl - i - 1), 1
 		for rd > 0 {
@@ -109,9 +109,9 @@ func CodeToNum(code string, mapping string) int64 {
 			rd--        // char radix index.
 		}
 		ri := strings.Index(mapping, code[i:i+1])
-		num += ri * rv
+		num += int64(ri * rv)
 	}
-	return int64(num)
+	return num
 }
 
 // Create a new uuid in int64
