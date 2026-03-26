@@ -376,6 +376,42 @@ func (stub *GrpcStub) SendMail(cat string, payload any) error {
 	return err
 }
 
+// Request send mail dispath by given category.
+func (stub *GrpcStub) AccMachs(uid string) (*acc.AMachs, error) {
+	if stub.Acc == nil {
+		return nil, invar.ErrInvalidClient
+	} else if uid == "" {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &acc.UUID{Uuid: uid}
+	return stub.Acc.AccMachs(context.Background(), param)
+}
+
+// Machine login by offline code, return account uid and token if success.
+func (stub *GrpcStub) MachLogin(uid, mach, code string) (*acc.Token, error) {
+	if stub.Acc == nil {
+		return nil, invar.ErrInvalidClient
+	} else if uid == "" || mach == "" || code == "" {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &acc.MCode{Uuid: uid, Mach: mach, Code: code}
+	return stub.Acc.MachLogin(context.Background(), param)
+}
+
+// Generate machine offline code.
+func (stub *GrpcStub) OfflineCode(uid, mach string) (*acc.Code, error) {
+	if stub.Acc == nil {
+		return nil, invar.ErrInvalidClient
+	} else if uid == "" || mach == "" {
+		return nil, invar.ErrInvalidParams
+	}
+
+	param := &acc.UMach{Uuid: uid, Mach: mach}
+	return stub.Acc.OfflineCode(context.Background(), param)
+}
+
 // ----------------------------------------
 // For Mea GRPC agent
 // ----------------------------------------
