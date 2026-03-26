@@ -298,7 +298,7 @@ message UMach {
 
 message AMach {
   string mach = 1; // machine serial no.
-  string bind = 2; // machine registried datetime.
+  string bund = 2; // machine registried datetime.
 }
 
 message AMachs {
