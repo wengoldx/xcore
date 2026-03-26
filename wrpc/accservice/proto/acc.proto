@@ -9,59 +9,59 @@ service Acc {
   // For Common & Utils
   // ----------------------------------------
 
-  // Request token access permission check
+  // Validate the request token, return account and password if passed.
   rpc ViaToken(Token) returns (AccPwd);
 
-  // Account role access permission check
+  // Validate target account role and access permission.
   rpc ViaRole(Role) returns (Result);
 
-  // Add account role excepted admin
+  // Attach a role with target account, excepted admin.
   rpc AddRole(TagRole) returns (AEmpty);
 
-  // Register account with given role, then return uuid and random password
-  // NOTICE that this function not create a admin role account
+  // Register account with given role, then return uuid and random password,
+  // NOTICE that this function not create a admin role account.
   rpc AccRegister(UserRole) returns (AccPwd);
 
-  // Account login by uuid/phone/email and encryptd password 
+  // Account login by uuid/phone/email and encryptd password.
   rpc AccLogin(AccPwd) returns (Token);
 
-  // Return profiles on role, e.g. get all store composers
+  // Return profiles on role, e.g. get all store composers.
   rpc RoleProfiles(UserRole) returns (RoleProfs);
 
-  // Return profiles on role, and filter by search conditions
+  // Return profiles on role, and filter by search conditions.
   rpc SearchInRole(Search) returns (RoleProfs);
 
-  // Update account email, it maybe case duplicate entry error when tag email exist in databse
+  // Update account email, it maybe case duplicate entry error when tag email exist in database.
   rpc UpdateEmail(IDEMail) returns (AEmpty);
 
-  // Reset account password and send by email
+  // Reset account password and send by email.
   rpc ResetSendPwd(UUID) returns (AEmpty);
 
-  // Unbind account wechat unionid (clear unionid field directly)
+  // Unbind account wechat unionid (clear unionid field directly).
   rpc UnbindWechat(UUID) returns (AEmpty);
 
-  // Return account request token by exist user uuid (only for QKS)
+  // Return account request token by exist user uuid (only for IFSC).
   rpc GetToken(UUID) returns (Token);
 
-  // Return account emails by given uuids
+  // Return account emails by given uuids.
   rpc GetAccEmails(UIDS) returns (IDEMails);
 
-  // Return account simple profiles
+  // Return account simple profiles.
   rpc GetProfile(UUID) returns (Profile);
 
-  // Return account contact (contain nickname, phone, email)
+  // Return account contact (contain nickname, phone, email).
   rpc GetContact(UUID) returns (Contact);
 
-  // Return account avatars by given uuids
+  // Return account avatars by given uuids.
   rpc GetAvatars(UIDS) returns (Avatars);
   
-  // Return account avatars by given uuids and search conditions
+  // Return account avatars by given uuids and search conditions.
   rpc SearchAvatars(SKeys) returns (Avatars);
 
-  // Delete indicated account by given uuid
+  // Delete indicated account by given uuid.
   rpc DeleteAcc(UUID) returns (AEmpty);
 
-  // Verify bind code of backup email
+  // Verify bind code of backup email.
   rpc ViaBKMail(Code) returns (AEmpty);
 
   // Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
@@ -71,49 +71,59 @@ service Acc {
   // For Store Module Of IFSCM
   // ----------------------------------------
 
-  // Register store machine account
+  // Register store machine account.
   rpc StoreAddMach(Email) returns (UUID);
 
-  // Register store composer account
+  // Register store composer account.
   rpc StoreAddComp(Composer) returns (UUID);
 
-  // Update store composer email and nickname
+  // Update store composer email and nickname.
   rpc StoreUpComp(CompSimp) returns (AEmpty);
 
-  // Store machine bind with player wechat unionid
+  // Store machine bind with player wechat unionid.
   rpc StoreBindWx(WxBind) returns (AEmpty);
 
-  // Store machine unbind player wechat unionid
+  // Store machine unbind player wechat unionid.
   rpc StoreUnbindWx(AccPwd) returns (AEmpty);
 
-  // Store composer unbind machine's player wechat unionid
+  // Store composer unbind machine's player wechat unionid.
   rpc CompUnbindWx(UUID) returns (AEmpty);
 
-  // Store composer reset machine password and send by email
+  // Store composer reset machine password and send by email.
   rpc CompResetPwd(TagPwd) returns (AEmpty);
 
-  // Rename store machine nickname and addresses
+  // Rename store machine nickname and addresses.
   rpc StoreRename(ProfAddr) returns (AEmpty);
 
-  // Return account simple profiles and addresses
+  // Return account simple profiles and addresses.
   rpc StoreProfile(UUID) returns (ProfStore);
 
-  // Return accounts simple profiles and addresses
+  // Return accounts simple profiles and addresses.
   rpc StoreProfiles(UIDS) returns (ProfStores);
 
-  // Return uuids and emails
+  // Return uuids and emails.
   rpc GetActiveEmails(Emails) returns (Emails);
+
+  // ----------------------------------------
+  // For Offline Code OF QKS
+  // ----------------------------------------
+
+  // Return target account bund machine infos.
+  rpc AccMachs(UUID) returns (AMachs);
+
+  // Machine login by offline code, return account uid and token if success.
+  rpc MachLogin(MCode) returns (Token);
 }
 
-// Empty response for AccService
+// Empty response for AccService.
 message AEmpty {}
 
 message Token {
-  string token = 1;     // account request token
+  string token = 1; // account request token.
 }
 
 message UUID {
-  string uuid = 1;      // account unique id
+  string uuid = 1; // account unique id.
 }
 
 message UIDS {
@@ -127,7 +137,7 @@ message SKeys {
 }
 
 message Email {
-  string email = 1;      // account email
+  string email = 1; // account email.
 }
 
 message Emails {
@@ -135,19 +145,19 @@ message Emails {
 }
 
 message AccPwd {
-  string acc = 1;       // account uuid, email or phone
-  string pwd = 2;       // account login password enripted by RSA + Base64
+  string acc = 1; // account uuid, email or phone.
+  string pwd = 2; // account login password enripted by RSA + Base64.
 }
 
 message TagPwd {
-  string uuid = 1;      // account unique id
-  string tag = 2;       // target account uuid to change password
-  string pwd = 3;       // target account login password enripted by RSA + Base64
+  string uuid = 1; // account unique id.
+  string tag = 2; // target account uuid to change password.
+  string pwd = 3; // target account login password enripted by RSA + Base64.
 }
 
 message IDEMail {
-  string uuid = 1;      // account unique id
-  string email = 2;     // store composer email address to update
+  string uuid = 1; // account unique id.
+  string email = 2; // store composer email address to update.
 }
 
 message IDEMails {
@@ -155,34 +165,34 @@ message IDEMails {
 }
 
 message Contact {
-  string uuid = 1;      // account unique id
-  string contact = 2;   // account nickname
-  string email = 3;     // account email address
-  string phone = 4;     // account email phone
+  string uuid = 1; // account unique id.
+  string contact = 2; // account nickname.
+  string email = 3; // account email address.
+  string phone = 4; // account email phone.
 }
 
 message Profile {
-  string uuid = 1;      // account unique id
-  string nickname = 2;  // account nickname
-  string heardurl = 3;  // account heardurl, the value set from wechat avatar or manual update by userself
-  int64  sex = 4;       // account sex, 0:none, 1:male, 2:female, 3:neutral
-  string birthday = 5;  // account birthday, the value set from real-name authentication
-  bool   isverify = 6;  // status to indicate account if pass real-name autnenticated
+  string uuid = 1; // account unique id.
+  string nickname = 2; // account nickname.
+  string heardurl = 3; // account heardurl, the value set from wechat avatar or manual update by userself.
+  int64  sex = 4; // account sex, 0:none, 1:male, 2:female, 3:neutral.
+  string birthday = 5; // account birthday, the value set from real-name authentication.
+  bool   isverify = 6; // status to indicate account if pass real-name autnenticated.
 }
 
 message ProfAddr {
-  string uuid = 1;      // account unique id
-  string nickname = 2;  // store name frist perfix string
-  string province = 3;  // store name middle string
-  string city = 4;      // store name the last string
-  string address = 5;   // store address string, it maybe empty
+  string uuid = 1; // account unique id.
+  string nickname = 2; // store name frist perfix string.
+  string province = 3; // store name middle string.
+  string city = 4; // store name the last string.
+  string address = 5; // store address string, it maybe empty.
 }
 
 message Avatar {
-  string uuid = 1;      // account unique id
-  int64  sex = 2;       // account sex, 0:none, 1:male, 2:female, 3:neutral
-  string nickname = 3;  // account nickname
-  string heardurl = 4;  // account heardurl, the value set from wechat avatar
+  string uuid = 1; // account unique id.
+  int64  sex = 2; // account sex, 0:none, 1:male, 2:female, 3:neutral.
+  string nickname = 3; // account nickname.
+  string heardurl = 4; // account heardurl, the value set from wechat avatar.
 }
 
 message Avatars {
@@ -190,15 +200,15 @@ message Avatars {
 }
 
 message ProfStore {
-  string uuid = 1;      // account unique id
-  string unionid = 2;   // wechat unionid bind with store account
-  string logourl = 3;   // store logo image url from heardurl field value of database
-  string email = 4;     // store account email address, set when account generate
-  string nickname = 5;  // store name frist perfix string
-  string province = 6;  // store name middle string
-  string city = 7;      // store name the last string
-  string address = 8;   // store address string
-  string signature = 9; // store account auth signature
+  string uuid = 1; // account unique id.
+  string unionid = 2; // wechat unionid bind with store account.
+  string logourl = 3; // store logo image url from heardurl field value of database.
+  string email = 4; // store account email address, set when account generate.
+  string nickname = 5; // store name frist perfix string.
+  string province = 6; // store name middle string.
+  string city = 7; // store name the last string.
+  string address = 8; // store address string.
+  string signature = 9; // store account auth signature.
 }
 
 message ProfStores {
@@ -206,52 +216,52 @@ message ProfStores {
 }
 
 message WxBind {
-  string uuid = 1;      // account unique id
-  string unionid = 2;   // wechat unionid bind with store account
-  string pwd =3;        // account login password enripted by RSA + Base64
+  string uuid = 1; // account unique id.
+  string unionid = 2; // wechat unionid bind with store account.
+  string pwd =3; // account login password enripted by RSA + Base64.
 }
 
 message Role {
-  string uuid = 1;      // account unique id
-  string router = 2;    // verification request API router
-  string method = 3;    // verification request http method
+  string uuid = 1; // account unique id.
+  string router = 2; // verification request API router.
+  string method = 3; // verification request http method.
 }
 
 message Result {
-  bool pass = 1;        // if account enable access router, ture is allow, false denied
+  bool pass = 1; // if account enable access router, ture is allow, false denied.
 }
 
 message UserRole {
-  string role = 1;      // traget role
+  string role = 1; // traget role.
 }
 
 message TagRole {
-  string uuid = 1;      // account unique id
-  string role = 2;      // traget role
+  string uuid = 1; // account unique id.
+  string role = 2; // traget role.
 }
 
 message Machine {
-  string email = 1;     // store machine account email address, set when account generate
-  string machsn = 2;    // store name frist perfix string
+  string email = 1; // store machine account email address, set when account generate.
+  string machsn = 2; // store name frist perfix string.
 }
 
 message Composer {
-  string email = 1;     // store account email address, set when account generate
-  string nickname = 2;  // store composer nickname
+  string email = 1; // store account email address, set when account generate.
+  string nickname = 2; // store composer nickname.
 }
 
 message CompSimp {
-  string uuid = 1;      // account unique id
-  string email = 2;     // store composer email address to update
-  string nickname = 3;  // store composer nickname
+  string uuid = 1; // account unique id.
+  string email = 2; // store composer email address to update.
+  string nickname = 3; // store composer nickname.
 }
 
 message RoleProf {
-  string uuid = 1;      // account unique id
-  string email = 2;     // account email address
-  string phone = 3;     // account phone
-  string nickname = 4;  // account nickname
-  string heardurl = 5;  // account heardurl, the value set from wechat avatar  
+  string uuid = 1; // account unique id.
+  string email = 2; // account email address.
+  string phone = 3; // account phone.
+  string nickname = 4; // account nickname.
+  string heardurl = 5; // account heardurl, the value set from wechat avatar.
 }
 
 message RoleProfs {
@@ -259,17 +269,37 @@ message RoleProfs {
 }
 
 message Search {
-  int64  category = 1;  // category for search
-  string keyword = 2;   // search keyword
-  string role = 3;      // target role
+  int64  category = 1; // category for search.
+  string keyword = 2; // search keyword.
+  string role = 3; // target role.
 }
 
 message Mail {
-  string cat = 1;       // who request send the email, one of 'qks', 'rainbow'.
-  string content = 2;   // mail content to send, formated as json string.
+  string cat = 1; // who request send the email, one of 'qks', 'rainbow'.
+  string content = 2; // mail content to send, formated as json string.
 }
 
 message Code {
-  string uuid = 1;      // account unique id
-  string code = 2;      // email verification code
+  string uuid = 1; // account unique id.
+  string code = 2; // email verification code.
 }
+
+// ----------------------------------------
+// For Offline Code OF QKS
+// ----------------------------------------
+
+message AMach {
+  string mach = 1; // machine serial no.
+  string bind = 2; // machine registried datetime.
+}
+
+message AMachs {
+  repeated AMach machs = 1;
+}
+
+message MCode {
+  string uuid = 1; // account unique id.
+  string mach = 2; // machine serial no.
+  string code = 3; // account offline code.
+}
+

@@ -22,67 +22,71 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccClient interface {
-	// Request token access permission check
+	// Validate the request token, return account and password if passed.
 	ViaToken(ctx context.Context, in *Token, opts ...grpc.CallOption) (*AccPwd, error)
-	// Account role access permission check
+	// Validate target account role and access permission.
 	ViaRole(ctx context.Context, in *Role, opts ...grpc.CallOption) (*Result, error)
-	// Add account role excepted admin
+	// Attach a role with target account, excepted admin.
 	AddRole(ctx context.Context, in *TagRole, opts ...grpc.CallOption) (*AEmpty, error)
-	// Register account with given role, then return uuid and random password
-	// NOTICE that this function not create a admin role account
+	// Register account with given role, then return uuid and random password,
+	// NOTICE that this function not create a admin role account.
 	AccRegister(ctx context.Context, in *UserRole, opts ...grpc.CallOption) (*AccPwd, error)
-	// Account login by uuid/phone/email and encryptd password
+	// Account login by uuid/phone/email and encryptd password.
 	AccLogin(ctx context.Context, in *AccPwd, opts ...grpc.CallOption) (*Token, error)
-	// Return profiles on role, e.g. get all store composers
+	// Return profiles on role, e.g. get all store composers.
 	RoleProfiles(ctx context.Context, in *UserRole, opts ...grpc.CallOption) (*RoleProfs, error)
-	// Return profiles on role, and filter by search conditions
+	// Return profiles on role, and filter by search conditions.
 	SearchInRole(ctx context.Context, in *Search, opts ...grpc.CallOption) (*RoleProfs, error)
-	// Update account email, it maybe case duplicate entry error when tag email exist in databse
+	// Update account email, it maybe case duplicate entry error when tag email exist in database.
 	UpdateEmail(ctx context.Context, in *IDEMail, opts ...grpc.CallOption) (*AEmpty, error)
-	// Reset account password and send by email
+	// Reset account password and send by email.
 	ResetSendPwd(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
-	// Unbind account wechat unionid (clear unionid field directly)
+	// Unbind account wechat unionid (clear unionid field directly).
 	UnbindWechat(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
-	// Return account request token by exist user uuid (only for QKS)
+	// Return account request token by exist user uuid (only for IFSC).
 	GetToken(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Token, error)
-	// Return account emails by given uuids
+	// Return account emails by given uuids.
 	GetAccEmails(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*IDEMails, error)
-	// Return account simple profiles
+	// Return account simple profiles.
 	GetProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Profile, error)
-	// Return account contact (contain nickname, phone, email)
+	// Return account contact (contain nickname, phone, email).
 	GetContact(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Contact, error)
-	// Return account avatars by given uuids
+	// Return account avatars by given uuids.
 	GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Avatars, error)
-	// Return account avatars by given uuids and search conditions
+	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(ctx context.Context, in *SKeys, opts ...grpc.CallOption) (*Avatars, error)
-	// Delete indicated account by given uuid
+	// Delete indicated account by given uuid.
 	DeleteAcc(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
-	// Verify bind code of backup email
+	// Verify bind code of backup email.
 	ViaBKMail(ctx context.Context, in *Code, opts ...grpc.CallOption) (*AEmpty, error)
 	// Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
 	SendMail(ctx context.Context, in *Mail, opts ...grpc.CallOption) (*AEmpty, error)
-	// Register store machine account
+	// Register store machine account.
 	StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error)
-	// Register store composer account
+	// Register store composer account.
 	StoreAddComp(ctx context.Context, in *Composer, opts ...grpc.CallOption) (*UUID, error)
-	// Update store composer email and nickname
+	// Update store composer email and nickname.
 	StoreUpComp(ctx context.Context, in *CompSimp, opts ...grpc.CallOption) (*AEmpty, error)
-	// Store machine bind with player wechat unionid
+	// Store machine bind with player wechat unionid.
 	StoreBindWx(ctx context.Context, in *WxBind, opts ...grpc.CallOption) (*AEmpty, error)
-	// Store machine unbind player wechat unionid
+	// Store machine unbind player wechat unionid.
 	StoreUnbindWx(ctx context.Context, in *AccPwd, opts ...grpc.CallOption) (*AEmpty, error)
-	// Store composer unbind machine's player wechat unionid
+	// Store composer unbind machine's player wechat unionid.
 	CompUnbindWx(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
-	// Store composer reset machine password and send by email
+	// Store composer reset machine password and send by email.
 	CompResetPwd(ctx context.Context, in *TagPwd, opts ...grpc.CallOption) (*AEmpty, error)
-	// Rename store machine nickname and addresses
+	// Rename store machine nickname and addresses.
 	StoreRename(ctx context.Context, in *ProfAddr, opts ...grpc.CallOption) (*AEmpty, error)
-	// Return account simple profiles and addresses
+	// Return account simple profiles and addresses.
 	StoreProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*ProfStore, error)
-	// Return accounts simple profiles and addresses
+	// Return accounts simple profiles and addresses.
 	StoreProfiles(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*ProfStores, error)
-	// Return uuids and emails
+	// Return uuids and emails.
 	GetActiveEmails(ctx context.Context, in *Emails, opts ...grpc.CallOption) (*Emails, error)
+	// Return target account bund machine infos.
+	AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error)
+	// Machine login by offline code, return account uid and token if success.
+	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*Token, error)
 }
 
 type accClient struct {
@@ -363,71 +367,93 @@ func (c *accClient) GetActiveEmails(ctx context.Context, in *Emails, opts ...grp
 	return out, nil
 }
 
+func (c *accClient) AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error) {
+	out := new(AMachs)
+	err := c.cc.Invoke(ctx, "/proto.Acc/AccMachs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*Token, error) {
+	out := new(Token)
+	err := c.cc.Invoke(ctx, "/proto.Acc/MachLogin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccServer is the server API for Acc service.
 // All implementations must embed UnimplementedAccServer
 // for forward compatibility
 type AccServer interface {
-	// Request token access permission check
+	// Validate the request token, return account and password if passed.
 	ViaToken(context.Context, *Token) (*AccPwd, error)
-	// Account role access permission check
+	// Validate target account role and access permission.
 	ViaRole(context.Context, *Role) (*Result, error)
-	// Add account role excepted admin
+	// Attach a role with target account, excepted admin.
 	AddRole(context.Context, *TagRole) (*AEmpty, error)
-	// Register account with given role, then return uuid and random password
-	// NOTICE that this function not create a admin role account
+	// Register account with given role, then return uuid and random password,
+	// NOTICE that this function not create a admin role account.
 	AccRegister(context.Context, *UserRole) (*AccPwd, error)
-	// Account login by uuid/phone/email and encryptd password
+	// Account login by uuid/phone/email and encryptd password.
 	AccLogin(context.Context, *AccPwd) (*Token, error)
-	// Return profiles on role, e.g. get all store composers
+	// Return profiles on role, e.g. get all store composers.
 	RoleProfiles(context.Context, *UserRole) (*RoleProfs, error)
-	// Return profiles on role, and filter by search conditions
+	// Return profiles on role, and filter by search conditions.
 	SearchInRole(context.Context, *Search) (*RoleProfs, error)
-	// Update account email, it maybe case duplicate entry error when tag email exist in databse
+	// Update account email, it maybe case duplicate entry error when tag email exist in database.
 	UpdateEmail(context.Context, *IDEMail) (*AEmpty, error)
-	// Reset account password and send by email
+	// Reset account password and send by email.
 	ResetSendPwd(context.Context, *UUID) (*AEmpty, error)
-	// Unbind account wechat unionid (clear unionid field directly)
+	// Unbind account wechat unionid (clear unionid field directly).
 	UnbindWechat(context.Context, *UUID) (*AEmpty, error)
-	// Return account request token by exist user uuid (only for QKS)
+	// Return account request token by exist user uuid (only for IFSC).
 	GetToken(context.Context, *UUID) (*Token, error)
-	// Return account emails by given uuids
+	// Return account emails by given uuids.
 	GetAccEmails(context.Context, *UIDS) (*IDEMails, error)
-	// Return account simple profiles
+	// Return account simple profiles.
 	GetProfile(context.Context, *UUID) (*Profile, error)
-	// Return account contact (contain nickname, phone, email)
+	// Return account contact (contain nickname, phone, email).
 	GetContact(context.Context, *UUID) (*Contact, error)
-	// Return account avatars by given uuids
+	// Return account avatars by given uuids.
 	GetAvatars(context.Context, *UIDS) (*Avatars, error)
-	// Return account avatars by given uuids and search conditions
+	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(context.Context, *SKeys) (*Avatars, error)
-	// Delete indicated account by given uuid
+	// Delete indicated account by given uuid.
 	DeleteAcc(context.Context, *UUID) (*AEmpty, error)
-	// Verify bind code of backup email
+	// Verify bind code of backup email.
 	ViaBKMail(context.Context, *Code) (*AEmpty, error)
 	// Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
 	SendMail(context.Context, *Mail) (*AEmpty, error)
-	// Register store machine account
+	// Register store machine account.
 	StoreAddMach(context.Context, *Email) (*UUID, error)
-	// Register store composer account
+	// Register store composer account.
 	StoreAddComp(context.Context, *Composer) (*UUID, error)
-	// Update store composer email and nickname
+	// Update store composer email and nickname.
 	StoreUpComp(context.Context, *CompSimp) (*AEmpty, error)
-	// Store machine bind with player wechat unionid
+	// Store machine bind with player wechat unionid.
 	StoreBindWx(context.Context, *WxBind) (*AEmpty, error)
-	// Store machine unbind player wechat unionid
+	// Store machine unbind player wechat unionid.
 	StoreUnbindWx(context.Context, *AccPwd) (*AEmpty, error)
-	// Store composer unbind machine's player wechat unionid
+	// Store composer unbind machine's player wechat unionid.
 	CompUnbindWx(context.Context, *UUID) (*AEmpty, error)
-	// Store composer reset machine password and send by email
+	// Store composer reset machine password and send by email.
 	CompResetPwd(context.Context, *TagPwd) (*AEmpty, error)
-	// Rename store machine nickname and addresses
+	// Rename store machine nickname and addresses.
 	StoreRename(context.Context, *ProfAddr) (*AEmpty, error)
-	// Return account simple profiles and addresses
+	// Return account simple profiles and addresses.
 	StoreProfile(context.Context, *UUID) (*ProfStore, error)
-	// Return accounts simple profiles and addresses
+	// Return accounts simple profiles and addresses.
 	StoreProfiles(context.Context, *UIDS) (*ProfStores, error)
-	// Return uuids and emails
+	// Return uuids and emails.
 	GetActiveEmails(context.Context, *Emails) (*Emails, error)
+	// Return target account bund machine infos.
+	AccMachs(context.Context, *UUID) (*AMachs, error)
+	// Machine login by offline code, return account uid and token if success.
+	MachLogin(context.Context, *MCode) (*Token, error)
 	mustEmbedUnimplementedAccServer()
 }
 
@@ -524,6 +550,12 @@ func (UnimplementedAccServer) StoreProfiles(context.Context, *UIDS) (*ProfStores
 }
 func (UnimplementedAccServer) GetActiveEmails(context.Context, *Emails) (*Emails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetActiveEmails not implemented")
+}
+func (UnimplementedAccServer) AccMachs(context.Context, *UUID) (*AMachs, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AccMachs not implemented")
+}
+func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MachLogin not implemented")
 }
 func (UnimplementedAccServer) mustEmbedUnimplementedAccServer() {}
 
@@ -1078,6 +1110,42 @@ func _Acc_GetActiveEmails_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Acc_AccMachs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UUID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).AccMachs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/AccMachs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).AccMachs(ctx, req.(*UUID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Acc_MachLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MCode)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).MachLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/MachLogin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).MachLogin(ctx, req.(*MCode))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Acc_ServiceDesc is the grpc.ServiceDesc for Acc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1204,6 +1272,14 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetActiveEmails",
 			Handler:    _Acc_GetActiveEmails_Handler,
+		},
+		{
+			MethodName: "AccMachs",
+			Handler:    _Acc_AccMachs_Handler,
+		},
+		{
+			MethodName: "MachLogin",
+			Handler:    _Acc_MachLogin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
