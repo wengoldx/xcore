@@ -87,6 +87,8 @@ type AccClient interface {
 	AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error)
 	// Machine login by offline code, return account uid and token if success.
 	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*Token, error)
+	// Generate machine offline code.
+	OfflineCode(ctx context.Context, in *UMach, opts ...grpc.CallOption) (*Code, error)
 }
 
 type accClient struct {
@@ -385,6 +387,15 @@ func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallO
 	return out, nil
 }
 
+func (c *accClient) OfflineCode(ctx context.Context, in *UMach, opts ...grpc.CallOption) (*Code, error) {
+	out := new(Code)
+	err := c.cc.Invoke(ctx, "/proto.Acc/OfflineCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccServer is the server API for Acc service.
 // All implementations must embed UnimplementedAccServer
 // for forward compatibility
@@ -454,6 +465,8 @@ type AccServer interface {
 	AccMachs(context.Context, *UUID) (*AMachs, error)
 	// Machine login by offline code, return account uid and token if success.
 	MachLogin(context.Context, *MCode) (*Token, error)
+	// Generate machine offline code.
+	OfflineCode(context.Context, *UMach) (*Code, error)
 	mustEmbedUnimplementedAccServer()
 }
 
@@ -556,6 +569,9 @@ func (UnimplementedAccServer) AccMachs(context.Context, *UUID) (*AMachs, error) 
 }
 func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*Token, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MachLogin not implemented")
+}
+func (UnimplementedAccServer) OfflineCode(context.Context, *UMach) (*Code, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OfflineCode not implemented")
 }
 func (UnimplementedAccServer) mustEmbedUnimplementedAccServer() {}
 
@@ -1146,6 +1162,24 @@ func _Acc_MachLogin_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Acc_OfflineCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UMach)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).OfflineCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/OfflineCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).OfflineCode(ctx, req.(*UMach))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Acc_ServiceDesc is the grpc.ServiceDesc for Acc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1280,6 +1314,10 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MachLogin",
 			Handler:    _Acc_MachLogin_Handler,
+		},
+		{
+			MethodName: "OfflineCode",
+			Handler:    _Acc_OfflineCode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

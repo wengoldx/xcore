@@ -113,6 +113,9 @@ service Acc {
 
   // Machine login by offline code, return account uid and token if success.
   rpc MachLogin(MCode) returns (Token);
+
+  // Generate machine offline code.
+  rpc OfflineCode(UMach) returns (Code);
 }
 
 // Empty response for AccService.
@@ -287,6 +290,11 @@ message Code {
 // ----------------------------------------
 // For Offline Code OF QKS
 // ----------------------------------------
+
+message UMach {
+  string uuid = 1; // account unique id.
+  string mach = 2; // machine serial no.
+}
 
 message AMach {
   string mach = 1; // machine serial no.
