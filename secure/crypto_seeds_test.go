@@ -24,9 +24,8 @@ import (
 
 const _test_seed = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9" // "0123456789"
 const _test_sign = "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
-const _test_code = "O8E0H4O8" // "49254989"
 
-func TestNewSeedSign(t *testing.T) {
+func TestNewSeedSigns(t *testing.T) {
 	s1 := NewSeedSign(_test_seed)
 	s2 := NewSeedSign(_test_seed)
 
@@ -49,9 +48,9 @@ func TestFilterDupChars(t *testing.T) {
 		{"Bad Src", "1234467890", "123467890"},
 	}
 
+	ss := SeedSign{}
 	for _, c := range cases {
 		t.Run(c.Case, func(t *testing.T) {
-			ss := SeedSign{}
 			out := ss.filterDupChars(c.Src)
 			if out != c.Out {
 				t.Fatal("Want:", c.Out, "but output:", out)
@@ -86,16 +85,19 @@ func TestSignPlaintext(t *testing.T) {
 	}
 }
 
-func TestSignCode(t *testing.T) {
+func TestSignAndVerifyCode(t *testing.T) {
 	cases := []struct {
 		Case      string
 		Type      string
+		Bits      int
 		Plaintext string
 	}{
-		{"Verify ECC sign code", "ECC", "this is a plaintext to sign by ECC"},
-		{"Verify ECC chinese  ", "ECC", "中文编码字符串签名测试"},
-		{"Verify RSA sign code", "RSA", "this is a plaintext to sign by ECC"},
-		{"Verify RSA chinese  ", "RSA", "中文编码字符串签名测试"},
+		{"Verify ECC sign code       ", "ECC", 0, "this is a plaintext to sign by ECC"},
+		{"Verify ECC chinese         ", "ECC", 0, "中文编码字符串签名测试"},
+		{"Verify RSA sign code [1024]", "RSA", 1024, "this is a plaintext to sign by RSA"},
+		{"Verify RSA chinese   [1024]", "RSA", 1024, "中文编码字符串签名测试"},
+		{"Verify RSA sign code [2048]", "RSA", 2048, "this is a plaintext to sign by RSA"},
+		{"Verify RSA chinese   [2048]", "RSA", 2048, "中文编码字符串签名测试"},
 	}
 
 	ss := NewSeedSign(_test_seed)
@@ -106,7 +108,7 @@ func TestSignCode(t *testing.T) {
 				prikey, _ := NewEccPriKey()
 				sign, _ = EccSign(c.Plaintext, prikey)
 			} else {
-				pri, _, _ := NewRSAKeys(2048)
+				pri, _, _ := NewRSAKeys(c.Bits)
 				sign, _ = RSASignB64(pri, c.Plaintext)
 			}
 
@@ -171,19 +173,30 @@ func TestRsaSignVerify(t *testing.T) {
 	t.Log("Passed ECC sign & verify!")
 }
 
-func TestGenCode(t *testing.T) {
+func TestGenSeedCodes(t *testing.T) {
 	ss := NewSeedSign(_test_seed)
-	for i := 0; i < 10; i++ { // test 10 times.
+	codes, conflicts := make(map[string]struct{}), 0
+	for i, cnt := 0, 0; i < 10000; i++ { // test 10000 times.
 		code := ss.SignCode(_test_sign)
-		fmt.Println("Code:", code)
+		if _, ok := codes[code]; ok {
+			conflicts++
+			continue
+		}
+		cnt++
+		codes[code] = struct{}{}
+		fmt.Println("[", cnt, "]", "Code:", code)
 	}
+	fmt.Println("Conflicted", conflicts)
 }
 
 func TestViaSignOne(t *testing.T) {
 	ss := NewSeedSign(_test_seed)
-	fmt.Println("code:", ss.SignCode(_test_sign))
-	if !ss.ViaCode(_test_sign, _test_code) {
-		t.Fatal("Verify sign&code failed!")
+	for i := 0; i < 10000; i++ {
+		code := ss.SignCode(_test_sign)
+		if !ss.ViaCode(_test_sign, code) {
+			t.Fatal("Verify sign&code failed!")
+		}
+		fmt.Println("Signed Code:", code)
 	}
 }
 
@@ -193,12 +206,13 @@ func TestSignToNum(t *testing.T) {
 	badchars := "!@#$%^&*()_+}{\":?><~}`-=[]\\;',./ "
 	num, sign := "", _test_sign+badchars
 	fmt.Println("sign src:", sign)
-	for i := 0; i < 5; i++ { // test 5 times.
+	for i := 0; i < 10; i++ { // test 10 times.
 		if num == "" {
-			num = ss.signNum(sign)
-		} else if num != ss.signNum(sign) {
+			_, num = ss.signSeedNum(sign)
+			fmt.Println("sign num:", num)
+			continue
+		} else if _, n := ss.signSeedNum(sign); num != n {
 			t.Fatal("Sign number not matched!")
 		}
-		fmt.Println("sign num:", num)
 	}
 }
