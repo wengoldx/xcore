@@ -22,7 +22,7 @@ import (
 //	go test -v -cover
 // -------------------------------------------------------------------
 
-const _test_seed = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9" // "0123456789"
+const _test_seed = "0aAbBcC1dDeEfF2gGhHiI3jJkKlL4mMnNoO5pPqQrR6sStTuU7vVwWxX8yYzZ9"
 const _test_sign = "ghdWBIEJFuiKgKtL89dfNBfNX7hXKAQj85hP40UcbgC+rPIujfCcac1w6fz/wcdzr1dTAvR2zXfn1yegPnsYDCA="
 
 func TestNewSeedSigns(t *testing.T) {
@@ -174,19 +174,31 @@ func TestRsaSignVerify(t *testing.T) {
 }
 
 func TestGenSeedCodes(t *testing.T) {
-	ss := NewSeedSign(_test_seed)
-	codes, conflicts := make(map[string]struct{}), 0
-	for i, cnt := 0, 0; i < 10000; i++ { // test 10000 times.
-		code := ss.SignCode(_test_sign)
-		if _, ok := codes[code]; ok {
-			conflicts++
-			continue
-		}
-		cnt++
-		codes[code] = struct{}{}
-		fmt.Println("[", cnt, "]", "Code:", code)
+	cases := []struct {
+		Case  string
+		Seeds string
+		Count int
+	}{
+		{"Number seeds", "1234567890", 1000},
+		{"Chat seeds", _test_seed, 10000},
 	}
-	fmt.Println("Conflicted", conflicts)
+
+	for _, c := range cases {
+		t.Run(c.Case, func(t *testing.T) {
+			ss := NewSeedSign(c.Seeds)
+			codes, conflicts, cnt := make(map[string]struct{}), 0, 0
+			for i := 0; i < c.Count; i++ {
+				code := ss.SignCode(_test_sign)
+				if _, ok := codes[code]; ok {
+					conflicts++
+					continue
+				}
+				cnt++
+				codes[code] = struct{}{}
+			}
+			fmt.Println("Count:", cnt, "- Conflicted", conflicts)
+		})
+	}
 }
 
 func TestViaSignOne(t *testing.T) {

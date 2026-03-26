@@ -184,15 +184,14 @@ func (s *SeedSign) SignCode(sign string) string {
 	}
 
 	seed, num := s.signSeedNum(sign)
-	weight := len(seed)              // set seed weight as default.
-	if nw := len(num); weight > nw { // check sign number lenght.
-		weight = nw // use the minimum weight.
-	}
+	weight := len(seed)                            // set seed weight as default.
+	scaling := float32(len(num)) / float32(weight) // sign number normalization rate.
 
 	code := "" // random 4 group segements
 	for seg := 0; seg < 4; seg++ {
-		pos := rand.Intn(weight)
-		code += seed[pos:pos+1] + num[pos:pos+1]
+		spos := rand.Intn(weight)
+		npos := int(float32(spos) * scaling)
+		code += seed[spos:spos+1] + num[npos:npos+1]
 	}
 	return code // length 8 chars
 }
@@ -215,14 +214,18 @@ func (s *SeedSign) ViaCode(sign, code string) bool {
 	}
 
 	seed, num := s.signSeedNum(sign)
-	for i, weight := 0, len(seed); i < cl-1; i += 2 {
+	weight := len(seed)                            // set seed weight as default.
+	scaling := float32(len(num)) / float32(weight) // sign number normalization rate.
+
+	for i := 0; i < cl-1; i += 2 {
 		poschar, digital := code[i], code[i+1]
-		pos := strings.Index(seed, string(poschar))
-		if pos < 0 || pos >= weight {
+		spos := strings.Index(seed, string(poschar))
+		if spos == -1 {
 			return false
 		}
 
-		if num[pos] != digital {
+		npos := int(float32(spos) * scaling)
+		if num[npos] != digital {
 			return false
 		}
 	}
