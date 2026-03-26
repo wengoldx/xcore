@@ -83,12 +83,10 @@ type AccClient interface {
 	StoreProfiles(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*ProfStores, error)
 	// Return uuids and emails.
 	GetActiveEmails(ctx context.Context, in *Emails, opts ...grpc.CallOption) (*Emails, error)
+	// Machine login by offline code, return account uid and token if success.
+	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*AToken, error)
 	// Return target account bund machine infos.
 	AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error)
-	// Machine login by offline code, return account uid and token if success.
-	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*Token, error)
-	// Generate machine offline code.
-	OfflineCode(ctx context.Context, in *UMach, opts ...grpc.CallOption) (*Code, error)
 }
 
 type accClient struct {
@@ -369,17 +367,8 @@ func (c *accClient) GetActiveEmails(ctx context.Context, in *Emails, opts ...grp
 	return out, nil
 }
 
-func (c *accClient) AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error) {
-	out := new(AMachs)
-	err := c.cc.Invoke(ctx, "/proto.Acc/AccMachs", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*Token, error) {
-	out := new(Token)
+func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*AToken, error) {
+	out := new(AToken)
 	err := c.cc.Invoke(ctx, "/proto.Acc/MachLogin", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -387,9 +376,9 @@ func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *accClient) OfflineCode(ctx context.Context, in *UMach, opts ...grpc.CallOption) (*Code, error) {
-	out := new(Code)
-	err := c.cc.Invoke(ctx, "/proto.Acc/OfflineCode", in, out, opts...)
+func (c *accClient) AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error) {
+	out := new(AMachs)
+	err := c.cc.Invoke(ctx, "/proto.Acc/AccMachs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -461,12 +450,10 @@ type AccServer interface {
 	StoreProfiles(context.Context, *UIDS) (*ProfStores, error)
 	// Return uuids and emails.
 	GetActiveEmails(context.Context, *Emails) (*Emails, error)
+	// Machine login by offline code, return account uid and token if success.
+	MachLogin(context.Context, *MCode) (*AToken, error)
 	// Return target account bund machine infos.
 	AccMachs(context.Context, *UUID) (*AMachs, error)
-	// Machine login by offline code, return account uid and token if success.
-	MachLogin(context.Context, *MCode) (*Token, error)
-	// Generate machine offline code.
-	OfflineCode(context.Context, *UMach) (*Code, error)
 	mustEmbedUnimplementedAccServer()
 }
 
@@ -564,14 +551,11 @@ func (UnimplementedAccServer) StoreProfiles(context.Context, *UIDS) (*ProfStores
 func (UnimplementedAccServer) GetActiveEmails(context.Context, *Emails) (*Emails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetActiveEmails not implemented")
 }
-func (UnimplementedAccServer) AccMachs(context.Context, *UUID) (*AMachs, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AccMachs not implemented")
-}
-func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*Token, error) {
+func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*AToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MachLogin not implemented")
 }
-func (UnimplementedAccServer) OfflineCode(context.Context, *UMach) (*Code, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OfflineCode not implemented")
+func (UnimplementedAccServer) AccMachs(context.Context, *UUID) (*AMachs, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AccMachs not implemented")
 }
 func (UnimplementedAccServer) mustEmbedUnimplementedAccServer() {}
 
@@ -1126,24 +1110,6 @@ func _Acc_GetActiveEmails_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Acc_AccMachs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccServer).AccMachs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.Acc/AccMachs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).AccMachs(ctx, req.(*UUID))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Acc_MachLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MCode)
 	if err := dec(in); err != nil {
@@ -1162,20 +1128,20 @@ func _Acc_MachLogin_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Acc_OfflineCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UMach)
+func _Acc_AccMachs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UUID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccServer).OfflineCode(ctx, in)
+		return srv.(AccServer).AccMachs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Acc/OfflineCode",
+		FullMethod: "/proto.Acc/AccMachs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).OfflineCode(ctx, req.(*UMach))
+		return srv.(AccServer).AccMachs(ctx, req.(*UUID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1308,16 +1274,12 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Acc_GetActiveEmails_Handler,
 		},
 		{
-			MethodName: "AccMachs",
-			Handler:    _Acc_AccMachs_Handler,
-		},
-		{
 			MethodName: "MachLogin",
 			Handler:    _Acc_MachLogin_Handler,
 		},
 		{
-			MethodName: "OfflineCode",
-			Handler:    _Acc_OfflineCode_Handler,
+			MethodName: "AccMachs",
+			Handler:    _Acc_AccMachs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

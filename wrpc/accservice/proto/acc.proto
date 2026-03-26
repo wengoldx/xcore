@@ -108,14 +108,11 @@ service Acc {
   // For Offline Code OF QKS
   // ----------------------------------------
 
+  // Machine login by offline code, return account uid and token if success.
+  rpc MachLogin(MCode) returns (AToken);
+
   // Return target account bund machine infos.
   rpc AccMachs(UUID) returns (AMachs);
-
-  // Machine login by offline code, return account uid and token if success.
-  rpc MachLogin(MCode) returns (Token);
-
-  // Generate machine offline code.
-  rpc OfflineCode(UMach) returns (Code);
 }
 
 // Empty response for AccService.
@@ -171,7 +168,7 @@ message Contact {
   string uuid = 1; // account unique id.
   string contact = 2; // account nickname.
   string email = 3; // account email address.
-  string phone = 4; // account email phone.
+  string phone = 4; // account phone.
 }
 
 message Profile {
@@ -299,6 +296,7 @@ message UMach {
 message AMach {
   string mach = 1; // machine serial no.
   string bund = 2; // machine registried datetime.
+  string series = 3; // machine series string, like 'YJ-E100'...
 }
 
 message AMachs {
@@ -306,8 +304,13 @@ message AMachs {
 }
 
 message MCode {
+  string mach = 1; // machine serial no.
+  string code = 2; // account offline code.
+}
+
+message AToken {
   string uuid = 1; // account unique id.
-  string mach = 2; // machine serial no.
-  string code = 3; // account offline code.
+  string email = 2; // account email address.
+  string token = 3; // account request token.
 }
 
