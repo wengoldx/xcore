@@ -84,7 +84,7 @@ type AccClient interface {
 	// Return uuids and emails.
 	GetActiveEmails(ctx context.Context, in *Emails, opts ...grpc.CallOption) (*Emails, error)
 	// Machine login by offline code, return account uid and token if success.
-	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*AToken, error)
+	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*EToken, error)
 	// Return target account bund machine infos.
 	AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error)
 }
@@ -367,8 +367,8 @@ func (c *accClient) GetActiveEmails(ctx context.Context, in *Emails, opts ...grp
 	return out, nil
 }
 
-func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*AToken, error) {
-	out := new(AToken)
+func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*EToken, error) {
+	out := new(EToken)
 	err := c.cc.Invoke(ctx, "/proto.Acc/MachLogin", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -451,7 +451,7 @@ type AccServer interface {
 	// Return uuids and emails.
 	GetActiveEmails(context.Context, *Emails) (*Emails, error)
 	// Machine login by offline code, return account uid and token if success.
-	MachLogin(context.Context, *MCode) (*AToken, error)
+	MachLogin(context.Context, *MCode) (*EToken, error)
 	// Return target account bund machine infos.
 	AccMachs(context.Context, *UUID) (*AMachs, error)
 	mustEmbedUnimplementedAccServer()
@@ -551,7 +551,7 @@ func (UnimplementedAccServer) StoreProfiles(context.Context, *UIDS) (*ProfStores
 func (UnimplementedAccServer) GetActiveEmails(context.Context, *Emails) (*Emails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetActiveEmails not implemented")
 }
-func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*AToken, error) {
+func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*EToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MachLogin not implemented")
 }
 func (UnimplementedAccServer) AccMachs(context.Context, *UUID) (*AMachs, error) {

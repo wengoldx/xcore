@@ -109,7 +109,7 @@ service Acc {
   // ----------------------------------------
 
   // Machine login by offline code, return account uid and token if success.
-  rpc MachLogin(MCode) returns (AToken);
+  rpc MachLogin(MCode) returns (EToken);
 
   // Return target account bund machine infos.
   rpc AccMachs(UUID) returns (AMachs);
@@ -309,9 +309,8 @@ message MCode {
   string code = 3; // account offline code.
 }
 
-message AToken {
-  string uuid = 1; // account unique id.
-  string email = 2; // account email address.
-  string token = 3; // account request token.
+message EToken {
+  string email = 1; // account email address.
+  string token = 2; // account request token.
 }
 

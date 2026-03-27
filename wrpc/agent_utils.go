@@ -377,7 +377,7 @@ func (stub *GrpcStub) SendMail(cat string, payload any) error {
 }
 
 // Machine login by offline code, return account uid and token if success.
-func (stub *GrpcStub) MachLogin(uid, mach, code string) (*acc.AToken, error) {
+func (stub *GrpcStub) MachLogin(uid, mach, code string) (*acc.EToken, error) {
 	if stub.Acc == nil {
 		return nil, invar.ErrInvalidClient
 	} else if mach == "" || code == "" {
