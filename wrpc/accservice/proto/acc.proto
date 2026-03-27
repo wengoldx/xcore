@@ -304,8 +304,9 @@ message AMachs {
 }
 
 message MCode {
-  string mach = 1; // machine serial no.
-  string code = 2; // account offline code.
+  string uuid = 1; // account unique id.
+  string mach = 2; // machine serial no.
+  string code = 3; // account offline code.
 }
 
 message AToken {
