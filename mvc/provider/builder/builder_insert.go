@@ -40,15 +40,25 @@ func NewInsert(table string, provider ...pd.ProviderUtils) *InsertBuilder {
 /* ------------------------------------------------------------------- */
 
 // Insert a new record without check.
+//
+//	h.Inserter().Values(pd.KValues{"role": admin, ...}).Exec()
 func (b *InsertBuilder) Exec() error { return b.provider.Exec(b) }
 
 // Insert records and check inserted row id or counts.
+//
+//	id, err := h.Inserter().Values(pd.KValues{"role": admin, ...}).Insert()
 func (b *InsertBuilder) Insert() (int64, error) { return b.provider.Insert(b) }
 
 // Insert records and check result.
+//
+//	h.Inserter().Values(pd.KValues{"role": admin, ...}).InsertCheck()
+//	// check insert id or rows count.
 func (b *InsertBuilder) InsertCheck() error { return b.provider.InsertCheck(b) }
 
 // Insert records without result check.
+//
+//	h.Inserter().Values(pd.KValues{"role": admin, ...}).InsertUncheck()
+//	// not check insert id and rows count.
 func (b *InsertBuilder) InsertUncheck() error { return b.provider.InsertUncheck(b) }
 
 /* ------------------------------------------------------------------- */

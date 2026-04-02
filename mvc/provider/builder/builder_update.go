@@ -23,7 +23,7 @@ import (
 //
 //	UPDATE table
 //		SET v1=?, v2=?, v3=?...
-//		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		WHERE wherers AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 type UpdateBuilder struct {
 	BaseBuilder
 	values pd.KValues // Target fields and values to update.
@@ -45,9 +45,15 @@ func NewUpdate(table string, provider ...pd.ProviderUtils) *UpdateBuilder {
 /* ------------------------------------------------------------------- */
 
 // Update record without check.
+//
+//	h.Updater().Values(pd.KValues{"role": admin}).Wheres(pd.Wheres{"uid=?": uid}).Exec()
+//	// not check updated row count.
 func (b *UpdateBuilder) Exec() error { return b.provider.Exec(b) }
 
 // Update record and check changed counts.
+//
+//	h.Updater().Values(pd.KValues{"role": admin}).Wheres(pd.Wheres{"uid=?": uid}).Exec()
+//	// check updated row count.
 func (b *UpdateBuilder) Update() error { return b.provider.Update(b) }
 
 /* ------------------------------------------------------------------- */

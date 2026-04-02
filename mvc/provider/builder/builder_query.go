@@ -22,7 +22,7 @@ import (
 // Build a query string for sql query.
 //
 //	SELECT tags FROM table
-//		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
 //		LIMIT limit.
 type QueryBuilder struct {
@@ -53,27 +53,73 @@ func (b *QueryBuilder) GetOuts() []any { return b.outs }
 /* ------------------------------------------------------------------- */
 
 // Check whether has the target record.
+//
+//	h.Querier().Wheres(pd.Wheres{"account=?": acc}).Has()
+//	// SELECT * FROM table WHERE account=? LIMIT 1
 func (b *QueryBuilder) Has() (bool, error) { return b.provider.Has(b) }
 
 // Check whether unexist the target record.
+//
+//	h.Querier().Wheres(pd.Wheres{"account=?": acc}).Has()
+//	// SELECT * FROM table WHERE account<>? LIMIT 1
 func (b *QueryBuilder) None() (bool, error) { return b.provider.None(b) }
 
 // Count the mathed query condition records.
+//
+//	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Count()
+//	// SELECT COUNT(*) FROM table WHERE role=?
 func (b *QueryBuilder) Count() (int, error) { return b.provider.Count(b) }
 
+// Deprecated: Use OneDone instead it!
+//
 // Query the top one record with scan callback.
+//
+//	h.Querier().Wheres(pd.Wheres{"account=?": acc}).OneScan(
+//		func(rows *sql.Rows) error {
+//			if err := rows.Scan(&role); err != nil {
+//				return err
+//			}
+//			return nil
+//		}
+//	)
 func (b *QueryBuilder) OneScan(cb pd.ScanCallback) error { return b.provider.OneScan(b, cb) }
 
 // Query the top one record and translate result by done callback.
+//
+//	h.Querier().TagOut("role", &role).Wheres(pd.Wheres{"account=?": acc}).OneDone()
+//	h.Querier().Tags("role", "name").Outs(&role, &name).Wheres(pd.Wheres{"account=?": acc}).OneDone()
+//	h.Querier().TagOut("secure", &secure).Wheres(pd.Wheres{"account=?": acc}).OneDone(
+//		func() { secure = decode(secure)
+//	)
 func (b *QueryBuilder) OneDone(done ...pd.DoneCallback) error { return b.provider.OneDone(b, done...) }
 
 // Query the all matched condition records.
+//
+//	roles := []*types.Role{}
+//	h.Querier().Tags("uid", "role").Wheres(pd.Wheres{"dep=?": dep}).OrderBy("name").
+//		Query(func(rows *sql.Rows) error {
+//			r := &types.Role{}
+//			if err := rows.Scan(&r.UID, &r.Role); err != nil {
+//				return err
+//			}
+//			roles = append(roles, r)
+//			return nil
+//		})
 func (b *QueryBuilder) Query(cb pd.ScanCallback) error { return b.provider.Query(b, cb) }
 
 // Query the all records with the Creator utils.
+//
+//	roles := []*types.Role{}
+//	h.Querier().Tags("uid", "role").Wheres(pd.Wheres{"dep=?": dep}).OrderBy("name").
+//		Array(pd.NewCreator(&roles, func(iv *types.Role) []any {
+//			return []any{&iv.UID, &iv.role}
+//		})
 func (b *QueryBuilder) Array(cr pd.Creator) error { return b.provider.Array(b, cr) }
 
 // Query the all records with the Creator utils.
+//
+//	roles := []string{}
+//	h.Querier().Tags("role").Wheres(pd.Wheres{"dep=?": dep}).Column(pd.NewScaner(&roles))
 func (b *QueryBuilder) Column(sr pd.Scaner) error { return b.provider.Column(b, sr) }
 
 /* ------------------------------------------------------------------- */

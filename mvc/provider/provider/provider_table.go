@@ -77,21 +77,37 @@ func WithDebug(debug bool) Option {
 /* ------------------------------------------------------------------- */
 
 // Create a query builder to query table records.
+//
+//	SELECT tags FROM table
+//		WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		ORDER BY order DESC
+//		LIMIT limit.
 func (p *TableProvider) Querier(t ...string) *builder.QueryBuilder {
 	return builder.NewQuery(utils.Variable(t, p.table), p)
 }
 
 // Create a insert builder to insert records to table.
+//
+//	`MySQL & MSSQL`: INSERT table (tags) VALUES (?, ?, ?)...
+//	`SQLITE`       : INSERT INTO table (tags) VALUES (?, ?, ?)...
 func (p *TableProvider) Inserter(t ...string) *builder.InsertBuilder {
 	return builder.NewInsert(utils.Variable(t, p.table), p)
 }
 
 // Create a update builder to update table records.
+//
+//	UPDATE table
+//		SET v1=?, v2=?, v3=?...
+//		WHERE wherers AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 func (p *TableProvider) Updater(t ...string) *builder.UpdateBuilder {
 	return builder.NewUpdate(utils.Variable(t, p.table), p)
 }
 
 // Create a delete builder to delete table records.
+//
+//	DELETE FROM table
+//		WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		LIMIT limit.
 func (p *TableProvider) Deleter(t ...string) *builder.DeleteBuilder {
 	return builder.NewDelete(utils.Variable(t, p.table), p)
 }
@@ -191,10 +207,9 @@ func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
 //
 //	accs := []*MyAcc{}
 //	creator := pd.NewCreator(func(iv *MyAcc) []any {
-//		datas= append(datas, iv)
 //		return []any{&iv.Name}
 //	}, /* func(iv *MyAcc) {} */) // or append parser function.
-//	h.Querier().Outs("name").Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
+//	h.Querier().Tags("name").Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
 func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 	return p.Query(b, func(rows *sql.Rows) error {
 		item, outs := creator.CreateItem() // item is *T type, outs all & pointers!
@@ -210,7 +225,7 @@ func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 //
 //	names := []string{}
 //	scaner := pd.NewScaner(&names/* , func(iv *string) {} */)
-//	h.Querier().Outs("name").Wheres(pd.Wheres{"role=?": "admin"}).Column(scaner)
+//	h.Querier().Tags("name").Wheres(pd.Wheres{"role=?": "admin"}).Column(scaner)
 func (p *TableProvider) Column(b pd.SQLBuilder, scaner pd.Scaner) error {
 	return p.Query(b, func(rows *sql.Rows) error {
 		out := scaner.CreateItem() // out is *T type!

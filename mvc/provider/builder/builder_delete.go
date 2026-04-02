@@ -22,7 +22,7 @@ import (
 // Build a query string for sql delete.
 //
 //	DELETE FROM table
-//		WHERE wherer AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//		WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		LIMIT limit.
 type DeleteBuilder struct {
 	BaseBuilder
@@ -45,9 +45,15 @@ func NewDelete(table string, provider ...pd.ProviderUtils) *DeleteBuilder {
 /* ------------------------------------------------------------------- */
 
 // Delete record without check.
+//
+//	h.Deleter().Wheres(pd.Wheres{"uid=?": uid}).Exec()
+//	// not check delete row count.
 func (b *DeleteBuilder) Exec() error { return b.provider.Exec(b) }
 
 // Delete record and check deleted counts.
+//
+//	h.Deleter().Wheres(pd.Wheres{"uid=?": uid}).Delete()
+//	// check delete row count.
 func (b *DeleteBuilder) Delete() error { return b.provider.Delete(b) }
 
 /* ------------------------------------------------------------------- */
