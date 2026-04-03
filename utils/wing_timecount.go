@@ -30,32 +30,30 @@ func NewTimeCounter() timeCounter {
 
 // Count the used duration time after counter create or called Reset().
 func (c *timeCounter) Count() int64 {
-	used := time.Now().UnixNano() - c.start
-	return used
+	return Now().UnixNano() - c.start
 }
 
 // Count the tick interval after counter create or called Reset().
-func (c *timeCounter) Tick() int64 {
-	last := c.tick
-	c.tick = time.Now().UnixNano()
-	return c.tick - last
+func (c *timeCounter) Tick() (interval int64) {
+	interval /* last */, c.tick = c.tick, Now().UnixNano()
+	return c.tick - interval /* last */
 }
 
 // Reset start time and clear used duration value.
 func (c *timeCounter) Reset() *timeCounter {
-	c.start = time.Now().UnixNano()
+	c.start = Now().UnixNano()
 	c.tick = c.start
 	return c
 }
 
 // Count and return the used duration on auto calculate unit.
 func (c *timeCounter) UsedTime() string {
-	return formatDuration(c.Count())
+	return c.formatDuration(c.Count())
 }
 
 // Count and return the tick interval on auto calculate unit.
 func (c *timeCounter) TickTime() string {
-	return formatDuration(c.Tick())
+	return c.formatDuration(c.Tick())
 }
 
 // Count and logout the used duration on auto calculate unit.
@@ -83,7 +81,7 @@ const (
 )
 
 // Format used time like: 1.234s, 56.789ms, 123.456us, 234ns.
-func formatDuration(used int64) string {
+func (c *timeCounter) formatDuration(used int64) string {
 	if used > _tc_s {
 		return fmt.Sprintf("%v.%v s", used/_tc_s, (used%_tc_s)/_tc_ms)
 	} else if used > _tc_ms {

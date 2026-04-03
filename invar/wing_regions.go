@@ -14,7 +14,7 @@ package invar
 type Region struct {
 	string          // Simple use Region value as string type
 	Phone    string // Phone region number
-	TimeDiff string // Region timezoom diff
+	TimeDiff string // Region timezone diff
 	CnName   string // Contry chinese name
 }
 

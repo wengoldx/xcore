@@ -211,7 +211,7 @@ func (s *DTalkSender) UsingKey(keyword string) {
 
 // signURL sign timestamp and signature datas with send webhook
 func (s *DTalkSender) signURL() string {
-	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+	timestamp := Now().UnixNano() / int64(time.Millisecond)
 	signstr := fmt.Sprintf("%d\n%s", timestamp, s.secure)
 	signtrue := secure.SignSHA256(s.secure, signstr)
 	return fmt.Sprintf("%s&timestamp=%d&sign=%s", s.webhook, timestamp, signtrue)
