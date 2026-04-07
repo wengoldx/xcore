@@ -297,6 +297,8 @@ message AMach {
   string mach = 1; // machine serial no.
   string bund = 2; // machine registried datetime.
   string series = 3; // machine series string, like 'YJ-E100'...
+  string code = 4; // last offlinet code.
+  string last = 5; // last code update time.
 }
 
 message AMachs {
