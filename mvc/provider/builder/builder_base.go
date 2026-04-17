@@ -23,11 +23,11 @@ import (
 // sql string for database QUID (query, update, insert, delete) actions.
 //
 // # WARNING:
-//	- The BaseBuilder not implement SQLBuilder.Build().
+//	- The BaseBuilder not implement pd.Builder.Build().
 //	- Use QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder to build whole sql string.
 type BaseBuilder struct {
 	provider pd.ProviderUtils // Table provider utils.
-	table    string           // Table name for update.
+	table    string           // Table name for query, update, insert, delete builder.
 }
 
 // Create a BaseBuilder instance to support sql build utils.
@@ -154,9 +154,9 @@ func (b *BaseBuilder) FormatLimit(n int) string {
 // Format like condition to string, set pattern one of 'perfix', 'suffix', 'center'
 // to make diffrent filter string as follow, by default use 'center' pattern.
 //
-//	- Perfix pattern: field LIKE 'filter%%'
-//	- Center pattern: field LIKE '%%filter%%'
-//	- Suffix pattern: field LIKE '%%filter'
+//	- Perfix pattern [perfix ]: field LIKE 'filter%%'
+//	- Center pattern [default]: field LIKE '%%filter%%'
+//	- Suffix pattern [suffix ]: field LIKE '%%filter'
 func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string {
 	if field != "" && filter != "" {
 		lower := strings.ToLower(utils.Variable(pattern, "center"))
@@ -180,36 +180,77 @@ func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string
 //		"Male":   true,
 //		"Name":   "ZhangSan",
 //		"Height": 176.8,
-//		"Secure": nil,      // Filter out nil value
+//		"Secure": nil,      // Set value as NULL
 //	}
-//	// => Age=?, Male=?, Name=?, Height=?, Secure=?
-//	// => ?,?,?,?
+//	// => Age, Male, Name, Height, Secure
+//	// => ?,?,?,?,NULL
 //	// => []any{16, true, "ZhangSan", 176.8}
 //
 // # WARNING:
-//
-// This method not well support insert nil value by arg, the nil
-// value will inserted like '<nil>' string, not NULL value;
-func (b *BaseBuilder) FormatInserts(values pd.KValues) (string, string, []any) {
+//	- This method support insert nil arg as NULL value.
+func (b *BaseBuilder) FormatInsert(values pd.KValues) (string, string, []any) {
 	fields, holders, args := "", "", []any{}
 	if cnt := len(values); cnt > 0 {
 		tags := []string{}
 		for key, arg := range values {
 			if key == "" { // filter out the empty field key.
 				continue
+			} else if arg == nil {
+				// FIXME: Translate nil arg to NULL value
+				// for single row insert!
+				holders += "NULL,"
+			} else {
+				holders += "?,"
+				args = append(args, arg)
 			}
-
-			// FIXME: The nil arg will be insert like '<nil>' string by
-			// arg, so DO NOT insert nil values if you can if possible!
 			tags = append(tags, key)
-			args = append(args, arg)
 		}
 
 		fields = strings.Join(tags, ", ")
-		holders = strings.Repeat("?,", cnt)
 		holders = strings.TrimSuffix(holders, ",")
 	}
 	return fields, holders, args
+}
+
+// Fetch the row header and KValues items, then return the formated values string.
+//
+//	headers := []string{"Age", "Male", "Name", "Height", "Secure"}
+//	values := KValues{
+//		"":       123456,   // Filter out empty field
+//		"Age":    16,
+//		"Male":   true,
+//		"Name":   "ZhangSan",
+//		"Height": 176.8,
+//		"Secure": nil,      // Set value as NULL
+//	}
+//	// => 16,true'ZhangSan',176.8,NULL
+//
+// # WARNING:
+//	- This method support insert nil arg as NULL value.
+func (p *BaseBuilder) FormatValues(headers []string, values pd.KValues) string {
+	row := []string{}
+	for _, key := range headers { // fetch colmuns
+		if key == "" { // filter out the empty field key.
+			continue
+		}
+
+		if value, ok := values[key]; ok {
+			// FIXME: Translate nil arg to NULL value
+			// for multiple rows insert!
+			if value == nil {
+				row = append(row, "NULL")
+				continue
+			}
+
+			switch v := value.(type) {
+			case string:
+				row = append(row, "'"+v+"'")
+			default:
+				row = append(row, fmt.Sprintf("%v", v))
+			}
+		}
+	}
+	return strings.Join(row, ",")
 }
 
 // Fetch the KValues items and return the joined fields and args.
@@ -236,8 +277,8 @@ func (b *BaseBuilder) FormatSets(values pd.KValues) (string, []any) {
 				continue
 			}
 
-			// FIXME: The nil arg will be translate to NULL value
-			// for single row or multiple rows insert.
+			// FIXME: Translate nil arg to NULL value
+			// for single or multiple rows update!
 			if arg == nil {
 				sets = append(sets, key+"=NULL")
 				continue
@@ -248,32 +289,6 @@ func (b *BaseBuilder) FormatSets(values pd.KValues) (string, []any) {
 		fields = strings.Join(sets, ", ")
 	}
 	return fields, args
-}
-
-// Fetch the KValues items and return the formated sets string.
-//
-//	values := KValues{
-//		"":       123456,   // Filter out empty field
-//		"Age":    16,
-//		"Male":   true,
-//		"Name":   "ZhangSan",
-//		"Height": 176.8,
-//		"Secure": nil,      // Filter out nil value
-//	}
-//	// => Age=16, Male=true, Name='ZhangSan', Height=176.8
-func (p *BaseBuilder) FormatValues(values pd.KValues) string {
-	sets := []string{}
-	for key, value := range values {
-		if key != "" && value != nil {
-			switch v := value.(type) {
-			case string:
-				sets = append(sets, key+"='"+v+"'")
-			default:
-				sets = append(sets, fmt.Sprintf(key+"=%v", v))
-			}
-		}
-	}
-	return strings.Join(sets, ",")
 }
 
 // Ensure where condition prefixed 'WHERE' keyword when not empty.

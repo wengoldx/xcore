@@ -12,6 +12,9 @@ package pd
 
 import (
 	"database/sql"
+
+	"github.com/astaxie/beego"
+	"github.com/wengoldx/xcore/utils"
 )
 
 // A callback for scan query result records, it will interrupt
@@ -30,11 +33,21 @@ type TransCallback func(tx *sql.Tx) error
 // A callback for single record query finaly notify.
 type DoneCallback func()
 
+// Print SQL builded query string when access table dtas.
+var LOG_SQL = beego.AppConfig.String("logger::logsql") == "on"
+
 /* ------------------------------------------------------------------- */
 /* Table-Alias typed data for Join-Query                               */
 /* ------------------------------------------------------------------- */
 
-// Table name with join alias for multi-table join.
+// Table name with join alias for multi-table join,
+// the datas format as table:alias.
+//
+//	account:a // table name "account", alias "a".
+//
+// # WARNING:
+//	- None check the duplicate alias error for multiple tables!
+//	- The alias will be overwritten when table name same!
 type Joins map[string]string
 
 // Append a table-alias into table Joins.
@@ -53,7 +66,14 @@ func (t *Joins) Remove(table string) *Joins {
 /* Key-Value typed data for Insert, Update                             */
 /* ------------------------------------------------------------------- */
 
-// Fields name and referened values for insert or update.
+// Fields name and referened values for insert or update,
+// the datas format as column:value.
+//
+//	user_name:'xiaoming' // column 'user_name', value 'xiaoming'.
+//
+// # WARNING:
+//	- None check the duplicate alias error for multiple tables!
+//	- The alias will be overwritten when table name same!
 type KValues map[string]any
 
 // Append a key-value into KValues.
@@ -82,7 +102,12 @@ func (v *KValues) Remove(keys ...string) *KValues {
 /* Wheres typed data for Query, Update, Delete                         */
 /* ------------------------------------------------------------------- */
 
-// Fields name and referened values for construct where condition string.
+// Fields name and referened values for construct where condition string,
+// the datas format as condition:value, for example:
+//
+//	uid=?:'123456'     // condition is "uid=?", the value "123456".
+//	uid='123456':nil   // condition is "uid='123456'" without value.
+//	t1.uid=t2.user:nil // confition for joined tables where string.
 type Wheres map[string]any
 
 // Append a where condition into Wheres.
@@ -105,4 +130,21 @@ func (w *Wheres) Remove(conditions ...string) *Wheres {
 		delete(*w, condition)
 	}
 	return w
+}
+
+// Target column name and args for build where in condition,
+// call pd.NewIn() to create it.
+type In struct {
+	field string // target column name.
+	args  []any  // where in values.
+}
+
+// Create a where in condition object.
+func NewIn[T any](field string, args []T) *In {
+ 	return &In{field: field, args: utils.ToAnys(args)}
+}
+
+// Return the where in field and args.
+func (w *In) Get() (string, []any) {
+	return w.field, w.args
 }

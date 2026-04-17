@@ -124,7 +124,7 @@ func (p *TableProvider) Deleter(t ...string) *builder.DeleteBuilder {
 //	h.Querier().Wheres(pd.Wheres{"account=?": acc}).Has()
 //
 // Use None() method to check whether unexist.
-func (p *TableProvider) Has(b pd.SQLBuilder) (bool, error) {
+func (p *TableProvider) Has(b pd.Builder) (bool, error) {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Tags("*").Build(p.debug)
 		return p.BaseProvider.Has(query, args...)
@@ -140,7 +140,7 @@ func (p *TableProvider) Has(b pd.SQLBuilder) (bool, error) {
 //	h.Querier().Wheres(pd.Wheres{"account=?": acc}).None()
 //
 // Use Has() method to check has result.
-func (p *TableProvider) None(builder pd.SQLBuilder) (bool, error) {
+func (p *TableProvider) None(builder pd.Builder) (bool, error) {
 	has, err := p.Has(builder)
 	return !has, err
 }
@@ -153,7 +153,7 @@ func (p *TableProvider) None(builder pd.SQLBuilder) (bool, error) {
 //	h.Querier().Wheres(pd.Wheres{"role=?": "admin"}).Count()
 //
 // Use BaseProvider.Count() method to direct execute query string.
-func (p *TableProvider) Count(b pd.SQLBuilder) (int, error) {
+func (p *TableProvider) Count(b pd.Builder) (int, error) {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Tags("COUNT(*)").Build(p.debug)
 		return p.BaseProvider.Count(query, args...)
@@ -166,7 +166,7 @@ func (p *TableProvider) Count(b pd.SQLBuilder) (int, error) {
 //
 // # NOTICE:
 //	- Use BaseProvider.One() method to direct execute query string.
-func (p *TableProvider) OneScan(b pd.SQLBuilder, cb pd.ScanCallback) error {
+func (p *TableProvider) OneScan(b pd.Builder, cb pd.ScanCallback) error {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Build(p.debug)
 		return p.BaseProvider.One(query, cb, args...)
@@ -177,7 +177,7 @@ func (p *TableProvider) OneScan(b pd.SQLBuilder, cb pd.ScanCallback) error {
 // Query the top one record and return the results without scaner
 // callback, it canbe set the finally done callback called when
 // result success read.
-func (p *TableProvider) OneDone(b pd.SQLBuilder, done ...pd.DoneCallback) error {
+func (p *TableProvider) OneDone(b pd.Builder, done ...pd.DoneCallback) error {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Build(p.debug)
 		if cb := utils.Variable(done, nil); cb != nil {
@@ -192,7 +192,7 @@ func (p *TableProvider) OneDone(b pd.SQLBuilder, done ...pd.DoneCallback) error 
 // from scan callback.
 //
 // Use BaseProvider.Query() method to direct execute query string.
-func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
+func (p *TableProvider) Query(b pd.Builder, cb pd.ScanCallback) error {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Build(p.debug)
 		return p.BaseProvider.Query(query, cb, args...)
@@ -210,7 +210,7 @@ func (p *TableProvider) Query(b pd.SQLBuilder, cb pd.ScanCallback) error {
 //		return []any{&iv.Name}
 //	}, /* func(iv *MyAcc) {} */) // or append parser function.
 //	h.Querier().Tags("name").Wheres(pd.Wheres{"role=?": "admin"}).Array(creator)
-func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
+func (p *TableProvider) Array(b pd.Builder, creator pd.Creator) error {
 	return p.Query(b, func(rows *sql.Rows) error {
 		item, outs := creator.CreateItem() // item is *T type, outs all & pointers!
 		if err := rows.Scan(outs...); err != nil {
@@ -226,7 +226,7 @@ func (p *TableProvider) Array(b pd.SQLBuilder, creator pd.Creator) error {
 //	names := []string{}
 //	scaner := pd.NewScaner(&names/* , func(iv *string) {} */)
 //	h.Querier().Tags("name").Wheres(pd.Wheres{"role=?": "admin"}).Column(scaner)
-func (p *TableProvider) Column(b pd.SQLBuilder, scaner pd.Scaner) error {
+func (p *TableProvider) Column(b pd.Builder, scaner pd.Scaner) error {
 	return p.Query(b, func(rows *sql.Rows) error {
 		out := scaner.CreateItem() // out is *T type!
 		if err := rows.Scan(out); err != nil {
@@ -240,7 +240,7 @@ func (p *TableProvider) Column(b pd.SQLBuilder, scaner pd.Scaner) error {
 // UpdateBuilder or DeleteBuilder, it not check the affected row counts.
 //
 // Use BaseProvider.Exec() method to direct execute query string.
-func (p *TableProvider) Exec(b pd.SQLBuilder) error {
+func (p *TableProvider) Exec(b pd.Builder) error {
 	query, args := b.Build(p.debug)
 	return p.BaseProvider.Exec(query, args...)
 }
@@ -249,7 +249,7 @@ func (p *TableProvider) Exec(b pd.SQLBuilder) error {
 // UpdateBuilder or DeleteBuilder, and check the affected row counts.
 //
 // Use BaseProvider.Exec() method to direct execute query string.
-func (p *TableProvider) ExecResult(b pd.SQLBuilder) (int64, error) {
+func (p *TableProvider) ExecResult(b pd.Builder) (int64, error) {
 	query, args := b.Build(p.debug)
 	return p.BaseProvider.ExecResult(query, args...)
 }
@@ -258,7 +258,7 @@ func (p *TableProvider) ExecResult(b pd.SQLBuilder) (int64, error) {
 // single value, or inserted rows count of multiple values.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *TableProvider) Insert(b pd.SQLBuilder) (int64, error) {
+func (p *TableProvider) Insert(b pd.Builder) (int64, error) {
 	if ib, ok := b.(*builder.InsertBuilder); ok {
 		query, args := b.Build(p.debug)
 		if cnt := ib.ValRows(); cnt <= 0 {
@@ -275,7 +275,7 @@ func (p *TableProvider) Insert(b pd.SQLBuilder) (int64, error) {
 // but not return insert id or counts.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *TableProvider) InsertCheck(b pd.SQLBuilder) error {
+func (p *TableProvider) InsertCheck(b pd.Builder) error {
 	_, err := p.Insert(b)
 	return err
 }
@@ -283,7 +283,7 @@ func (p *TableProvider) InsertCheck(b pd.SQLBuilder) error {
 // Insert the given rows into target table without check insert counts.
 //
 // Use BaseProvider.Insert() method to direct execute query string.
-func (p *TableProvider) InsertUncheck(b pd.SQLBuilder) error {
+func (p *TableProvider) InsertUncheck(b pd.Builder) error {
 	if ib, ok := b.(*builder.InsertBuilder); ok {
 		if ib.ValRows() <= 0 {
 			return invar.ErrInvalidData
@@ -297,7 +297,7 @@ func (p *TableProvider) InsertUncheck(b pd.SQLBuilder) error {
 // return invar.ErrNotChanged error when none updated.
 //
 // Use BaseProvider.Update() method to direct execute query string.
-func (p *TableProvider) Update(b pd.SQLBuilder) error {
+func (p *TableProvider) Update(b pd.Builder) error {
 	if ub, ok := b.(*builder.UpdateBuilder); ok {
 		query, args := ub.Build(p.debug)
 		return p.BaseProvider.Update(query, args...)
@@ -309,7 +309,7 @@ func (p *TableProvider) Update(b pd.SQLBuilder) error {
 // return invar.ErrNotChanged error when none deleted.
 //
 // Use BaseProvider.Delete() method to direct execute query string.
-func (p *TableProvider) Delete(b pd.SQLBuilder) error {
+func (p *TableProvider) Delete(b pd.Builder) error {
 	if rb, ok := b.(*builder.DeleteBuilder); ok {
 		query, args := rb.Build(p.debug)
 		return p.BaseProvider.Delete(query, args...)

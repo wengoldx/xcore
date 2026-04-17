@@ -69,6 +69,86 @@ func TestFormatLike(t *testing.T) {
 	}
 }
 
+func TestFormatInsert(t *testing.T) {
+	cases := []*wt.TestCase{
+		wt.NewCase("Check normal    ", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8}),
+		wt.NewCase("Filter empty key", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "": 123456}),
+		wt.NewCase("Append NULL args", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "Secure": nil}),
+	}
+
+	builder := NewBuilder("")
+	for _, c := range cases {
+		param := c.Params.(pd.KValues)
+		fileds, holders, values := builder.FormatInsert(param)
+		t.Log("Fileds:", fileds, "- Holders:", holders, "- Values:", values)
+		switch c.Case {
+		case "Check normal    ", "Filter empty key":
+			if len(values) != 4 {
+				t.Fatal("BaseBuilder.FormatInsert error > not matched the values!")
+			}
+		case "Append NULL args":
+			if !strings.Contains(holders, "NULL") {
+				t.Fatal("BaseBuilder.FormatInsert error > not append nil args!")
+			}
+		}
+	}
+}
+
+func TestFormatValues(t *testing.T) {
+	cases := []*wt.TestCase{
+		wt.NewCase("Check normal    ", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8}),
+		wt.NewCase("Filter empty key", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "": 123456}),
+		wt.NewCase("Append NULL args", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "Secure": nil}),
+	}
+
+	headers := []string{"Age", "Male", "Name", "Height", "Secure"}
+	builder := NewBuilder("")
+	for _, c := range cases {
+		param := c.Params.(pd.KValues)
+		values := builder.FormatValues(headers, param)
+		t.Log("Values:", values)
+		switch c.Case {
+		case "Check normal    ", "Filter empty key":
+			if vs := strings.Split(values, ","); len(vs) != 4 {
+				t.Fatal("BaseBuilder.FormatInserts error > not matched the values!")
+			}
+		case "Append NULL args":
+			if !strings.Contains(values, "NULL") {
+				t.Fatal("BaseBuilder.FormatInserts error > not append nil args!")
+			}
+		}
+	}
+}
+
+func TestFormatSets(t *testing.T) {
+	cases := []*wt.TestCase{
+		wt.NewCase("Check normal    ", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8}),
+		wt.NewCase("Filter empty key", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "": 123456}),
+		wt.NewCase("Append NULL args", "", pd.KValues{"Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "Secure": nil}),
+	}
+
+	builder := NewBuilder("")
+	for _, c := range cases {
+		param := c.Params.(pd.KValues)
+		sets, args := builder.FormatSets(param)
+		t.Log("Sets:", sets, "- Args:", args)
+		switch c.Case {
+		case "Filter empty key":
+			if strings.HasPrefix(sets, "=?") || strings.Contains(sets, ", =?") {
+				t.Fatal("BaseBuilder.FormatSets error > not filter out empty key!")
+			}
+		case "Append NULL args":
+			if !strings.Contains(sets, "Secure=NULL") {
+				t.Fatal("BaseBuilder.FormatSets error > not append nil args!")
+			}
+		}
+	}
+}
+
+func TestCheckWhere(t *testing.T)  { /* TODO */ }
+func TestCheckLimit(t *testing.T)  { /* TODO */ }
+func TestBuildWheres(t *testing.T) { /* TODO */ }
+
 type MyTestDoc struct {
 	Doc string `column:"doc"`
 }
@@ -124,6 +204,10 @@ func TestParseOut(t *testing.T) {
 	fmt.Println("     .DocPtr =", data.DocPtr)
 	fmt.Println("     .NilPtr =", data.NilPtr)
 }
+
+/* ------------------------------------------------------------------- */
+/* For provider.Creator & provider.Scaner Tests                        */
+/* ------------------------------------------------------------------- */
 
 func TestItemCreator(t *testing.T) {
 	datas := []*MyTestData{}

@@ -33,7 +33,7 @@ type DeleteBuilder struct {
 	limit  int       // Limit number.
 }
 
-var _ pd.SQLBuilder = (*DeleteBuilder)(nil)
+var _ pd.Builder = (*DeleteBuilder)(nil)
 
 // Create a DeleteBuilder instance to build a query string.
 func NewDelete(table string, provider ...pd.ProviderUtils) *DeleteBuilder {
@@ -89,6 +89,14 @@ func (b *DeleteBuilder) WhereSep(sep string) *DeleteBuilder {
 	return b
 }
 
+// Specify the where in condition with field and args for query.
+//
+//	builder.In(pd.NewIn("id", []int{1,2})) // => WHERE id IN (1, 2)
+func (b *DeleteBuilder) In(in *pd.In) *DeleteBuilder {
+	b.ins = b.FormatWhereIn(in.Get())
+	return b
+}
+
 // Specify the like condition for query.
 //
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
@@ -116,7 +124,7 @@ func (b *DeleteBuilder) Reset() *DeleteBuilder {
 }
 
 /* ------------------------------------------------------------------- */
-/* For SQLBuilder interface                                            */
+/* For SQL Builder interface                                           */
 /* ------------------------------------------------------------------- */
 
 // Build the delete action sql string and args for provider to delete datas.

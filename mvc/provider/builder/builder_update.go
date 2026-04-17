@@ -33,7 +33,7 @@ type UpdateBuilder struct {
 	like   string     // Like conditions string.
 }
 
-var _ pd.SQLBuilder = (*UpdateBuilder)(nil)
+var _ pd.Builder = (*UpdateBuilder)(nil)
 
 // Create a UpdateBuilder instance to build a query string.
 func NewUpdate(table string, provider ...pd.ProviderUtils) *UpdateBuilder {
@@ -68,10 +68,10 @@ func (b *UpdateBuilder) Update() error { return b.provider.Update(b) }
 //		"Male":   true,
 //		"Name":   "ZhangSan",
 //		"Height": 176.8,
-//		"Secure": nil,      // Filter out nil value
+//		"Secure": nil,      // Set value as NULL
 //	}
-//	// => SET Age=?, Male=?, Name=?, Height=?
-//	// => values: []any{16, true, "ZhangSan", 176.8}
+//	// => SET Age=?, Male=?, Name=?, Height=?, Secure=NULL
+//	// => values: []any{16, true, "ZhangSan", 176.8, nil}
 func (b *UpdateBuilder) Values(row pd.KValues) *UpdateBuilder {
 	b.values = row
 	return b
@@ -106,6 +106,14 @@ func (b *UpdateBuilder) WhereSep(sep string) *UpdateBuilder {
 	return b
 }
 
+// Specify the where in condition with field and args for query.
+//
+//	builder.In(pd.NewIn("id", []int{1,2})) // => WHERE id IN (1, 2)
+func (b *UpdateBuilder) In(in *pd.In) *UpdateBuilder {
+	b.ins = b.FormatWhereIn(in.Get())
+	return b
+}
+
 // Specify the like condition for query.
 //
 //	builder.Like("acc", "zhang")           // => acc LIKE '%%zhang%%'
@@ -125,7 +133,7 @@ func (b *UpdateBuilder) Reset() *UpdateBuilder {
 }
 
 /* ------------------------------------------------------------------- */
-/* For SQLBuilder interface                                            */
+/* For SQL Builder interface                                           */
 /* ------------------------------------------------------------------- */
 
 // Build the update action sql string and args for provider to update datas.

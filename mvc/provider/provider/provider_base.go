@@ -13,6 +13,7 @@ package provider
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/wengoldx/xcore/invar"
@@ -375,168 +376,147 @@ func (p *BaseProvider) LastID(result sql.Result) int64 {
 /* Util Methods For Access Table                                       */
 /* ------------------------------------------------------------------- */
 
-// Table datas for describe table structures.
+// Table describe infos, each column contains the follow header's datas.
+//
+//	------------------------------------------------------
+//	| FIELD | TYPE | IS NULLABLE | DEFAULT | KEY | EXTRA |
+//	------------------------------------------------------
 type Table struct {
-	Columns []*Column // Table column infos
-	Spans   [6]int    // spans lenght for print table
+	Columns []*Column // Table column datas.
+	Spans   [6]int    // Column spans lenght for print.
 }
 
 // Table column datas.
 type Column struct {
-	Field string // Column name
-	Type  string // Field value type
-	Null  string // Flag for indicate field if null
-	Def   string // Field default value
-	Key   string // [Only MySQL] Primary key, foreign key or normal field
-	Extra string // [Only MySQL] Extra infos
+	Field string // Column name.
+	Type  string // Field value type.
+	Null  string // Flag for indicate field if null.
+	Def   string // Field default value.
+
+	Key   string // [MySQL Only] Primary key, foreign key or normal field.
+	Extra string // [MySQL Only] Extra infos.
 }
 
 // Get target table structs by name from mysql databse.
-func (p *BaseProvider) MysqlTable(table string, print ...bool) *Table {
-	if !p.prepared() {
-		return nil
-	}
-
-	db := p.client.DB()
-	rows, err := db.Query("DESCRIBE " + table + ";")
-	if err != nil {
-		logger.E("Describe table:", table, "err:", err)
-		return nil
-	}
-	defer rows.Close()
-
-	cs, spans := []*Column{}, defPaddings()
-	for rows.Next() {
+func (p *BaseProvider) MySQLTable(table string, print ...bool) *Table {
+	printtable := len(print) > 0 && print[0]
+	cs, spans := []*Column{}, defHeaderSpans()
+	scaner := func(rows *sql.Rows) error {
 		var def *string
 		c := &Column{Def: "NULL"}
-		if err := rows.Scan(&(c.Field), &(c.Type), &(c.Null), &(c.Key), &def, &(c.Extra)); err != nil {
-			logger.E("Scane table:", table, "struct, err:", err)
-			return nil
-		}
-
-		if def != nil {
+		if err := rows.Scan(&c.Field, &c.Type, &c.Null, &c.Key, &def, &c.Extra); err != nil {
+			return err
+		} else if def != nil {
 			c.Def = *def
 		}
 
-		// calculate spans for format print
-		if len(print) > 0 && print[0] {
-			spans = calculatePaddings(c, spans)
+		// calculate spans for format print.
+		if printtable {
+			spans = calHeaderSpans(c, spans)
 		}
 		cs = append(cs, c)
+		return nil
+	}
+
+	query := "DESCRIBE " + table + ";"
+	if err := p.Query(query, scaner); err != nil {
+		logger.E("Describe table:", table, "err:", err)
+		return nil
 	}
 	return &Table{Columns: cs, Spans: spans}
 }
 
 // Get target table structs by name from mssql database.
-func (p *BaseProvider) MssqlTable(table string, print ...bool) *Table {
-	if !p.prepared() {
-		return nil
-	}
-
-	db := p.client.DB()
-	query := "SELECT column_name, data_type, is_nullable, column_default FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" + table + "';"
-	rows, err := db.Query(query)
-	if err != nil {
-		logger.E("Describe table:", table, "err:", err)
-		return nil
-	}
-	defer rows.Close()
-
-	cs, spans := []*Column{}, defPaddings()
-	for rows.Next() {
+func (p *BaseProvider) MSSQLTable(table string, print ...bool) *Table {
+	printtable := len(print) > 0 && print[0]
+	cs, spans := []*Column{}, defHeaderSpans()
+	scaner := func(rows *sql.Rows) error {
 		var def *string
 		c := &Column{Def: "NULL"}
-		if err := rows.Scan(&(c.Field), &(c.Type), &(c.Null), &def); err != nil {
-			logger.E("Scane table:", table, "struct, err:", err)
-			return nil
-		}
-
-		if def != nil {
+		if err := rows.Scan(&c.Field, &c.Type, &c.Null, &def); err != nil {
+			return err
+		} else if def != nil {
 			c.Def = *def
 		}
 
-		// calculate spans for format print
-		if len(print) > 0 && print[0] {
-			spans = calculatePaddings(c, spans)
+		// calculate spans for format print.
+		if printtable {
+			spans = calHeaderSpans(c, spans)
 		}
 		cs = append(cs, c)
+		return nil
+	}
+
+	query := "SELECT column_name, data_type, is_nullable, column_default FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='" + table + "';"
+	if err := p.Query(query, scaner); err != nil {
+		logger.E("Describe table:", table, "err:", err)
+		return nil
 	}
 	return &Table{Columns: cs, Spans: spans}
 }
 
 // Print target table structs.
 //
-//	table := provider.MysqlTable("config", true)
+//	table := provider.MySQLTable("config", true)
 //	provider.PrintTable(table)
 func (p *BaseProvider) PrintTable(table *Table) {
-	ps, cnt := table.Spans, len(table.Columns)
-	for i, c := range table.Columns {
-		if i == 0 {
-			printHeader(1, ps) // +------------------------------------------------+
-			printHeader(2, ps) // | FIELD | TYPE | IS NULL | DEFAULT | KEY | EXTRA |
-			printHeader(3, ps) // |-------+------+---------+-----+---------+-------|
-		}
+	divs, format := getPrintFormat(table.Spans)
 
-		fmt.Printf("| %s | %s | %s | %s | %s | %s |\n",
-			withSpan(c.Field, ps[0]), withSpan(c.Type, ps[1]), withSpan(c.Null, ps[2]),
-			withSpan(c.Def, ps[3]), withSpan(c.Key, ps[4]), withSpan(c.Extra, ps[5]))
+	// ------------------------------------------------------
+	// | FIELD | TYPE | IS NULLABLE | DEFAULT | KEY | EXTRA |
+	// ------------------------------------------------------
+	printDivider(divs)
+	printColumn(format, "FIELD", "TYPE", "IS NULL", "DEFAULT", "KEY", "EXTRA")
+	printDivider(divs)
 
-		if i == cnt-1 {
-			printHeader(1, ps) // +------------------------------------------------+
-		}
+	for _, c := range table.Columns {
+		printColumn(format, c.Field, c.Type, c.Null, c.Def, c.Key, c.Extra)
 	}
+	printDivider(divs)
 }
 
-// Calculate padding spans to print table struct as formated.
-func calculatePaddings(c *Column, paddings [6]int) [6]int {
-	fields := []string{c.Field, c.Type, c.Null, c.Def, c.Key, c.Extra}
-	for i, field := range fields {
-		if flen := len(field); flen > paddings[i] {
-			paddings[i] = flen
-		}
-	}
-	return paddings
-}
-
-// Return default header paddings.
+// Return default table header spans.
 //
 // ------------------------------------------------------
 // | FIELD | TYPE | IS NULLABLE | DEFAULT | KEY | EXTRA |
 // ------------------------------------------------------
-func defPaddings() [6]int { return [6]int{5, 4, 11, 7, 3, 5} }
+func defHeaderSpans() [6]int { return [6]int{5, 4, 11, 7, 3, 5} }
 
-// Tial ' ' chars into given text if length over max.
-func withSpan(text string, max int) string {
-	if cnt := len(text); cnt < max {
-		text += strings.Repeat(" ", max-cnt)
+// Calculate header spans to print table struct as formated.
+func calHeaderSpans(c *Column, spans [6]int) [6]int {
+	fields := []string{c.Field, c.Type, c.Null, c.Def, c.Key, c.Extra}
+	for i, field := range fields {
+		if flen := len(field); flen > spans[i] {
+			// use the max length as header span.
+			spans[i] = flen
+		}
 	}
-	return text
+	return spans
 }
 
-// Get max length divider as '---'.
-func asDivider(max int) string {
-	if max > 0 {
-		return strings.Repeat("-", max)
+// Return the format string for print table column infos.
+//
+//	"| % -5s | % -4s | % -11s | % -7s | % -3s | % -5s |\n"
+func getPrintFormat(spans [6]int) (divs int, format string) {
+	for _, span := range spans {
+		divs += span
 	}
-	return ""
+
+	format = "| % -" + strconv.Itoa(spans[0]) + "s | % -" +
+		strconv.Itoa(spans[1]) + "s | % -" +
+		strconv.Itoa(spans[2]) + "s | % -" +
+		strconv.Itoa(spans[3]) + "s | % -" +
+		strconv.Itoa(spans[4]) + "s | % -" +
+		strconv.Itoa(spans[5]) + "s |\n"
+	return divs, format
 }
 
-// Print table columns labels on formated.
-func printHeader(header int, ps [6]int) {
-	switch header {
-	case 1: // the table start and end line
-		fmt.Printf("+-%s---%s---%s---%s---%s---%s-+\n",
-			asDivider(ps[0]), asDivider(ps[1]), asDivider(ps[2]),
-			asDivider(ps[3]), asDivider(ps[4]), asDivider(ps[5]))
+// Print table infos divider line.
+func printDivider(max int) {
+	fmt.Printf("+%s+\n", strings.Repeat("-", max+17 /* (6-1)x3 + 2 */))
+}
 
-	case 2: // the table header label line
-		fmt.Printf("| %s | %s | %s | %s | %s | %s |\n",
-			withSpan("FIELD", ps[0]), withSpan("TYPE", ps[1]), withSpan("IS NULL", ps[2]),
-			withSpan("DEFAULT", ps[3]), withSpan("KEY", ps[4]), withSpan("EXTRA", ps[5]))
-
-	case 3: // the header and content diliver line
-		fmt.Printf("|-%s-+-%s-+-%s-+-%s-+-%s-+-%s-|\n",
-			asDivider(ps[0]), asDivider(ps[1]), asDivider(ps[2]),
-			asDivider(ps[3]), asDivider(ps[4]), asDivider(ps[5]))
-	}
+// Print table column infos.
+func printColumn(format, cfield, ctype, cnull, cdef, ckey, cextra string) {
+	fmt.Printf(format, cfield, ctype, cnull, cdef, ckey, cextra)
 }

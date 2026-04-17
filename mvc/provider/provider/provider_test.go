@@ -63,3 +63,23 @@ func TestInsertBuilder(t *testing.T) {
 	query, arg = i.Values(v3, v2, v1).Build()
 	fmt.Println(query, "-", arg)
 }
+
+func TestGetPrintFormat(t *testing.T) {
+	spans := [6]int{5, 4, 11, 7, 3, 5}
+	divs, ft := getPrintFormat(spans)
+	fmt.Println("Divs:", divs, "-", "'"+ft+"'")
+
+}
+
+func TestPrintTable(t *testing.T) {
+	table := &Table{
+		Columns: []*Column{
+			{"account", "VARCHAR", "NOT NULL", "", "PRIMARY KEY", "AUTO_INCREMENT"},
+			{"name", "VARCHAR", "NULL", "u1234567890", "", ""},
+			{"age", "INT", "", "20", "", ""},
+		},
+		Spans: [6]int{7, 7, 8, 11, 11, 14},
+	}
+	b := &BaseProvider{}
+	b.PrintTable(table)
+}

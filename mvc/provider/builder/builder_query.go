@@ -38,7 +38,7 @@ type QueryBuilder struct {
 	limit  int       // Limit number.
 }
 
-var _ pd.SQLBuilder = (*QueryBuilder)(nil)
+var _ pd.Builder = (*QueryBuilder)(nil)
 
 // Create a QueryBuilder instance to build a query string.
 func NewQuery(table string, provider ...pd.ProviderUtils) *QueryBuilder {
@@ -187,6 +187,14 @@ func (b *QueryBuilder) WhereSep(sep string) *QueryBuilder {
 	return b
 }
 
+// Specify the where in condition with field and args for query.
+//
+//	builder.In(pd.NewIn("id", []int{1,2})) // => WHERE id IN (1, 2)
+func (b *QueryBuilder) In(in *pd.In) *QueryBuilder {
+	b.ins = b.FormatWhereIn(in.Get())
+	return b
+}
+
 // Specify the order by condition for query.
 //
 //	builder.OrderBy("id")          // => ORDER BY id DESC
@@ -225,7 +233,7 @@ func (b *QueryBuilder) Reset() *QueryBuilder {
 }
 
 /* ------------------------------------------------------------------- */
-/* For SQLBuilder interface                                            */
+/* For SQL Builder interface                                           */
 /* ------------------------------------------------------------------- */
 
 // Build the query action sql string and args for provider to query datas.

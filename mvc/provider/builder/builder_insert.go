@@ -21,14 +21,15 @@ import (
 
 // Build a query string for sql insert.
 //
-//	`MySQL & MSSQL`: INSERT table (tags) VALUES (?, ?, ?)...
 //	`SQLITE`       : INSERT INTO table (tags) VALUES (?, ?, ?)...
+//	`MySQL & MSSQL`: INSERT INTO table (tags) VALUES (?, ?, ?)...
+//	                 INSERT table (tags) VALUES (?, ?, ?)...
 type InsertBuilder struct {
 	BaseBuilder
 	rows []pd.KValues // Target row records to insert.
 }
 
-var _ pd.SQLBuilder = (*InsertBuilder)(nil)
+var _ pd.Builder = (*InsertBuilder)(nil)
 
 // Create a InsertBuilder instance to build a query string.
 func NewInsert(table string, provider ...pd.ProviderUtils) *InsertBuilder {
@@ -75,19 +76,21 @@ func (b *InsertBuilder) InsertUncheck() error { return b.provider.InsertUncheck(
 //		"Male":   true,
 //		"Name":   "ZhangSan",
 //		"Height": 176.8,
-//		"Secure": nil,      // Filter out nil value
+//		"Secure": nil,      // Set value as NULL
 //	}
-//	// => Age=?, Male=?, Name=?, Height=?
-//	// => ?,?,?,?
+//	// => Age, Male, Name, Height, Secure
+//	// => ?,?,?,?,NULL
 //	// => []any{16, true, "ZhangSan", 176.8}
 //
 // 2. Set multiple rows for provider.Inserts() to insert records at one time.
 //
 //	rows := []pd.KValues{
-//		{ "Age": 16, "Name": "ZhangSan", "Height": 176.8 },
-//		{ "Age": 15, "Name": "LiXu", "Height": 168.5 },
+//		{ "Age": 16, "Male": true, "Name": "ZhangSan", "Height": 176.8, "Secure": nil },
+//		{ "Age": 15, "Male": false, "Name": "LiXu", "Height": 168.5, "Secure": "prikey" },
 //	}
-//	// => (Age=16,Name="ZhangSan",Height=176.8),(Age=15,Name="LiXu",Height=168.5)
+//	// => Age,Male,Name,Height,Secure
+//	// => ?,?,?,?,?
+//	// => (16,true,"ZhangSan",176.8,NULL),(15,false,"LiXu",168.5,"prikey")
 func (b *InsertBuilder) Values(row ...pd.KValues) *InsertBuilder {
 	b.rows = row
 	return b
@@ -105,26 +108,26 @@ func (b *InsertBuilder) ValRows() int {
 }
 
 /* ------------------------------------------------------------------- */
-/* For SQLBuilder interface                                            */
+/* For SQL Builder interface                                           */
 /* ------------------------------------------------------------------- */
 
 // Build the insert action sql string and args for provider to insert datas.
 //
-//	`MySQL & MSSQL`: INSERT table (tags) VALUES (?, ?, ?)...
 //	`SQLITE`       : INSERT INTO table (tags) VALUES (?, ?, ?)...
+//	`MySQL & MSSQL`: INSERT INTO table (tags) VALUES (?, ?, ?)...
+//	                 INSERT table (tags) VALUES (?, ?, ?)...
 //
 // # WARNING:
-//
-// The InsertBuild not well insert nil value by arg for single row
-// insert, but good for insert nil value as NULL for multiple rows insert.
-//
-// And, it use the first row args key as the column headers.
+//	- The InsertBuild support insert nil arg as NULL value both for single
+//	and multiple rows insert.
+//	- And, it use the first row args key as the column headers.
 func (b *InsertBuilder) Build(debug ...bool) (string, []any) {
 	// diff := utils.Condition(b.driver == "sqlite", "INTO ", "")
 	if cnt := len(b.rows); cnt == 1 {
-		// INSERT INTO table (v1, v2...) VALUES (?,?...)'
-		fields, holders, args := b.FormatInserts(b.rows[0])
+		// INSERT INTO table (v1, v2, v3, ...) VALUES (?,?,NULL,...)'
+		fields, holders, args := b.FormatInsert(b.rows[0])
 
+		// FIXME: The 'INSERT INTO' good work for both mysql and sqlite!
 		query := "INSERT INTO %s (%s) VALUES (%s)"
 		query = fmt.Sprintf(query, b.table, fields, holders)
 		if utils.Variable(debug, false) {
@@ -141,32 +144,14 @@ func (b *InsertBuilder) Build(debug ...bool) (string, []any) {
 		}
 
 		rows := []string{}
-		for _, row := range b.rows { //fetch rows
-			vs := []string{}
-			for _, h := range headers { // fetch colmuns
-				if value, ok := row[h]; ok {
-					// FIXME: Translate nil arg to NULL value
-					// for multiple rows insert!
-					if value == nil {
-						vs = append(vs, "NULL")
-						continue
-					}
-
-					switch v := value.(type) {
-					case string:
-						vs = append(vs, "'"+v+"'")
-					default:
-						vs = append(vs, fmt.Sprintf("%v", v))
-					}
-				}
-			}
+		for _, row := range b.rows {
 			// append row values: (1,'2',3.45,true,NULL,...)
-			rows = append(rows, "("+strings.Join(vs, ",")+")")
+			rows = append(rows, "("+b.FormatValues(headers, row)+")")
 		}
-
 		fields := strings.Join(headers, ", ")
 		values := strings.Join(rows, ", ")
 
+		// FIXME: The 'INSERT INTO' good work for both mysql and sqlite!
 		query := "INSERT INTO %s (%s) VALUES %s"
 		query = fmt.Sprintf(query, b.table, fields, values)
 		if utils.Variable(debug, false) {
