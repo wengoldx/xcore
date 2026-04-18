@@ -125,8 +125,8 @@ func Close(session ...string) error {
 // This method maybe init the nil DBClient client when mysql.Open(), or
 // mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewBase(session ...string) *provider.BaseProvider {
-	return provider.NewBaseProvider(Select(session...))
+func NewBase[T *provider.BaseProvider](session ...string) T {
+	return (T)(provider.NewBaseProvider(Select(session...)))
 }
 
 // Create and return a TableProvider instance with MySQL client.
@@ -143,8 +143,8 @@ func NewBase(session ...string) *provider.BaseProvider {
 // This method maybe init the nil DBClient client when mysql.Open(), or
 // mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewTable(table string, session ...string) *provider.TableProvider {
-	return provider.NewTableProvider(Select(session...), provider.WithTable(table))
+func NewTable[T *provider.TableProvider](table string, session ...string) T {
+	return (T)(provider.NewTableProvider(Select(session...), provider.WithTable(table)))
 }
 
 // Bind tables with the DBClient client.
