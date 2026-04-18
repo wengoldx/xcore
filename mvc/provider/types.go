@@ -13,7 +13,6 @@ package pd
 import (
 	"database/sql"
 
-	"github.com/astaxie/beego"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -24,17 +23,14 @@ type ScanCallback func(rows *sql.Rows) error
 // A callback for format insert values as string to insert record.
 type InsertCallback func(index int) string
 
-// A callback for format insert rows as string to insert record.
-type InsertsCallback[T any] func(iv T) string
-
-// A callback for handle transaction by call provider.Trans().
+// A callback for handle transaction by call BaseProvider.Trans().
 type TransCallback func(tx *sql.Tx) error
+
+// A callback for handle transaction by call TableProvider.Trans().
+type TranerCallback func(t *Traner) error
 
 // A callback for single record query finaly notify.
 type DoneCallback func()
-
-// Print SQL builded query string when access table dtas.
-var LOG_SQL = beego.AppConfig.String("logger::logsql") == "on"
 
 /* ------------------------------------------------------------------- */
 /* Table-Alias typed data for Join-Query                               */

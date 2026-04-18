@@ -312,13 +312,16 @@ func (p *BaseProvider) Tran(query string, args ...any) error {
 
 // Excute multiple transactions, it will rollback when cased one error.
 //
-//	// Excute 3 transactions in callback with different query1 ~ 3
+//	// Excute 4 transactions in callback with different query1 ~ 4
 //	err := provider.Trans(
-//		func(tx *sql.Tx) error { return provider.TxQuery(tx, query1, func(rows *sql.Rows) error {
+//		func(tx *sql.Tx) error { return pd.TxQuery(query1, func(rows *sql.Rows) error {
 //				// Fetch all rows to get result datas...
 //			}, args...) },
-//		func(tx *sql.Tx) error { return provider.TxExec(tx, query2, args...) },
-//		func(tx *sql.Tx) error { return provider.TxExec(tx, query3, args...) })
+//		func(tx *sql.Tx) error { return pd.TxInsert(query2, nil, args...) },
+//		func(tx *sql.Tx) error { return pd.TxInserts(tx, query3, datas, func(iv *MyStruct) string {
+//			return fmt.Sprintf("(%v, '%v')", iv.D1, iv.D2)
+//		}),
+//		func(tx *sql.Tx) error { return pd.TxExec(tx, query4, args...) })
 func (p *BaseProvider) Trans(cbs ...pd.TransCallback) error {
 	if !p.prepared() || len(cbs) == 0 {
 		return invar.ErrBadDBConnect

@@ -22,7 +22,7 @@
 //      -  }                                                   |
 //      -                                                      |
 //      -  var mytable = MyTable{  --------------+             |
-//      -      *mysql.NewTable("mytable", log)   |             |
+//      -      *mysql.NewTable("mytable")        |             |
 //      -  }                                     |             |
 //                                    mytable <--+             |
 //                                   +--------+                |

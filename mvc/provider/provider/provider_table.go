@@ -13,6 +13,7 @@ package provider
 import (
 	"database/sql"
 
+	"github.com/astaxie/beego"
 	"github.com/wengoldx/xcore/invar"
 	pd "github.com/wengoldx/xcore/mvc/provider"
 	"github.com/wengoldx/xcore/mvc/provider/builder"
@@ -26,7 +27,7 @@ import (
 //
 //	// define the custom provider.
 //	type SampleTable struct { *provider.TableProvider }
-//	s := &SampleTable{*mysql.NewTable("sample", _logsql)}
+//	s := &SampleTable{*mysql.NewTable("sample")}
 //	mysql.SetClient(s)
 //
 //	// or create directory if client exist.
@@ -38,7 +39,7 @@ import (
 type TableProvider struct {
 	BaseProvider
 	table string // Table name.
-	debug bool   // Debug mode for show builded query string, default false.
+	debug bool   // Debug flag for print SQL actions, default false.
 }
 
 var _ pd.Provider = (*TableProvider)(nil)
@@ -51,7 +52,8 @@ var _ pd.ProviderUtils = (*TableProvider)(nil)
 // This method call by 'sqlite3', 'mysql', 'mssql' module called to create
 // target table and bind with connected database client instance.
 func NewTableProvider(client pd.DBClient, opts ...Option) *TableProvider {
-	tp := &TableProvider{}
+	logsql := beego.AppConfig.String("logger::logsql") == "on"
+	tp := &TableProvider{debug: logsql}
 	tp.BaseProvider = *NewBaseProvider(client)
 	for _, optFunc := range opts {
 		optFunc(tp)
@@ -67,14 +69,15 @@ func WithTable(table string) Option {
 	return func(provider *TableProvider) { provider.table = table }
 }
 
-// Specify the debug mode.
-func WithDebug(debug bool) Option {
-	return func(provider *TableProvider) { provider.debug = debug }
-}
-
 /* ------------------------------------------------------------------- */
 /* Create and Return Builder Instance FOR QUID Actions                 */
 /* ------------------------------------------------------------------- */
+
+// Set current table provider debug flag, true is on, false not.
+func (p *TableProvider) Debug(onoff bool) *TableProvider {
+	p.debug = onoff
+	return p
+}
 
 // Create a query builder to query table records.
 //
@@ -315,4 +318,40 @@ func (p *TableProvider) Delete(b pd.Builder) error {
 		return p.BaseProvider.Delete(query, args...)
 	}
 	return invar.ErrBadSQLBuilder
+}
+
+// Excute multiple transactions, it will rollback when cased one error.
+//
+//	// Excute 4 transactions in callback with different query1 ~ 4
+//	err := provider.Trans(
+//		func(t *pd.Traner) error { return tr.Query(query1, func(rows *sql.Rows) error {
+//				// Fetch all rows to get result datas...
+//			}, args...) },
+//		func(t *pd.Traner) error { return tr.Insert(query2, nil, args...) },
+//		func(t *pd.Traner) error { return tr.Inserts(query3, pd.NewTxInserter(rows, func(iv *MyStruct) string {
+//			return fmt.Sprintf("(%v, '%v')", iv.D1, iv.D2)
+//		})),
+//		func(t *pd.Traner) error { return tr.Exec(query4, args...) })
+func (p *TableProvider) Trans(cbs ...pd.TranerCallback) error {
+	if !p.prepared() || len(cbs) == 0 {
+		return invar.ErrBadDBConnect
+	}
+
+	tx, err := p.client.DB().Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+	traner := (*pd.Traner)(tx)
+	for _, cb := range cbs {
+		if err := cb(traner); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }

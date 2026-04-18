@@ -134,7 +134,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 // # USAGE:
 //
 //	type MyTable struct{ provider.TableProvider }
-//	var MyTableIns = MyTable{ *mysql.NewTable("mytable", _logsql)}
+//	var MyTableIns = MyTable{ *mysql.NewTable("mytable")}
 //	// Call mysql.New(), or mysql.Open() to create mysql client here!
 //	mysql.BindTables(MyTableIns)
 //
@@ -143,9 +143,8 @@ func NewBase(session ...string) *provider.BaseProvider {
 // This method maybe init the nil DBClient client when mysql.Open(), or
 // mysql.OpenWithOptions() not called, So call mysql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) *provider.TableProvider {
-	return provider.NewTableProvider(Select(session...),
-		provider.WithTable(table), provider.WithDebug(debug))
+func NewTable(table string, session ...string) *provider.TableProvider {
+	return provider.NewTableProvider(Select(session...), provider.WithTable(table))
 }
 
 // Bind tables with the DBClient client.

@@ -128,7 +128,7 @@ func NewBase(session ...string) *provider.BaseProvider {
 // # USAGE:
 //
 //	type MyTable struct{ provider.TableProvider }
-//	var MyTableIns = MyTable{ *mssql.NewTable("mytable", _logsql)}
+//	var MyTableIns = MyTable{ *mssql.NewTable("mytable")}
 //	// Call mssql.New(), or mssql.Open() to create mssql client here!
 //	mssql.BindTables(MyTableIns)
 //
@@ -137,9 +137,8 @@ func NewBase(session ...string) *provider.BaseProvider {
 // This method maybe init the nil DBClient client when mssql.Open(), or
 // mssql.OpenWithOptions() not called, So call mssql.SetupTables() later
 // to set valid DBClient client for all tables!
-func NewTable(table string, debug bool, session ...string) *provider.TableProvider {
-	return provider.NewTableProvider(Select(session...),
-		provider.WithTable(table), provider.WithDebug(debug))
+func NewTable(table string, session ...string) *provider.TableProvider {
+	return provider.NewTableProvider(Select(session...), provider.WithTable(table))
 }
 
 // Bind tables with the DBClient client.

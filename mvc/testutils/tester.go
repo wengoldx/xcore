@@ -47,7 +47,7 @@ var _t = &tester{
 
 // Setup tester instance with options and table provider.
 func SetupTester(opts ...Option) {
-	_t.tabler = mysql.NewTable("", true)
+	_t.tabler = mysql.NewTable("").Debug(true)
 }
 
 // Return tester instance.

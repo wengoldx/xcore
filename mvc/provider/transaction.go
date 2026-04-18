@@ -5,7 +5,7 @@
 //
 // Prismy.No | Date       | Modified by. | Description
 // -------------------------------------------------------------------
-// 00001       2019/05/22   yangping       New version
+// 00001       2026/04/18   yangping       New version
 // -------------------------------------------------------------------
 
 package pd
@@ -16,6 +16,66 @@ import (
 
 	"github.com/wengoldx/xcore/invar"
 )
+
+/* ------------------------------------------------------------------- */
+/* For TableProvider Trans() Method Utils                              */
+/* ------------------------------------------------------------------- */
+
+// SQL translate utils, alias from sql.Tx.
+//
+//	tx -> tr convert: `tr, ok := any(tx).(*Traner)` OR `tr = (*Traner)(tx)`
+//	tr -> tx convert: `tx, ok := any(tr).(*sql.Tx)` OR `tx = (*sql.Tx)(tr)`
+type Traner sql.Tx
+
+// Excute transaction step to update, insert, or delete datas without check result.
+func (t *Traner) Exec(query string, args ...any) error {
+	return TxExec((*sql.Tx)(t), query, args...)
+}
+
+// Excute transaction step to check if data exist, it wil return
+// invar.ErrNotFound if unexist any records, or return nil when exist results.
+func (t *Traner) Exist(query string, args ...any) error {
+	return TxExist((*sql.Tx)(t), query, args...)
+}
+
+// Excute transaction step to query single data and get result in scan callback.
+func (t *Traner) One(query string, cb ScanCallback, args ...any) error {
+	return TxOne((*sql.Tx)(t), query, cb, args...)
+}
+
+// Excute transaction step to query datas, and fetch result in scan callback.
+func (t *Traner) Query(query string, cb ScanCallback, args ...any) error {
+	return TxQuery((*sql.Tx)(t), query, cb, args...)
+}
+
+// Excute transaction step to insert a new record and return inserted id.
+func (t *Traner) Insert(query string, out *int64, args ...any) error {
+	return TxInsert((*sql.Tx)(t), query, out, args...)
+}
+
+// Excute transaction step to insert multiple records.
+//
+//	// type MyStruct {D1 int, D2 string}
+//	// datas := []*MyStruct{{1,"2"}, {3,"4"}}
+//	query := "INSERT sametable (field1, field2) VALUES"
+//	err := h.Trans(
+//		func (t *pd.Traner) error { return t.Query(query_str..., args...)},
+//		func (t *pd.Traner) error { return t.Inserts(query, pd.NewInserter(datas, func(iv *MyStruct) string {
+//			return fmt.Sprintf("(%v, '%v')", iv.D1, iv.D2)
+//		})
+func (t *Traner) Inserts(query string, inserter Inserter) error {
+	return inserter.DoInserts((*sql.Tx)(t), query)
+}
+
+// Excute transaction step to delete record and check result,
+// set 'out = nil' for not output inserted record id.
+func (t *Traner) Delete(query string, out *int64, args ...any) error {
+	return TxDelete((*sql.Tx)(t), query, args...)
+}
+
+/* ------------------------------------------------------------------- */
+/* For Global Transaction Utils                                        */
+/* ------------------------------------------------------------------- */
 
 // Excute transaction step to update, insert, or delete datas without check result.
 func TxExec(tx *sql.Tx, query string, args ...any) error {
@@ -90,7 +150,7 @@ func TxInsert(tx *sql.Tx, query string, out *int64, args ...any) error {
 //	// type MyStruct {D1 int, D2 string}
 //	// datas := []*MyStruct{{1,"2"}, {3,"4"}}
 //	query := "INSERT sametable (field1, field2) VALUES"
-//	err := mvc.TxInserts(tx, query, datas, func(iv *MyStruct) string {
+//	err := pd.TxInserts(tx, query, datas, func(iv *MyStruct) string {
 //		return fmt.Sprintf("(%v, '%v')", iv.D1, iv.D2)
 //	})
 func TxInserts[T any](tx *sql.Tx, query string, rows []T, cb InsertsCallback[T]) error {

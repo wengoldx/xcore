@@ -51,6 +51,7 @@ var (
 	ErrDupEntry           = WingErr{errors.New("duplicate entry")}                         // Error: duplicate entry.
 	ErrBadDBConnect       = WingErr{errors.New("database not connnect")}                   // Error: database not connnect.
 	ErrBadSQLBuilder      = WingErr{errors.New("bad sql string builder")}                  // Error: bad sql string builder.
+	ErrBadSQLTraner       = WingErr{errors.New("bad sql translater")}                      // Error: bad sql translater.
 	ErrBadModelCreator    = WingErr{errors.New("bad model creator")}                       // Error: bad model creator.
 	ErrTagOffline         = WingErr{errors.New("target offline")}                          // Error: target offline.
 	ErrClientOffline      = WingErr{errors.New("client offline")}                          // Error: client offline.
