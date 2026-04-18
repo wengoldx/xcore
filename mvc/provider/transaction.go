@@ -67,9 +67,8 @@ func (t *Traner) Inserts(query string, inserter Inserter) error {
 	return inserter.DoInserts((*sql.Tx)(t), query)
 }
 
-// Excute transaction step to delete record and check result,
-// set 'out = nil' for not output inserted record id.
-func (t *Traner) Delete(query string, out *int64, args ...any) error {
+// Excute transaction step to delete record and check result.
+func (t *Traner) Delete(query string, args ...any) error {
 	return TxDelete((*sql.Tx)(t), query, args...)
 }
 
