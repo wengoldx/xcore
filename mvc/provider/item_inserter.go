@@ -34,7 +34,7 @@ type TxInserter [T any] struct {
 var _ Inserter = (*TxInserter[any])(nil)
 
 // Create a transaction inserter to insert multiple rows datas.
-func NewInserter[T any](query string, rows []T, cb InsertsCallback[T]) *TxInserter[T] {
+func NewInserter[T any](rows []T, cb InsertsCallback[T]) *TxInserter[T] {
 	return &TxInserter[T]{rows:rows, cb:cb}
 }
 
