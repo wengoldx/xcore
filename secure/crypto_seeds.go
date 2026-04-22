@@ -52,7 +52,7 @@ type SeedSign struct {
 }
 
 // The default global singleton, call AsDefault() to init it.
-var _defsign = &SeedSign{}
+var _def_signer = &SeedSign{}
 
 // Create a SeedSign object by distinct chars string, it will filter
 // out all duplicate chars before create valid seeds mapping.
@@ -66,18 +66,18 @@ func NewSeedSign(src string) *SeedSign {
 
 // Return the default glocal SeedSign singleton after called
 // secure.NewSeedSign().AsDefault() to init it.
-func DefSeedSign() *SeedSign { return _defsign }
+func DefSeedSign() *SeedSign { return _def_signer }
 
 // Use current SeedSign as the global singleton.
-func (s *SeedSign) AsDefault() { _defsign = s }
+func (s *SeedSign) AsDefault() { _def_signer = s }
 
 // # FIXME: The follow utils enable called directly to sign plaintext whatever SeedSign seeds inited.
 // Utils Methods Start >>
 
-func SeedESign(crt string, ts ...string) (string, error)    { return _defsign.EccSign(crt, ts...) }
-func SeedEVerify(s, pub string, ts ...string) (bool, error) { return _defsign.EccVerify(s, pub, ts...) }
-func SeedRSign(pri string, ts ...string) (string, error)    { return _defsign.RsaSign(pri, ts...) }
-func SeedRVerify(s, pub string, ts ...string) (bool, error) { return _defsign.RsaVerify(s, pub, ts...) }
+func SeedESign(crt string, ts ...string) (string, error)   { return _def_signer.EccSign(crt, ts...) }
+func SeedEVerify(s, pu string, ts ...string) (bool, error) { return _def_signer.EccVerify(s, pu, ts...) }
+func SeedRSign(pr string, ts ...string) (string, error)    { return _def_signer.RsaSign(pr, ts...) }
+func SeedRVerify(s, pu string, ts ...string) (bool, error) { return _def_signer.RsaVerify(s, pu, ts...) }
 
 // Utils Methods End <<
 

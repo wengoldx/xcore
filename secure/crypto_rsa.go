@@ -165,10 +165,10 @@ func CertPubKey4F(certfile string) (*rsa.PublicKey, error) {
 	return CertPubKey(certpem)
 }
 
-// -------------------------------------------------------------------
-// Create a RSA key as PKCS#1, ASN.1 format and encrypt by public
-// key, than decrypt by private key.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Create a RSA key as PKCS#1, ASN.1 format and encrypt by public      */
+/* key, than decrypt by private key.                                   */
+/* ------------------------------------------------------------------- */
 
 // Create RSA private and public keys in PKCS#1, ASN.1 DER format,
 // and limit bits length of key cert.
@@ -267,10 +267,10 @@ func RSADecrypt4F(prifile string, ciphertext []byte) ([]byte, error) {
 	return RSADecrypt(string(prikey), ciphertext)
 }
 
-// -------------------------------------------------------------------
-// Sign the given string by RSA private key as PKCS#1, ASN.1 format
-// and verify by public key.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Sign the given string by RSA private key as PKCS#1, ASN.1 format    */
+/* and verify by public key.                                           */
+/* ------------------------------------------------------------------- */
 
 // Using RSA private key to make digital signature,
 // the private key in PKCS#1, ASN.1 DER form.
@@ -397,10 +397,10 @@ func RSAVerifyASN(pubkey, original string, signature []byte) error {
 	return rsa.VerifyPSS(pub, hash, digect, signature, opts)
 }
 
-// -------------------------------------------------------------------
-// Sign the given string by RSA private key as PKCS#8, ASN.1 format
-// and verify by public key.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Sign the given string by RSA private key as PKCS#8, ASN.1 format    */
+/* and verify by public key.                                           */
+/* ------------------------------------------------------------------- */
 
 // Create RSA private and public keys in PKCS#8, ASN.1 DER format,
 // and limit bits length of key cert.
@@ -460,11 +460,11 @@ func RSA8Verify4F(pubfile, original string, signature []byte) error {
 	return RSAVerify4F(pubfile, original, signature)
 }
 
-// -------------------------------------------------------------------
-// Create a cert by given PKCS#1 or PKCS#8 RSA private key with target
-// organization and expire days. So, call RSA3Sign() and RSA3Verify()
-// to sign and verify source datas base on this cert.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Create a cert by given PKCS#1 or PKCS#8 RSA private key with target */
+/* organization and expire days. So, call RSA3Sign() and RSA3Verify()  */
+/* to sign and verify source datas base on this cert.                  */
+/* ------------------------------------------------------------------- */
 
 // Create a serianl number for generate cert pem file data
 // by call NewRSACert().
@@ -548,10 +548,10 @@ func RSACertVerify4F(certfile, original string, signature []byte) error {
 	return RSACertVerify(certpem, original, signature)
 }
 
-// -------------------------------------------------------------------
-// Use RSA-OAEP with RSA cert to encrypt given plaintext, and decrypt
-// ciphertext.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Use RSA-OAEP with RSA cert to encrypt given plaintext, and decrypt  */
+/* ciphertext.                                                         */
+/* ------------------------------------------------------------------- */
 
 // Encrypts the given text with cert pem data by RSA-OAEP, the cert can
 // create by NewRSACert() for PKCS#1 or PKCS#8, then return ciphertext
@@ -606,9 +606,9 @@ func OAEPDecrypt4F(prifile, ciphertext string, pkcs8 ...bool) (string, error) {
 	return OAEPDecrypt(prikey, ciphertext, pkcs8...)
 }
 
-// -------------------------------------------------------------------
-// Private methods define.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Private methods define.                                             */
+/* ------------------------------------------------------------------- */
 
 // Create RSA private and public keys by given PKCS# type and cert length,
 // the pkcs input param can valued one of 'PKCS1' or 'PKCS8'.

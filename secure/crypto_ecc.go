@@ -248,9 +248,9 @@ func EccVerify(plaintext, signb64 string, pubkey *ecdsa.PublicKey) (bool, error)
 	return valid, nil
 }
 
-// -------------------------------------------------------------------
-// Private methods define.
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
+/* Private methods define.                                             */
+/* ------------------------------------------------------------------- */
 
 // Marshal ECC digital signs to custom formated string for next decode
 // by parseEccSigns() method.

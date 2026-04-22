@@ -5,9 +5,9 @@ option go_package = "./proto";
 
 service Acc {
 
-  // ----------------------------------------
-  // For Common & Utils
-  // ----------------------------------------
+  /* ------------------------------------------------------------------- */
+  /* For Common & Utils                                                  */
+  /* ------------------------------------------------------------------- */
 
   // Validate the request token, return account and password if passed.
   rpc ViaToken(Token) returns (AccPwd);
@@ -67,9 +67,9 @@ service Acc {
   // Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
   rpc SendMail(Mail) returns (AEmpty);
 
-  // ----------------------------------------
-  // For Store Module Of IFSCM
-  // ----------------------------------------
+  /* ------------------------------------------------------------------- */
+  /* For Store Module Of IFSCM                                           */
+  /* ------------------------------------------------------------------- */
 
   // Register store machine account.
   rpc StoreAddMach(Email) returns (UUID);
@@ -104,9 +104,9 @@ service Acc {
   // Return uuids and emails.
   rpc GetActiveEmails(Emails) returns (Emails);
 
-  // ----------------------------------------
-  // For Offline Code OF QKS
-  // ----------------------------------------
+  /* ------------------------------------------------------------------- */
+  /* For Offline Code OF QKS                                             */
+  /* ------------------------------------------------------------------- */
 
   // Machine login by offline code, return account uid and token if success.
   rpc MachLogin(MCode) returns (EToken);
@@ -284,9 +284,9 @@ message Code {
   string code = 2; // email verification code.
 }
 
-// ----------------------------------------
-// For Offline Code OF QKS
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Offline Code OF QKS                                             */
+/* ------------------------------------------------------------------- */
 
 message UMach {
   string uuid = 1; // account unique id.

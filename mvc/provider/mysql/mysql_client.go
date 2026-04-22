@@ -21,14 +21,14 @@ import (
 	"github.com/wengoldx/xcore/utils"
 )
 
-// ----------------------------------------
-// NOTIC :
-//
-// import the follow driver for MySQL database access.
-//
-// _ "github.com/go-sql-driver/mysql"   // use for mysql
-//
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* NOTIC :                                                             */
+/*                                                                     */
+/* import the follow driver for MySQL database access.                 */
+/*                                                                     */
+/* _ "github.com/go-sql-driver/mysql"   // use for mysql               */
+/*                                                                     */
+/* ------------------------------------------------------------------- */
 
 // Mysql client for access target mysql database.
 type MySQL struct {

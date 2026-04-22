@@ -201,7 +201,7 @@ func (e *ESClient) SearchIndex(index, query string, page int, limit ...int) (*Re
 	return readResponse(res)
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
 
 // Read search response data or error reason
 func readResponse(res *esapi.Response) (*Response, error) {

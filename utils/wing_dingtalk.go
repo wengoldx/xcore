@@ -87,7 +87,7 @@ type DTFeedCard struct {
 	Links []DTFeedLink `json:"links"`
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
 
 // DTMsgText Text type message
 type DTMsgText struct {
@@ -127,7 +127,7 @@ type DTMsgFeedCard struct {
 	MsgType string     `json:"msgtype"`
 }
 
-// -------------------------------------------------------------------
+/* ------------------------------------------------------------------- */
 
 // DTalkSender message sender for DingTalk custom robot, it just support
 // inited with keywords, secure token functions, but not ips range sets.

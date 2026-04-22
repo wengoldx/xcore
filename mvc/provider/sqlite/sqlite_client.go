@@ -20,14 +20,14 @@ import (
 	"github.com/wengoldx/xcore/utils"
 )
 
-// ----------------------------------------
-// NOTIC :
-//
-// import the follow driver for Sqlite database access.
-//
-// _ "github.com/mattn/go-sqlite3"   // use for sqlite
-//
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* NOTIC :                                                             */
+/*                                                                     */
+/* import the follow driver for Sqlite database access.                */
+/*                                                                     */
+/* _ "github.com/mattn/go-sqlite3"   // use for sqlite                 */
+/*                                                                     */
+/* ------------------------------------------------------------------- */
 
 // Sqlite client for access target sqlite database.
 type Sqlite struct {

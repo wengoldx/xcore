@@ -21,14 +21,14 @@ import (
 	"github.com/wengoldx/xcore/utils"
 )
 
-// ----------------------------------------
-// NOTIC :
-//
-// import the follow driver for MSSQL database access.
-//
-// _ "github.com/denisenkom/go-mssqldb" // use for sql server 2017 ~ 2019
-//
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* NOTIC :                                                             */
+/*                                                                     */
+/* import the follow driver for MSSQL database access.                 */
+/*                                                                     */
+/* _ "github.com/denisenkom/go-mssqldb" // for sql server 2017 ~ 2019  */
+/*                                                                     */
+/* ------------------------------------------------------------------- */
 
 // MSSQL client for access target Microsoft SQL Server database.
 type MSSQL struct {

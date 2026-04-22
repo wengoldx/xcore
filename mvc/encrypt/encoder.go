@@ -17,18 +17,24 @@ import (
 	"github.com/wengoldx/xcore/secure"
 )
 
+// For logout encrypt or decrypt logs.
+var eclog = logger.CatLogger("Encrypter")
+
+// Setup default encoder and tokener with secure and salt datas.
+func Setup(secure, salt string) {
+	NewEncoder(secure, true) // setup default encoder.
+	NewTokener(salt, true)   // setup default tokener.
+}
+
+/* ------------------------------------------------------------------- */
+/* Encript & Decript Datas By AES Secure Methods                       */
+/* ------------------------------------------------------------------- */
+
 // Data encrypt & decrypt utils.
 type Encoder []byte
 
-// ----------------------------------------------
-// Encript & Decript Datas By AES Secure Methods
-// ----------------------------------------------
-
 // Global default encoder instance for easy used.
 var _def_encoder *Encoder
-
-// For logout encrypt or decrypt logs.
-var eclog = logger.CatLogger("Encrypter")
 
 // New encoder instance for data encrypt and decrypt by AES keys.
 //

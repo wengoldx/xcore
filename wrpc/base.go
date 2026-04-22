@@ -214,9 +214,9 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 	return nil
 }
 
-// ----------------------------------------
-// Account Authentications Request
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Account Authentications Request                                     */
+/* ------------------------------------------------------------------- */
 
 // Auth header token and return account uuid.
 //
@@ -255,9 +255,9 @@ func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
 	return resp.Pass
 }
 
-// ----------------------------------------
-// GRPC Local Service Setup
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* GRPC Local Service Setup                                            */
+/* ------------------------------------------------------------------- */
 
 // Target services listing callback for create grpc client after registred.
 func listingCallback(svr string, addr string, port int) {

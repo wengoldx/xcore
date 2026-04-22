@@ -19,37 +19,34 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
-// Encode account and password as a simple login token.
+// Deprecated: Encode account and password as a simple login token.
 //
-// ---
-//
-//  account   password
-//      |- + -|
-//         |
-//      base64          current nanosecode
-//         |                    |
-//        md5                base64
-//         +------- "."---------|
-//                   |
-//                base64 => token
+//	account   password
+//	    |- + -|
+//	       |
+//	    base64          current nanosecode
+//	       |                    |
+//	      md5                base64
+//	       +------- "."---------|
+//	                 |
+//	              base64 => token
 func EncLoginToken(acc, pwd string) string {
 	timestamp := fmt.Sprintf("%v", time.Now().UnixNano())
 	origin := EncodeB64MD5(acc+"."+pwd) + "." + EncodeBase64(timestamp)
 	return EncodeBase64(origin)
 }
 
-// Verify login token.
+// Deprecated: Verify login token.
 //
-// ---
-//        token => base64
-//                   |
-//         +------- "."---------|
-//        md5                base64
-//         |                    |
-//      base64          current nanosecode
-//         |
-//      |- + -|
-//  account   password
+//	      token => base64
+//	                 |
+//	       +------- "."---------|
+//	      md5                base64
+//	       |                    |
+//	    base64          current nanosecode
+//	       |
+//	    |- + -|
+//	account   password
 func ViaLoginToken(acc, pwd, token string, duration int64) (bool, error) {
 	origin, err := DecodeBase64(token)
 	if err != nil {

@@ -250,9 +250,9 @@ func TrimSpace(strs ...*string) {
 	}
 }
 
-// ----------------------------------------
-// Translate
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Translate                                                           */
+/* ------------------------------------------------------------------- */
 
 // ToMap transform given struct data to map data, the transform struct
 // feilds must using json tag to mark the map key.
@@ -312,9 +312,9 @@ func ToXMLReplace(input any, from, to string) (string, error) {
 	return xmlout, nil
 }
 
-// ----------------------------------------
-// Reversal
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Reversal                                                            */
+/* ------------------------------------------------------------------- */
 
 // Reversal ints string to int array with default separator , char or custom separator.
 func ReverInts(src string, sep ...string) []int {
@@ -342,9 +342,9 @@ func ReverInt64s(src string, sep ...string) []int64 {
 	return out
 }
 
-// ----------------------------------------
-// Split
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Split                                                               */
+/* ------------------------------------------------------------------- */
 
 // SplitTrim extend strings.Split to trim space and sub strings before split.
 //
@@ -393,9 +393,9 @@ func SplitAfterTrim(src, sub string) []string {
 	return rst
 }
 
-// ----------------------------------------
-// Others
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Others                                                              */
+/* ------------------------------------------------------------------- */
 
 // GetSortKey get first letter of Chinese Pinyin
 func GetSortKey(str string) string {

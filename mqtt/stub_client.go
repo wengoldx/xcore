@@ -322,9 +322,9 @@ func (stub *MqttStub) parseConfig(data, svr string) error {
 	return nil
 }
 
-// ----------------------------------------
-// MQTT Local Client Setup
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* MQTT Local Client Setup                                             */
+/* ------------------------------------------------------------------- */
 
 // A simple way to setup mqtt client by given connect handler and optional params,
 // you can subscribe mqtt topics on return true. The optional params must set as

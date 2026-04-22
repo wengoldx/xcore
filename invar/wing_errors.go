@@ -24,6 +24,7 @@ var (
 	ErrNotFound           = WingErr{errors.New("notfound")}                                // Error: notfound.
 	ErrNotChanged         = WingErr{errors.New("not changed")}                             // Error: not changed.
 	ErrNotInserted        = WingErr{errors.New("not inserted")}                            // Error: not inserted.
+	ErrNotInited          = WingErr{errors.New("not inited")}                              // Error: not inited.
 	ErrInvalidNum         = WingErr{errors.New("invalid number")}                          // Error: invalid number.
 	ErrInvalidAccount     = WingErr{errors.New("invalid account")}                         // Error: invalid account.
 	ErrInvalidToken       = WingErr{errors.New("invalid token")}                           // Error: invalid token.

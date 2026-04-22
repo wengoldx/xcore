@@ -11,18 +11,18 @@
 package enc
 
 import (
-	"errors"
 	"time"
 
+	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/secure"
 )
 
 // JWT token utils.
 type Tokener string
 
-// ----------------------------------------------
+// -------------------------------------------------------------------
 // JWT Token Utils
-// ----------------------------------------------
+// -------------------------------------------------------------------
 
 // Global default tokener instance for easy used.
 var _def_tokener *Tokener
@@ -54,7 +54,7 @@ func VerifyToken(jwttoken string) (string, error) {
 	if _def_tokener != nil {
 		return _def_tokener.VerifyToken(jwttoken)
 	}
-	return "", errors.New("Not inited!")
+	return "", invar.ErrNotInited
 }
 
 // Use default tokener to generate a new JWT token.
@@ -65,7 +65,7 @@ func NewToken(keyword string, expire time.Duration) (string, error) {
 	if _def_tokener != nil {
 		return _def_tokener.NewToken(keyword, expire)
 	}
-	return "", errors.New("Not inited!")
+	return "", invar.ErrNotInited
 }
 
 // Verify JWT token and return JWT keywords.

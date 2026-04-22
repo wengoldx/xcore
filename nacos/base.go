@@ -32,9 +32,9 @@ import (
 // Object logger with [NACOS] mark for nacos module
 var naclog = logger.CatLogger("NACOS")
 
-// ----------------------------------------
-// Auto Register Define
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Auto Register Define                                                */
+/* ------------------------------------------------------------------- */
 
 // Server register informations
 type ServerItem struct {
@@ -142,9 +142,9 @@ func (si *ServerItem) OnChanged(services []model.Instance, err error) {
 	}
 }
 
-// ----------------------------------------
-// Config Service Define
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* Config Service Define                                               */
+/* ------------------------------------------------------------------- */
 
 // Meta config informations
 type MetaConfig struct {
@@ -282,7 +282,7 @@ func (mc *MetaConfig) UpdateChineses(descs []*utils.SvrDesc) error {
 	return nil
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
 
 // Create nacos client config, contain nacos remote server and
 // current business servers configs, this client keep alive with

@@ -206,7 +206,7 @@ func D(v ...any) {
 	logs.SetPrefix("")
 }
 
-// -----------------
+/* ------------------------------------------------------------------- */
 
 // E logs a message at error level.
 func Ef(f string, v ...any) {

@@ -151,7 +151,7 @@ func UpdateChineses(data string, descs []*SvrDesc) (string, error) {
 	return string(swagger), nil
 }
 
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
 
 // Load local server routers from swagger.json file.
 func loadSwaggerRouters() (*Routers, error) {

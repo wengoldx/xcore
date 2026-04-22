@@ -34,9 +34,9 @@ type UrlPath struct {
 	Path string // Real bucket path of MinIO service
 }
 
-// ----------------------------------------
-// For Wss GRPC agent
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Wss GRPC agent                                                  */
+/* ------------------------------------------------------------------- */
 
 // Obtain a single pre-signed url for upload file to minio storage.
 func (stub *GrpcStub) SignUrl(res, suffix string, addition ...string) (*UrlPath, error) {
@@ -298,9 +298,9 @@ func (stub *GrpcStub) GetFileInfo(filepath string) (*wss.Info, error) {
 	return stub.Wss.GetFileInfo(context.Background(), param)
 }
 
-// ----------------------------------------
-// For Acc GRPC agent
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Acc GRPC agent                                                  */
+/* ------------------------------------------------------------------- */
 
 // Get account request token by given uuid.
 func (stub *GrpcStub) GetToken(uuid string) (string, error) {
@@ -400,9 +400,9 @@ func (stub *GrpcStub) AccMachs(uid string) (*acc.AMachs, error) {
 	return stub.Acc.AccMachs(context.Background(), param)
 }
 
-// ----------------------------------------
-// For Mea GRPC agent
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Mea GRPC agent                                                  */
+/* ------------------------------------------------------------------- */
 
 // Get measured body detail by request id.
 func (stub *GrpcStub) GetBody(reqid string) (*mea.BodyDetail, error) {
@@ -493,9 +493,9 @@ func (stub *GrpcStub) DelBody(reqid string) error {
 	return err
 }
 
-// ----------------------------------------
-// For Chat GRPC agent
-// ----------------------------------------
+/* ------------------------------------------------------------------- */
+/* For Chat GRPC agent                                                 */
+/* ------------------------------------------------------------------- */
 
 // Add a new staff to company.
 func (stub *GrpcStub) AddStaff(uuid, name, headurl, brand, client, old string) error {
