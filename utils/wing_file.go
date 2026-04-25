@@ -216,6 +216,18 @@ func SaveJsonFile(jsonfile string, data any) error {
 	return os.WriteFile(jsonfile, buf, 0755)
 }
 
+// Save cert pem content to target file.
+func SaveCertFile(certfile, datas string) error {
+	pemfile, err := OpenTruncFile(certfile, 0600)
+	if err != nil {
+		return err
+	}
+
+	defer pemfile.Close()
+	_, err = pemfile.WriteString(datas)
+	return err
+}
+
 // Save file datas to target file on override or append mode, by default override
 // the datas to file, the function will auto create the unexist directories.
 func SaveFile(dirpath, filename string, datas []byte, append ...bool) error {
