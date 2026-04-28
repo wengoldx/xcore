@@ -23,7 +23,6 @@ import (
 	"github.com/wengoldx/xcore/elastic"
 	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
-	"github.com/wengoldx/xcore/mqtt"
 	"github.com/wengoldx/xcore/utils"
 	"github.com/wengoldx/xcore/utils/xhttp"
 	"github.com/wengoldx/xcore/wechat"
@@ -382,8 +381,8 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 		mc.parseWords(data)
 	case DID_ES_AGENTS:
 		mc.setEsAgent(data)
-	case DID_MQTT_AGENTS:
-		mqtt.SetupMQLogger(data)
+	// case DID_MQTT_AGENTS:
+	// 	mqtt.SetupMQLogger(data)
 	default: // DID_API_ROUTERS, DID_GRPC_CERTS
 		naclog.I("Received configs of", dataId)
 	}
