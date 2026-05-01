@@ -114,6 +114,11 @@ func RegisterFieldValidator(tag string, valfunc validator.Func) {
 /* For Response Status & Datas                                         */
 /* ------------------------------------------------------------------- */
 
+// Just response ok for all options request.
+func (c *WingController) Options() {
+	c.ResponOK(true)
+}
+
 // Sends a json response to client on status check mode.
 func (c *WingController) ResponJSON(state int, data ...any) {
 	c.responCheckState(newOptions(true, false), state, data...)
