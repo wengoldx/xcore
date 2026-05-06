@@ -51,10 +51,13 @@ type SetRequest func(req *http.Request) (bool, error)
 /* ------------------------------------------------------------------- */
 
 // Create and return header author callback.
-func AuthFunc(token string) SetRequest {
+func AuthFunc(token string, ignore ...bool) SetRequest {
 	return func(req *http.Request) (bool, error) {
 		req.Header.Set("Author", "WENGOLD-V1.2")
 		req.Header.Set("Token", token)
+		if len(ignore) > 0 {
+			return ignore[0], nil
+		}
 		return true, nil
 	}
 }
@@ -427,7 +430,7 @@ func execClientDo(req *http.Request, setRequestFunc SetRequest) (*http.Response,
 		if ignore, err := setRequestFunc(req); err != nil {
 			return nil, err
 		} else if ignore { // ignore TLS!
-			logger.I("Http client ignore TLS!")
+			// logger.I("Http client ignore TLS!")
 			client.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: ignore},
 			}
