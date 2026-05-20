@@ -49,17 +49,21 @@ type SeedSign struct {
 	// Seeds map radix for get seed string in valid range,
 	// it inited when call createSeeds().
 	radix int
+
+	// Code length, must a even number and be equal or greater than 6,
+	// by default, set to 8!
+	codelen int
 }
 
 // The default global singleton, call AsDefault() to init it.
-var _def_signer = &SeedSign{}
+var _def_signer = &SeedSign{codelen: 8}
 
 // Create a SeedSign object by distinct chars string, it will filter
 // out all duplicate chars before create valid seeds mapping.
 //
 //	See SeedSign.filterDupChars() for filter duplicate chars.
 func NewSeedSign(src string) *SeedSign {
-	seedsign := &SeedSign{seeds: make(map[int]string)}
+	seedsign := &SeedSign{seeds: make(map[int]string), codelen: 8}
 	seedsign.createSeeds(src)
 	return seedsign
 }
@@ -74,10 +78,14 @@ func (s *SeedSign) AsDefault() { _def_signer = s }
 // # FIXME: The follow utils enable called directly to sign plaintext whatever SeedSign seeds inited.
 // Utils Methods Start >>
 
-func SeedESign(crt string, ts ...string) (string, error)   { return _def_signer.EccSign(crt, ts...) }
-func SeedEVerify(s, pu string, ts ...string) (bool, error) { return _def_signer.EccVerify(s, pu, ts...) }
-func SeedRSign(pr string, ts ...string) (string, error)    { return _def_signer.RsaSign(pr, ts...) }
-func SeedRVerify(s, pu string, ts ...string) (bool, error) { return _def_signer.RsaVerify(s, pu, ts...) }
+func SeedESign(crt string, ts ...string) (string, error) { return _def_signer.EccSign(crt, ts...) }
+func SeedEVerify(s, pu string, ts ...string) (bool, error) {
+	return _def_signer.EccVerify(s, pu, ts...)
+}
+func SeedRSign(pr string, ts ...string) (string, error) { return _def_signer.RsaSign(pr, ts...) }
+func SeedRVerify(s, pu string, ts ...string) (bool, error) {
+	return _def_signer.RsaVerify(s, pu, ts...)
+}
 
 // Utils Methods End <<
 
@@ -92,9 +100,9 @@ func (s *SeedSign) isPrepared() bool {
 //
 // The src string MUST all distinct chars and over 2 chars lenght:
 //
-//	- OK : '1234567890' // good src, all chars distinct.
-//	- NG : '1234467890' // have double 4 chars
-//	- NG : '1'          // too short src string.
+//   - OK : '1234567890' // good src, all chars distinct.
+//   - NG : '1234467890' // have double 4 chars
+//   - NG : '1'          // too short src string.
 func (s *SeedSign) createSeeds(src string) {
 	src = s.filterDupChars(src)
 
@@ -176,7 +184,7 @@ func (s *SeedSign) signSeedNum(sign string) (string, string) {
 // Then call secure.DefSeedSign().ViaCode() to verify sign and code whether matched.
 //
 // # WARING:
-//	- This method need call secure.NewSeedSign() to init seeds first!
+//   - This method need call secure.NewSeedSign() to init seeds first!
 func (s *SeedSign) SignCode(sign string) string {
 	sign = strings.TrimSpace(sign)
 	if !s.isPrepared() || sign == "" {
@@ -187,8 +195,9 @@ func (s *SeedSign) SignCode(sign string) string {
 	weight := len(seed)                            // set seed weight as default.
 	scaling := float32(len(num)) / float32(weight) // sign number normalization rate.
 
-	code := "" // random 4 group segements
-	for seg := 0; seg < 4; seg++ {
+	// random 4 group segements by 8 code length.
+	code, groups := "", s.codelen/2
+	for seg := 0; seg < groups; seg++ {
 		spos := rand.Intn(weight)
 		npos := int(float32(spos) * scaling)
 		code += seed[spos:spos+1] + num[npos:npos+1]
@@ -205,10 +214,10 @@ func (s *SeedSign) SignCode(sign string) string {
 //	rst  := ss.ViaCode(sign, code) // rst == true
 //
 // # WARING:
-//	- This method need call secure.NewSeedSign() to init seeds first!
+//   - This method need call secure.NewSeedSign() to init seeds first!
 func (s *SeedSign) ViaCode(sign, code string) bool {
 	sl, cl := len(sign), len(code)
-	invalids := (sl == 0 || cl%2 != 0 || sl < (cl/2))
+	invalids := (sl == 0 || cl != s.codelen || cl%2 != 0 || sl < (cl/2))
 	if !s.isPrepared() || invalids {
 		return false
 	}
@@ -252,8 +261,8 @@ func (s *SeedSign) SignPlaintext(texts ...string) string {
 // Use ECC private cert file to encrypt plaintext as sign string.
 //
 // # WARNING:
-//	- Even use the same plaintext and ECC crtfile to sign, it always
-//	output the different sign strings.
+//   - Even use the same plaintext and ECC crtfile to sign, it always
+//     output the different sign strings.
 func (s *SeedSign) EccSign(crtfile string, texts ...string) (string, error) {
 	if plaintext := s.SignPlaintext(texts...); plaintext != "" {
 		prikey, err := LoadEccPemFile(crtfile)
@@ -280,8 +289,8 @@ func (s *SeedSign) EccVerify(sign, pubpem string, texts ...string) (bool, error)
 // Use RSA private key content to encrypt plaintext as sign string (formated as base64 string).
 //
 // # WARNING:
-//	- Use the same plaintext and RSA private key to sign, it always
-//	output the same sign strings.
+//   - Use the same plaintext and RSA private key to sign, it always
+//     output the same sign strings.
 func (s *SeedSign) RsaSign(prikey string, texts ...string) (string, error) {
 	if plaintext := s.SignPlaintext(texts...); plaintext != "" {
 		return RSASignB64(prikey, plaintext)
