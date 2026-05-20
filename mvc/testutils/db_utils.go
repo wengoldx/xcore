@@ -31,12 +31,24 @@ func UseDebugLogger() {
 /* For MySQL                                                           */
 /* ------------------------------------------------------------------- */
 
-// Open database for testing by given .test env file.
+// Open database for testing by given `~/conf/.test` env file.
+//
+// # USAGE:
 //
 //	opts := mysql.Options{
 //		Host: "localhost:3306", Database: "testdb",
 //		User: "user", Password: "****",
 //	}
+//
+// # CONFIG:
+//
+// The `~/conf/.test` file content as follow:
+//
+//	[DATABASE]
+//	Host="localhost:3306"
+//	Database="testdb"
+//	User="user"
+//	Password="****"
 func OpenTestMysql(env string) {
 	UseDebugLogger()
 
@@ -76,11 +88,21 @@ func readMysqlEnv(env string) mysql.Options {
 /* For Sqlite                                                          */
 /* ------------------------------------------------------------------- */
 
-// Open database for testing by given .test env file.
+// Open database for testing by given `~/conf/.test` env file.
+//
+// # USAGE:
 //
 //	opts := sqlite.Options{
 //		Database: "testdb", Memory: false,
 //	}
+//
+// # CONFIG:
+//
+// The `~/conf/.test` file content as follow:
+//
+//	[DATABASE]
+//	Database="testdb"
+//	Memory=false
 func OpenTestSqlite(env string) {
 	UseDebugLogger()
 
