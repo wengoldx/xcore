@@ -42,8 +42,8 @@ type DoneCallback func()
 //	account:a // table name "account", alias "a".
 //
 // # WARNING:
-//	- None check the duplicate alias error for multiple tables!
-//	- The alias will be overwritten when table name same!
+//   - None check the duplicate alias error for multiple tables!
+//   - The alias will be overwritten when table name same!
 type Joins map[string]string
 
 // Append a table-alias into table Joins.
@@ -68,8 +68,8 @@ func (t *Joins) Remove(table string) *Joins {
 //	user_name:'xiaoming' // column 'user_name', value 'xiaoming'.
 //
 // # WARNING:
-//	- None check the duplicate alias error for multiple tables!
-//	- The alias will be overwritten when table name same!
+//   - None check the duplicate alias error for multiple tables!
+//   - The alias will be overwritten when table name same!
 type KValues map[string]any
 
 // Append a key-value into KValues.
@@ -90,6 +90,22 @@ func (v *KValues) Adds(values KValues) *KValues {
 func (v *KValues) Remove(keys ...string) *KValues {
 	for _, key := range keys {
 		delete(*v, key)
+	}
+	return v
+}
+
+// Append a key-value into KValues when value not a empty string or 0 number.
+func (v *KValues) AddIF(key string, value any) *KValues {
+	switch vt := value.(type) {
+	case string:
+		if vt != "" {
+			(*v)[key] = value
+		}
+	case int8, uint8, int16, uint16, int, uint, int32, uint32, int64, uint64,
+		float32, float64:
+		if vt != 0 {
+			(*v)[key] = value
+		}
 	}
 	return v
 }
@@ -137,7 +153,7 @@ type In struct {
 
 // Create a where in condition object.
 func NewIn[T any](field string, args []T) *In {
- 	return &In{field: field, args: utils.ToAnys(args)}
+	return &In{field: field, args: utils.ToAnys(args)}
 }
 
 // Return the where in field and args.
