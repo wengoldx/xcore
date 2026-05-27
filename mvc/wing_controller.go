@@ -378,13 +378,22 @@ func (c *WingController) RunDevMode(next func()) {
 	next()
 }
 
+// Do next action on 'prod' runmode.
+func (c *WingController) RunProdMode(next func()) {
+	if beego.BConfig.RunMode != "prod" {
+		c.E403Denind("Only For Release!")
+		return
+	}
+	next()
+}
+
 // Do next action after got the opened multipart file, and close it when exit method.
 //
 // # WARNING
 //
 // Set maxsize (in bytes) to limit the upload file size, it will response 403 error
 // code when the file size overed the maxsize.
-// 
+//
 // By default not check file size.
 func (c *WingController) GetSingleFile(key string, next FileFunc, maxsize ...int64) {
 	file, header, err := c.GetFile(key)
@@ -419,12 +428,12 @@ func (c *WingController) GetMultiFiles(key string, next FilesFunc) {
 //	@Return 400: Invalid input params (error fields or validate error).
 //
 // # NOTICE:
-//	- This method not check 'WENGOLD-V*' header.
-//	- Use AuthController, RoleController to check header and token.
+//   - This method not check 'WENGOLD-V*' header.
+//   - Use AuthController, RoleController to check header and token.
 //
 // # WARNING:
-//	- The out param must create as a struct pointer for this methoed!
-//	- This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
+//   - The out param must create as a struct pointer for this methoed!
+//   - This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
 func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterParsedInner(ps, nextFunc, parseOptions(true /* no-use */, opts...))
 }
@@ -435,8 +444,8 @@ func (c *WingController) DoAfterParsed(ps any, nextFunc NextFunc, opts ...Option
 //	@Return 404: Server internal error.
 //
 // # NOTICE:
-//	- This method not check 'WENGOLD-V*' header.
-//	- Use AuthController, RoleController to check header and token.
+//   - This method not check 'WENGOLD-V*' header.
+//   - Use AuthController, RoleController to check header and token.
 func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(true, opts...))
 }
@@ -447,8 +456,8 @@ func (c *WingController) DoAfterValidated(ps any, nextFunc NextFunc, opts ...Opt
 //	@Return 404: Server internal error.
 //
 // # NOTICE:
-//	- This method not check 'WENGOLD-V*' header.
-//	- Use AuthController, RoleController to check header and token.
+//   - This method not check 'WENGOLD-V*' header.
+//   - Use AuthController, RoleController to check header and token.
 func (c *WingController) DoAfterUnmarshal(ps any, nextFunc NextFunc, opts ...Option) {
 	c.doAfterValidatedInner(ps, nextFunc, parseOptions(false, opts...))
 }
@@ -601,8 +610,8 @@ func (c *WingController) validateUrlParams(ps any, validate bool) bool {
 //	parseUrlParams(param)
 //
 // # WARNING:
-//	- The sample param must create as a struct pointer for this methoed!
-//	- This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
+//   - The sample param must create as a struct pointer for this methoed!
+//   - This method only support types: bool, string, int, int32, int64, uint, uint32, uint64, float32, float64.
 func (c *WingController) parseUrlParams(ps any) bool {
 	vp := reflect.ValueOf(ps) // rv = &{}
 	if !vp.IsValid() || vp.Kind() != reflect.Ptr || vp.IsNil() {
