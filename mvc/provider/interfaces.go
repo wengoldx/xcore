@@ -43,18 +43,34 @@ type Provider interface {
 
 // A interface implement by provider.TableProvider to export utils.
 type ProviderUtils interface {
-	Has(b Builder) (bool, error)                   // For Query.
-	None(b Builder) (bool, error)                  // For Query.
-	Count(b Builder) (int, error)                  // For Query.
-	OneScan(b Builder, cb ScanCallback) error      // For Query.
-	OneDone(b Builder, done ...DoneCallback) error // For Query.
-	Query(b Builder, cb ScanCallback) error        // For Query.
-	Array(b Builder, cr Creator) error             // For Query.
-	Column(b Builder, sr Scaner) error             // For Query.
-	Insert(b Builder) (int64, error)               // For Insert.
-	InsertCheck(b Builder) error                   // For Insert.
-	InsertUncheck(b Builder) error                 // For Insert.
-	Exec(b Builder) error                          // For Insert, Update, Delete.
-	Update(b Builder) error                        // For Update.
-	Delete(b Builder) error                        // For Delete.
+
+	/* ------------------------------------------------------------------- */
+	/* For Query Utils                                                     */
+	/* ------------------------------------------------------------------- */
+
+	Has(b Builder) (bool, error)
+	None(b Builder) (bool, error)
+	Count(b Builder) (int, error)
+	OneScan(b Builder, cb ScanCallback) error
+	OneDone(b Builder, done ...DoneCallback) error
+	Query(b Builder, cb ScanCallback) error
+	Array(b Builder, cr Creator) error
+	Column(b Builder, sr Scaner) error
+
+	/* ------------------------------------------------------------------- */
+	/* For Insert Utils                                                    */
+	/* ------------------------------------------------------------------- */
+
+	Insert(b Builder) (int64, error)
+	InsertCheck(b Builder) error
+	InsertUncheck(b Builder) error
+
+	/* ------------------------------------------------------------------- */
+	/* For Update & Delete Utils                                           */
+	/* ------------------------------------------------------------------- */
+
+	Exec(b Builder) error                // For Insert, Update, Delete.
+	ExecResult(b Builder) (int64, error) // For Insert, Update, Delete.
+	Update(b Builder) error
+	Delete(b Builder) error
 }

@@ -168,7 +168,7 @@ func (p *TableProvider) Count(b pd.Builder) (int, error) {
 // from scan callback.
 //
 // # NOTICE:
-//	- Use BaseProvider.One() method to direct execute query string.
+//   - Use BaseProvider.One() method to direct execute query string.
 func (p *TableProvider) OneScan(b pd.Builder, cb pd.ScanCallback) error {
 	if qb, ok := b.(*builder.QueryBuilder); ok {
 		query, args := qb.Build(p.debug)
