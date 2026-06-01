@@ -52,9 +52,15 @@ func (b *UpdateBuilder) Exec() error { return b.provider.Exec(b) }
 
 // Update record and check changed counts.
 //
-//	h.Updater().Values(pd.KValues{"role": admin}).Wheres(pd.Wheres{"uid=?": uid}).Exec()
+//	h.Updater().Values(pd.KValues{"role": admin}).Wheres(pd.Wheres{"uid=?": uid}).Update()
 //	// check updated row count.
 func (b *UpdateBuilder) Update() error { return b.provider.Update(b) }
+
+// Update record and return updated rows.
+//
+//	rows, _ := h.Updater().Values(pd.KValues{"role": admin}).Wheres(pd.Wheres{"uid=?": uid}).ExecResult()
+//	// updated row count, maybe 0.
+func (b *UpdateBuilder) ExecResult() (int64, error) { return b.provider.ExecResult(b) }
 
 /* ------------------------------------------------------------------- */
 /* For SQL String Build Utils                                          */
