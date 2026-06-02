@@ -48,35 +48,16 @@ const (
 /* Create UTime Object Utils                                           */
 /* ------------------------------------------------------------------- */
 
-// Now time with local timezone.
-func Now() *UTime { return &UTime{ins: time.Now()} }
-
-// Today date at 00:00:00 clock as '2006-01-02 00:00:00'.
-func Today() *UTime { return &UTime{ins: Now().Date()} }
-
-// Yesterday date at 00:00:00 clock as '2006-01-01 00:00:00'.
-func Yesterday() *UTime { return &UTime{ins: FromTime(time.Now().AddDate(0, 0, -1)).Date()} }
-
-// Tomorrow date at 00:00:00 clock as '2006-01-03 00:00:00'.
-func Tomorrow() *UTime { return &UTime{ins: FromTime(time.Now().AddDate(0, 0, 1)).Date()} }
-
-// New UTime objec from time.Time object.
-func FromTime(t time.Time) *UTime { return &UTime{ins: t} }
-
-// New UTime objec from datetime string format as '2006-01-02 15:04:05'.
-func FromString(s string) *UTime { return FromTime(parseLocalTime(s, time.DateTime)) }
-
-// New UTime objec from datetime string format as '2006-01-02T15:04:05Z07:00'.
-func FromRFC3339(s string) *UTime { return FromTime(parseLocalTime(s, time.RFC3339)) }
-
-// New UTime object from now and offset input years.
-func AddYear(y int) *UTime { return Now().AddYear(y) }
-
-// New UTime object from now and offset input months.
-func AddMonth(m int) *UTime { return Now().AddMonth(m) }
-
-// New UTime object from now and offset input days.
-func AddDay(d int) *UTime { return Now().AddDay(d) }
+func Now() *UTime                 { return &UTime{ins: time.Now()} }                    // Now time with local timezone.
+func Today() *UTime               { return &UTime{ins: Now().Date()} }                  // Today date at 00:00:00 clock as '2006-01-02 00:00:00'.
+func Yesterday() *UTime           { return &UTime{ins: AddDay(-1).Date()} }             // Yesterday date at 00:00:00 clock as '2006-01-01 00:00:00'.
+func Tomorrow() *UTime            { return &UTime{ins: AddDay(1).Date()} }              // Tomorrow date at 00:00:00 clock as '2006-01-03 00:00:00'.
+func FromTime(t time.Time) *UTime { return &UTime{ins: t} }                             // New UTime objec from time.Time object.
+func FromString(s string) *UTime  { return FromTime(parseLocalTime(s, time.DateTime)) } // New UTime objec from datetime string format as '2006-01-02 15:04:05'.
+func FromRFC3339(s string) *UTime { return FromTime(parseLocalTime(s, time.RFC3339)) }  // New UTime objec from datetime string format as '2006-01-02T15:04:05Z07:00'.
+func AddYear(y int) *UTime        { return Now().AddYear(y) }                           // New UTime object from now and offset input years.
+func AddMonth(m int) *UTime       { return Now().AddMonth(m) }                          // New UTime object from now and offset input months.
+func AddDay(d int) *UTime         { return Now().AddDay(d) }                            // New UTime object from now and offset input days.
 
 /* ------------------------------------------------------------------- */
 /* UTime Methods                                                       */
@@ -90,59 +71,35 @@ func (t *UTime) AddMinute(m int) *UTime    { t.ins = t.ins.Add(time.Duration(m) 
 func (t *UTime) AddSecond(s int) *UTime    { t.ins = t.ins.Add(time.Duration(s) * time.Second); return t }
 func (t *UTime) Offset(y, m, d int) *UTime { t.ins = t.ins.AddDate(y, m, d); return t }
 
-// Return time.Time object.
-func (t *UTime) Time() time.Time { return t.ins }
-
 // Return time.Time object but only year, month, day values as '2006-01-02 00:00:00'.
 func (t *UTime) Date() time.Time {
 	y, m, d := t.ins.Date()
 	return time.Date(y, m, d, 0, 0, 0, 0, time.Local)
 }
 
-// Return unix seconds.
-func (t *UTime) Unix() int64 { return t.ins.Unix() }
-
-// Return unix nano seconds.
-func (t *UTime) UnixNano() int64 { return t.ins.UnixNano() }
-
-// Check whether expired.
-func (t *UTime) IsExpired() bool { return t.ins.Before(time.Now()) }
-
-// Check whether today.
-func (t *UTime) IsToday() bool { return IsToday(t.ins) }
-
-// Check whether the same datetime.
-func (t *UTime) IsSame(d time.Time) bool { return t.ins.Equal(d) }
-
-// Check whether the same date, it only check year, month, day.
-func (t *UTime) IsSameDay(d time.Time) bool { return IsSameDay(t.ins, d) }
-
-// Check t whether before the input d datetime.
-func (t *UTime) Before(d time.Time) bool { return t.ins.Before(d) }
-
-// Check whether same datetime from otner UTime object.
-func (t *UTime) Equal(o *UTime) bool { return t.ins.Equal(o.ins) }
-
-// To UTC time string as '2006-01-02 15:04:05'.
-func (t *UTime) ToString() string { return t.ins.Format(time.DateTime) }
-
-// To RFC3339 time string as '2006-01-02T15:04:05Z07:00'.
-func (t *UTime) ToRFC3339() string { return t.ins.Format(time.RFC3339) }
-
-// To date only string as '2006-01-02'.
-func (t *UTime) ToDate() string { return t.ins.Format(time.DateOnly) }
-
-// To time only string as '15:04:05'.
-func (t *UTime) ToTime() string { return t.ins.Format(time.TimeOnly) }
+func (t *UTime) Time() time.Time            { return t.ins }                       // Return time.Time object.
+func (t *UTime) Unix() int64                { return t.ins.Unix() }                // Return unix seconds.
+func (t *UTime) UnixNano() int64            { return t.ins.UnixNano() }            // Return unix nano seconds.
+func (t *UTime) IsValid() bool              { return !t.ins.Equal(time.Time{}) }   // Check whether valid time, not of `0000-00-00 00:00:00`.
+func (t *UTime) IsExpired() bool            { return t.ins.Before(time.Now()) }    // Check whether expired.
+func (t *UTime) IsToday() bool              { return IsToday(t.ins) }              // Check whether today.
+func (t *UTime) IsSame(d time.Time) bool    { return t.ins.Equal(d) }              // Check whether the same datetime.
+func (t *UTime) IsSameDay(d time.Time) bool { return IsSameDay(t.ins, d) }         // Check whether the same date, it only check year, month, day.
+func (t *UTime) Before(d time.Time) bool    { return t.ins.Before(d) }             // Check t whether before the input d datetime.
+func (t *UTime) Equal(o *UTime) bool        { return t.ins.Equal(o.ins) }          // Check whether same datetime from otner UTime object.
+func (t *UTime) ToString() string           { return t.ins.Format(time.DateTime) } // To UTC time string as '2006-01-02 15:04:05'.
+func (t *UTime) ToRFC3339() string          { return t.ins.Format(time.RFC3339) }  // To RFC3339 time string as '2006-01-02T15:04:05Z07:00'.
+func (t *UTime) ToDate() string             { return t.ins.Format(time.DateOnly) } // To date only string as '2006-01-02'.
+func (t *UTime) ToTime() string             { return t.ins.Format(time.TimeOnly) } // To time only string as '15:04:05'.
 
 // To time string according layout format.
 //
-//	- utils.ZoneLayout     : '2006-01-02T15:04:05Z'
-//	- utils.MSLayout       : '2006-01-02 15:04:05.000'
-//	- utils.DateNoneHyphen : '20060102'
-//	- utils.TimeNoneHyphen : '20060102150405'
-//	- utils.HourNoneHyphen : '150405'
-//	- utils.MSNoneHyphen   : '20060102150405000'
+//   - utils.ZoneLayout     : '2006-01-02T15:04:05Z'
+//   - utils.MSLayout       : '2006-01-02 15:04:05.000'
+//   - utils.DateNoneHyphen : '20060102'
+//   - utils.TimeNoneHyphen : '20060102150405'
+//   - utils.HourNoneHyphen : '150405'
+//   - utils.MSNoneHyphen   : '20060102150405000'
 //
 // See ToString(), ToRFC3339(), ToDate(), ToTime() for more layout formats.
 func (t *UTime) ToLayout(layout string) string { return t.ins.Format(layout) }
@@ -150,7 +107,7 @@ func (t *UTime) ToLayout(layout string) string { return t.ins.Format(layout) }
 // Diff with input d datetime, and return hours, minutes, seconds.
 //
 // # WARNING:
-//	- More than 24 hours diff duratons will be trimmed!
+//   - More than 24 hours diff duratons will be trimmed!
 func (t *UTime) TimeDiff(oth time.Time) (int, int, int) {
 	v, h, m := int(t.Unix()-oth.Unix()), 3600, 60
 	return (v / h) % 24, (v % h / m), (v % m)
@@ -184,11 +141,11 @@ func parseLocalTime(s, layout string) time.Time {
 //	time.ParseInLocation(layout, timestring, time.Local).
 //
 // The layout enable using:
-//	- time.DateTime : '2006-01-02 15:04:05'
-//	- time.RFC3339  : '2006-01-02T15:04:05Z07:00'
-//	- time.DateOnly : '2006-01-02'
-//	- time.TimeOnly : '15:04:05'
-//	- utils.MSLayout: '2006-01-02 15:04:05.000'
+//   - time.DateTime : '2006-01-02 15:04:05'
+//   - time.RFC3339  : '2006-01-02T15:04:05Z07:00'
+//   - time.DateOnly : '2006-01-02'
+//   - time.TimeOnly : '15:04:05'
+//   - utils.MSLayout: '2006-01-02 15:04:05.000'
 func ParseTime(layout, src string) (time.Time, error) {
 	return time.ParseInLocation(layout, src, time.Local)
 }
@@ -206,7 +163,7 @@ func IsSameDay(d1, d2 time.Time) bool {
 // or offseted timezone
 func IsToday[T any](des T) bool {
 	now := time.Now()
-	y, m, d := now.Year(), now.Month(), now.Day() 
+	y, m, d := now.Year(), now.Month(), now.Day()
 	switch vt := any(des).(type) {
 	case string:
 		dt, _ := ParseTime(time.DateOnly, vt)

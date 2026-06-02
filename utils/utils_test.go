@@ -51,3 +51,13 @@ func TestSplitSuffix(t *testing.T) {
 		return rst
 	})
 }
+
+func TestUTimeValid(t *testing.T) {
+	bad := FromString("")
+	fmt.Println("Bad UTime:", bad.ToString())
+	fmt.Println("Check result:", bad.IsValid())
+
+	valid := FromString("2026-06-02 08:56:38")
+	fmt.Println("Valid UTime:", valid.ToString())
+	fmt.Println("Check result:", valid.IsValid())
+}
