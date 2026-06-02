@@ -17,7 +17,7 @@ require (
 	golang.org/x/crypto v0.0.0-20221005025214-4161e89ecf1b
 	golang.org/x/net v0.8.0
 	google.golang.org/grpc v1.50.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/ini.v1 v1.66.2
 )

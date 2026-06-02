@@ -275,7 +275,7 @@ message Search {
 }
 
 message Mail {
-  string cat = 1; // who request send the email, one of 'qks', 'rainbow'.
+  string serve = 1; // who request send the email, one of 'qks', 'rainbow'.
   string content = 2; // mail content to send, formated as json string.
 }
 

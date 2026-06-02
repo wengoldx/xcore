@@ -359,10 +359,10 @@ func (stub *GrpcStub) SearchAvatars(uids []string, filter bool, key string) (*ac
 }
 
 // Request send mail dispath by given category.
-func (stub *GrpcStub) SendMail(cat string, payload any) error {
+func (stub *GrpcStub) SendMail(serve string, payload any) error {
 	if stub.Acc == nil {
 		return invar.ErrInvalidClient
-	} else if cat == "" || payload == nil {
+	} else if serve == "" || payload == nil {
 		return invar.ErrInvalidParams
 	}
 
@@ -371,7 +371,7 @@ func (stub *GrpcStub) SendMail(cat string, payload any) error {
 		return invar.ErrCaseException
 	}
 
-	param := &acc.Mail{Cat: cat, Content: string(content)}
+	param := &acc.Mail{Serve: serve, Content: string(content)}
 	_, err = stub.Acc.SendMail(context.Background(), param)
 	return err
 }
