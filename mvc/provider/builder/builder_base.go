@@ -23,8 +23,8 @@ import (
 // sql string for database QUID (query, update, insert, delete) actions.
 //
 // # WARNING:
-//	- The BaseBuilder not implement pd.Builder.Build().
-//	- Use QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder to build whole sql string.
+//   - The BaseBuilder not implement pd.Builder.Build().
+//   - Use QueryBuilder, InsertBuilder, UpdateBuilder, DeleteBuilder to build whole sql string.
 type BaseBuilder struct {
 	provider pd.ProviderUtils // Table provider utils.
 	table    string           // Table name for query, update, insert, delete builder.
@@ -75,12 +75,12 @@ func (b *BaseBuilder) FormatJoins(tables pd.Joins) string {
 // Format where conditions to string with args, by default join conditions with
 // AND connector, but can change to OR or empty connector by set 'connector' param.
 //
-//	- not set or set AND : use AND connector.
-//	- set OR             : use OR  connector.
-//	- set empty string   : tail connector inside where condition like 'condition AND', 'condition OR'.
+//   - not set or set AND : use AND connector.
+//   - set OR             : use OR  connector.
+//   - set empty string   : tail connector inside where condition like 'condition AND', 'condition OR'.
 //
 // # WARNING:
-//	- Here will filter out the nil values in wheres.
+//   - Here will filter out the nil values in wheres.
 func (b *BaseBuilder) FormatWheres(wheres pd.Wheres, sep ...string) (string, []any) {
 	where, args := "", []any{}
 	if len(wheres) > 0 {
@@ -114,12 +114,12 @@ func (b *BaseBuilder) FormatWheres(wheres pd.Wheres, sep ...string) (string, []a
 
 // Format where in condition to string without perfix 'WHERE' keyword.
 //
-//	- int number args  : field IN (1,2,3)
-//	- float number args: field IN (1.2,2.3,3.45)
-//	- string args      : field IN ('1','2','3')
+//   - int number args  : field IN (1,2,3)
+//   - float number args: field IN (1.2,2.3,3.45)
+//   - string args      : field IN ('1','2','3')
 //
 // # WARNING:
-//	- Here will filter out the nil values in args.
+//   - Here will filter out the nil values in args.
 func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 	if len(args) > 0 {
 		values := strings.Join(utils.ToStrings(args), ",")
@@ -130,8 +130,8 @@ func (b *BaseBuilder) FormatWhereIn(field string, args []any) string {
 
 // Format order by condition to string.
 //
-//	- desc = true : ORDER BY field DESC
-//	- desc = false: ORDER BY field ASC
+//   - desc = true : ORDER BY field DESC
+//   - desc = false: ORDER BY field ASC
 func (b *BaseBuilder) FormatOrder(field string, desc ...bool) string {
 	if field != "" {
 		isdesc := utils.Variable(desc, true) // default for DESC.
@@ -143,9 +143,13 @@ func (b *BaseBuilder) FormatOrder(field string, desc ...bool) string {
 
 // Format limit condition to string.
 //
-//	- output string: LIMIT n
-func (b *BaseBuilder) FormatLimit(n int) string {
+//   - output string: LIMIT n
+//   - output string: LIMIT n, cnt (start n and query cnt records)
+func (b *BaseBuilder) FormatLimit(n int, page ...int) string {
 	if n > 0 {
+		if len(page) > 0 && page[0] > 0 {
+			return fmt.Sprintf("LIMIT %d, %d", n, page[0])
+		}
 		return fmt.Sprintf("LIMIT %d", n)
 	}
 	return ""
@@ -154,9 +158,9 @@ func (b *BaseBuilder) FormatLimit(n int) string {
 // Format like condition to string, set pattern one of 'perfix', 'suffix', 'center'
 // to make diffrent filter string as follow, by default use 'center' pattern.
 //
-//	- Perfix pattern [perfix ]: field LIKE 'filter%%'
-//	- Center pattern [default]: field LIKE '%%filter%%'
-//	- Suffix pattern [suffix ]: field LIKE '%%filter'
+//   - Perfix pattern [perfix ]: field LIKE 'filter%%'
+//   - Center pattern [default]: field LIKE '%%filter%%'
+//   - Suffix pattern [suffix ]: field LIKE '%%filter'
 func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string {
 	if field != "" && filter != "" {
 		lower := strings.ToLower(utils.Variable(pattern, "center"))
@@ -187,7 +191,7 @@ func (b *BaseBuilder) FormatLike(field, filter string, pattern ...string) string
 //	// => []any{16, true, "ZhangSan", 176.8}
 //
 // # WARNING:
-//	- This method support insert nil arg as NULL value.
+//   - This method support insert nil arg as NULL value.
 func (b *BaseBuilder) FormatInsert(values pd.KValues) (string, string, []any) {
 	fields, holders, args := "", "", []any{}
 	if cnt := len(values); cnt > 0 {
@@ -226,7 +230,7 @@ func (b *BaseBuilder) FormatInsert(values pd.KValues) (string, string, []any) {
 //	// => 16,true'ZhangSan',176.8,NULL
 //
 // # WARNING:
-//	- This method support insert nil arg as NULL value.
+//   - This method support insert nil arg as NULL value.
 func (p *BaseBuilder) FormatValues(headers []string, values pd.KValues) string {
 	row := []string{}
 	for _, key := range headers { // fetch colmuns
@@ -267,7 +271,7 @@ func (p *BaseBuilder) FormatValues(headers []string, values pd.KValues) string {
 //	// => []any{16, true, "ZhangSan", 176.8}
 //
 // # WARNING:
-//	- This method support update nil arg as NULL value.
+//   - This method support update nil arg as NULL value.
 func (b *BaseBuilder) FormatSets(values pd.KValues) (string, []any) {
 	fields, args := "", []any{}
 	if cnt := len(values); cnt > 0 {
@@ -312,11 +316,11 @@ func (b *BaseBuilder) CheckLimit(query string) string {
 
 // Build where conditions, append where ins, like conditions if exist.
 //
-//	- WHERE wheres
-//	- WHERE wheres AND field IN (v1,v2...)
-//	- WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-//	- WHERE field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-//	- WHERE field LIKE '%%filter%%'
+//   - WHERE wheres
+//   - WHERE wheres AND field IN (v1,v2...)
+//   - WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//   - WHERE field IN (v1,v2...) AND field2 LIKE '%%filter%%'
+//   - WHERE field LIKE '%%filter%%'
 //
 // Use FormatWheres(), FormatWhereIn() to format Wheres data or where in condition.
 func (b *BaseBuilder) BuildWheres(wheres pd.Wheres, ins, like string, sep ...string) (string, []any) {
@@ -371,8 +375,8 @@ func (b *BaseBuilder) JoinOrWheres(wheres ...string) string {
 //	// tags = []string{"name"}, outs = []any{&param.Name}
 //
 // # WARNING:
-//	- The 'out' param must create as a struct pointer for this methoed!
-//	- The 'out' struct field only support build in types.
+//   - The 'out' param must create as a struct pointer for this methoed!
+//   - The 'out' struct field only support build in types.
 func (b *BaseBuilder) ParseOut(out any) ([]string, []any) {
 	tags, outs := []string{}, []any{}
 

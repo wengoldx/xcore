@@ -44,7 +44,12 @@ func TestFormatJoins(t *testing.T) {
 func TestFormatWheres(t *testing.T)  { /* TODO */ }
 func TestFormatWhereIn(t *testing.T) { /* TODO */ }
 func TestFormatOrder(t *testing.T)   { /* TODO */ }
-func TestFormatLimit(t *testing.T)   { /* TODO */ }
+
+func TestFormatLimit(t *testing.T) {
+	builder := &BaseBuilder{}
+	fmt.Println(builder.FormatLimit(20))
+	fmt.Println(builder.FormatLimit(5, 10))
+}
 
 func TestFormatLike(t *testing.T) {
 	type LikeData struct {

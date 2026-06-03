@@ -24,7 +24,7 @@ import (
 //	SELECT tags FROM table
 //		WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
 //		ORDER BY order DESC
-//		LIMIT limit.
+//		LIMIT limit [, page].
 type QueryBuilder struct {
 	BaseBuilder
 	joins  pd.Joins  // Table-Alias for multi-table joins.
@@ -35,7 +35,8 @@ type QueryBuilder struct {
 	ins    string    // Where in conditions.
 	like   string    // Like conditions string.
 	order  string    // Keyword for order by condition.
-	limit  int       // Limit number.
+	limit  int       // Limit counts ('LIMIT 5'), or page start number ('LIMIT 5, 10') .
+	page   int       // Page items, used by 'LIMIT' keyword as 'LIMIT 5, 10' means start 5 index query 10 in this page.
 }
 
 var _ pd.Builder = (*QueryBuilder)(nil)
@@ -222,13 +223,21 @@ func (b *QueryBuilder) Limit(limit int) *QueryBuilder {
 	return b
 }
 
+// Specify the page start and counts for query.
+//
+//	builder.Page(5, 10) // => LIMIT 5, 10
+func (b *QueryBuilder) Page(start, cnt int) *QueryBuilder {
+	b.limit, b.page = start, cnt
+	return b
+}
+
 // Reset builder datas for next prepare and build.
 func (b *QueryBuilder) Reset() *QueryBuilder {
 	clear(b.tags)
 	clear(b.wheres)
 	clear(b.outs)
 	b.sep, b.ins, b.like, b.order = "", "", "", ""
-	b.limit = 0
+	b.limit, b.page = 0, 0
 	return b
 }
 
@@ -247,7 +256,7 @@ func (b *QueryBuilder) Build(debug ...bool) (string, []any) {
 
 	tags := strings.Join(b.tags, ",")                          // out1,out2,out3...
 	where, args := b.BuildWheres(b.wheres, b.ins, b.like, sep) // WHERE wheres AND field IN (v1,v2...) AND field2 LIKE '%%filter%%'
-	limit := b.FormatLimit(b.limit)                            // LIMIT n
+	limit := b.FormatLimit(b.limit, b.page)                    // LIMIT n
 
 	joins := b.FormatJoins(b.joins)                       // table1 AS a, table2 AS b
 	table := utils.Condition(joins != "", joins, b.table) // priority use of joined tables, or use b.table
