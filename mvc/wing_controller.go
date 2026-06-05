@@ -181,7 +181,7 @@ func (c *WingController) ResponData(state int, data ...map[any]any) {
 	c.ServeFormatted()
 }
 
-// ResponOK sends a empty success response to client
+// ResponOK sends a empty success response to client.
 func (c *WingController) ResponOK(silent ...bool) {
 	if !(len(silent) > 0 && silent[0]) {
 		ctl, act := c.GetControllerAndAction()
@@ -193,6 +193,18 @@ func (c *WingController) ResponOK(silent ...bool) {
 	// FIXME: here maybe not set content type when response error
 	// w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(""))
+}
+
+// RespString sends a string with OK status response to client.
+func (c *WingController) RespString(data string, silent ...bool) {
+	if !(len(silent) > 0 && silent[0]) {
+		ctl, act := c.GetControllerAndAction()
+		logger.I("Respone String >", ctl+"."+act)
+	}
+
+	w := c.Ctx.ResponseWriter
+	w.WriteHeader(invar.StatusOK)
+	w.Write([]byte(data))
 }
 
 /* ------------------------------------------------------------------- */
