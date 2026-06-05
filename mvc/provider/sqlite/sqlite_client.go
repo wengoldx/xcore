@@ -78,6 +78,21 @@ const (
 // database before use query, insert, update and delete methods. it will
 // cache the instance to clients map, so use Select() to get the default
 // or target instance by given session is safly.
+//
+// # WARNING:
+//
+// SQLite using UTC time (Zone +00:00) as default by call DATETIME('now')
+// or CURRENT_TIMESTAMP, so call DATETIME('now', 'localtime') to create a
+// local time as better for function.
+//
+//	> UTC   time: CURRENT_TIMESTAMP ----------------------> 2026-06-05 02:01:26
+//	>             DATETIME('now')   ----------------------> 2026-06-05 02:01:26
+//	>             DATETIME('now', '+1 day') --------------> 2026-06-06 02:01:26
+//	>                                                               ^^
+//	> Local time: DATETIME('now', 'localtime') -----------> 2026-06-05 10:01:26
+//	>                                                                  ^^
+//	>             DATETIME('now', 'localtime', '+1 day') -> 2026-06-06 10:01:26
+//	>                                                               ^^ ^^
 func New(opts ...Option) *Sqlite {
 	client := &Sqlite{options: DefaultOptions()}
 	for _, optFunc := range opts {
@@ -172,7 +187,7 @@ func BindTables(tables ...pd.Provider) {
 //	memory = false          ; set true for memory sqlite database.
 //
 // # NOTICE:
-//	- This method useful for beego project easy to connect a Sqlite database.
+//   - This method useful for beego project easy to connect a Sqlite database.
 func Open(session ...string) error {
 	return OpenWithOptions(LoadOptions(session...))
 }

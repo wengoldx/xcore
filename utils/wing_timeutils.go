@@ -11,6 +11,7 @@
 package utils
 
 import (
+	"strings"
 	"time"
 )
 
@@ -20,7 +21,7 @@ import (
 //	ut := utils.Now()
 //	ut := utils.FromTime(time.Now())
 //	ut := utils.FromString('2026-01-02 03:04:05')
-//	ut := utils.FromRFC3339('2026-01-02T03:04:05Z08:00')
+//	ut := utils.FromRFC3339('2026-01-02T03:04:05+08:00')
 //	ut := utils.AddYear(1)  // after 1 year.
 //	ut := utils.AddMonth(1) // after 1 month.
 //	ut := utils.AddDate(1)  // after 1 day.
@@ -28,7 +29,7 @@ import (
 // Format now time to string as:
 //
 //	utils.Now().ToString()  // 2026-01-02 03:04:05
-//	utils.Now().ToRFC3339() // 2026-01-02T03:04:05Z08:00
+//	utils.Now().ToRFC3339() // 2026-01-02T03:04:05+08:00
 //	utils.Now().ToDate()    // 2026-01-02
 //	utils.Now().ToTime()    // 03:04:05
 type UTime struct {
@@ -37,7 +38,6 @@ type UTime struct {
 
 const (
 	MsLayout       = "2006-01-02 15:04:05.000" // Time layout with million seconds.
-	ZoneLayout     = "2006-01-02T15:04:05Z"    // Time layout with local timezone, see RFC3339.
 	DateNoneHyphen = "20060102"                // Time layout date only without hyphen char.
 	TimeNoneHyphen = "20060102150405"          // Time layout datetime without hyphen char.
 	HourNoneHyphen = "150405"                  // Time layout time only without hyphen char.
@@ -54,7 +54,7 @@ func Yesterday() *UTime           { return &UTime{ins: AddDay(-1).Date()} }     
 func Tomorrow() *UTime            { return &UTime{ins: AddDay(1).Date()} }              // Tomorrow date at 00:00:00 clock as '2006-01-03 00:00:00'.
 func FromTime(t time.Time) *UTime { return &UTime{ins: t} }                             // New UTime objec from time.Time object.
 func FromString(s string) *UTime  { return FromTime(parseLocalTime(s, time.DateTime)) } // New UTime objec from datetime string format as '2006-01-02 15:04:05'.
-func FromRFC3339(s string) *UTime { return FromTime(parseLocalTime(s, time.RFC3339)) }  // New UTime objec from datetime string format as '2006-01-02T15:04:05Z07:00'.
+func FromRFC3339(s string) *UTime { return FromTime(parseLocalTime(s, time.RFC3339)) }  // New UTime objec from datetime string format as '2006-01-02T15:04:05Z' or '2006-01-02T15:04:05+07:00'.
 func AddYear(y int) *UTime        { return Now().AddYear(y) }                           // New UTime object from now and offset input years.
 func AddMonth(m int) *UTime       { return Now().AddMonth(m) }                          // New UTime object from now and offset input months.
 func AddDay(d int) *UTime         { return Now().AddDay(d) }                            // New UTime object from now and offset input days.
@@ -88,13 +88,12 @@ func (t *UTime) IsSameDay(d time.Time) bool { return IsSameDay(t.ins, d) }      
 func (t *UTime) Before(d time.Time) bool    { return t.ins.Before(d) }             // Check t whether before the input d datetime.
 func (t *UTime) Equal(o *UTime) bool        { return t.ins.Equal(o.ins) }          // Check whether same datetime from otner UTime object.
 func (t *UTime) ToString() string           { return t.ins.Format(time.DateTime) } // To UTC time string as '2006-01-02 15:04:05'.
-func (t *UTime) ToRFC3339() string          { return t.ins.Format(time.RFC3339) }  // To RFC3339 time string as '2006-01-02T15:04:05Z07:00'.
+func (t *UTime) ToRFC3339() string          { return t.ins.Format(time.RFC3339) }  // To RFC3339 time string as '2006-01-02T15:04:05Z', or '2006-01-02T15:04:05+07:00'.
 func (t *UTime) ToDate() string             { return t.ins.Format(time.DateOnly) } // To date only string as '2006-01-02'.
 func (t *UTime) ToTime() string             { return t.ins.Format(time.TimeOnly) } // To time only string as '15:04:05'.
 
 // To time string according layout format.
 //
-//   - utils.ZoneLayout     : '2006-01-02T15:04:05Z'
 //   - utils.MSLayout       : '2006-01-02 15:04:05.000'
 //   - utils.DateNoneHyphen : '20060102'
 //   - utils.TimeNoneHyphen : '20060102150405'
@@ -129,6 +128,36 @@ func parseLocalTime(s, layout string) time.Time {
 	return t
 }
 
+// Parse time from string with timezone, the s time string maybe format
+// as time.DateTime or time.RFC3339 layout, it useful to read datetime
+// values from SQLite or MySQL database.
+//
+//	s : '2006-01-02 15:04:05'
+//	    '2006-01-02T15:04:05Z'
+//	    '2006-01-02T15:04:05.000'
+//	    '2006-01-02T15:04:05+07:00'
+//	    '2006-01-02T15:04:05.000+07:00'
+func UTFrom(s string) *UTime {
+	if strings.Contains(s, "T") {
+		return FromRFC3339(s)
+	}
+	return FromString(s) // '2006-01-02 15:04:05'
+}
+
+// Unifies time string to output as '2006-01-02 15:04:05'.
+//
+//	s : '2006-01-02 15:04:05'           \
+//	    '2006-01-02T15:04:05Z'           |
+//	    '2006-01-02T15:04:05.000'         => output: '2006-01-02 15:04:05'
+//	    '2006-01-02T15:04:05+07:00'      |
+//	    '2006-01-02T15:04:05.000+07:00' /
+func UTUnifies(s string) string {
+	if strings.Contains(s, "T") {
+		return FromRFC3339(s).ToString()
+	}
+	return s
+}
+
 // Parse time from string with timezone, the src time string maybe formated
 // from time.Format() returned value.
 //
@@ -142,7 +171,7 @@ func parseLocalTime(s, layout string) time.Time {
 //
 // The layout enable using:
 //   - time.DateTime : '2006-01-02 15:04:05'
-//   - time.RFC3339  : '2006-01-02T15:04:05Z07:00'
+//   - time.RFC3339  : '2006-01-02T15:04:05Z' or '2006-01-02T15:04:05+07:00'
 //   - time.DateOnly : '2006-01-02'
 //   - time.TimeOnly : '15:04:05'
 //   - utils.MSLayout: '2006-01-02 15:04:05.000'
