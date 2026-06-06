@@ -12,6 +12,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -149,6 +150,73 @@ func UpdateChineses(data string, descs []*SvrDesc) (string, error) {
 
 	logger.D("Updated routers chineses")
 	return string(swagger), nil
+}
+
+const _router_ver_file = "./routers/router.go"
+const _router_ver_key = "// @APIVersion "
+
+// Update swagger version by search keyword '// @APIVersion '
+// in project ./routers/router.go code file.
+//
+// ---
+//
+//	                                         end
+//	                                         v
+//	router.go content : '// @APIVersion 1.2.3'
+//	                     ^              ^
+//	                     start          verstart
+//
+// ---
+//
+// This method is useful to update swagger API version when
+// excute 'bee run -gendoc=true' command in project root dir.
+//
+// # USAGE:
+//
+// The best timing to call it before database inited in init().
+//
+//	package content
+//	import "github.com/wengoldx/xcore/utils"
+//	func init() {
+//	    utils.UpdateVersion(types.APP_VERSION)
+//	    // ...
+//	}
+func UpdateVersion(ver string) {
+	// clear all black chars out from version string!
+	ver = strings.TrimSpace(strings.ReplaceAll(ver, " ", ""))
+
+	// check version not empty and router.go code file exist!
+	if ver != "" && IsFile(_router_ver_file) {
+		if content := ReadTextFile(_router_ver_file); content != "" {
+
+			// router.go code file exist and not empty!
+			if start := strings.Index(content, _router_ver_key); start != -1 {
+				// '// @APIVersion 1.2.3' seed to '1' position.
+				verstart := start + len(_router_ver_key)
+
+				lineend := strings.Index(content[verstart:], "\n")
+				if lineend > 0 && lineend < len("xx.xx.xx") {
+					// '// @APIVersion 1.2.3' seed to line end.
+					end := verstart + lineend
+
+					// not upgrade if version up to date!
+					if old := content[verstart:end]; old == ver {
+						logger.I("Swagger version is last!")
+						return
+					}
+
+					// upgrade swagger version and overwrite to router.go file.
+					newver := fmt.Sprintf(_router_ver_key+"%s", ver)
+					content = content[:start] + newver + content[end:]
+					if err := os.WriteFile(_router_ver_file, []byte(content), 0755); err != nil {
+						logger.E("Update swagger version, err:", err)
+						return
+					}
+					logger.I("Upgrade swagger version:", ver)
+				}
+			}
+		}
+	}
 }
 
 /* ------------------------------------------------------------------- */
