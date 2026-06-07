@@ -94,9 +94,12 @@ type AccConfs struct {
 		Stmps  map[string]Stmp   `json:"stmps"`  // Mail stmp server config for send mail.
 		Serves map[string]EMails `json:"serves"` // Mail mappings of services.
 
-		Host   string             `json:"host"`   // Deprecated: Mail proxy server host address.
-		Port   int                `json:"port"`   // Deprecated: Mail proxy server port.
-		Sender map[string]*Sender `json:"sender"` // Deprecated: Mail sender account for each backend server.
+		// Deprecated: Mail proxy server host address.
+		Host string `json:"host"`
+		// Deprecated: Mail proxy server port.
+		Port int `json:"port"`
+		// Deprecated: Mail sender account for each backend server.
+		Sender map[string]*Sender `json:"sender"`
 	} `json:"email"`
 
 	// SMS sender service
