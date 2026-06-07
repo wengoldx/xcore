@@ -91,9 +91,9 @@ func (q *Queue) Len() int {
 	return q.list.Len()
 }
 
-/* --------------------------- */
-/* Extention Utils             */
-/* --------------------------- */
+/* ------------------------------------------------------------------- */
+/* Extention Utils                                                     */
+/* ------------------------------------------------------------------- */
 
 // Fetching result return by callback.
 type Result int
@@ -109,7 +109,7 @@ const (
 // Fetch queue nodes, use callback returns to remove node or interupt fetch.
 //
 // # WARNING:
-//	- DO NOT do heavy performence codes in callback, exist a lock here!
+//   - DO NOT do heavy performence codes in callback, exist a lock here!
 //
 // # USAGE:
 //

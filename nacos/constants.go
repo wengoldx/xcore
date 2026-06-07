@@ -10,9 +10,9 @@
 
 package nacos
 
-/* -------------------------- */
-/* Internal constants defines */
-/* -------------------------- */
+/* ------------------------------------------------------------------- */
+/* Internal constants defines                                          */
+/* ------------------------------------------------------------------- */
 
 const (
 	nacosSysSecure = "accessor"      // CICD system secure authentications
@@ -25,9 +25,9 @@ const (
 	configKeyPort = "nacosport" // Local server access port for grpc connect
 )
 
-/* -------------------------- */
-/* Export constants defines   */
-/* -------------------------- */
+/* ------------------------------------------------------------------- */
+/* Export constants defines                                            */
+/* ------------------------------------------------------------------- */
 
 // Nacos namespace string for xcore/nacos
 const (
@@ -54,17 +54,18 @@ const (
 	DID_SER_RELEASE  = "dunyu.ser.release"  // Fixed group, data id for master release version and infos
 )
 
-/* -------------------------- */
-/* Export Configs defines     */
-/* -------------------------- */
+/* ------------------------------------------------------------------- */
+/* Export Configs defines                                              */
+/* ------------------------------------------------------------------- */
 
 // Nacos config for data id DID_ACC_CONFIGS
 //
 //	{
 //	  "email": {
-//	    "identity" : "xxxxxx",
-//	    "host": "smtp.exmail.qq.com",
-//	    "port": 465,
+//	    "stmps": {
+//	      "qq":  {"host": "smtp.exmail.qq.com", "port": 465},
+//	      "ali": {"host": "smtp.qiye.aliyun.com", "port": 465},
+//	    },
 //	    "serves": {
 //	      "accservice": {
 //	        "send1": {"user": "sender1@email.com", "pwd":""},
@@ -90,13 +91,12 @@ type AccConfs struct {
 
 	// Email sender service
 	Email struct {
-		Identity string            `json:"identity"` // Mail proxy server identity.
-		Host     string            `json:"host"`     // Mail proxy server host address.
-		Port     int               `json:"port"`     // Mail proxy server port.
-		Serves   map[string]EMails `json:"serves"`   // Mail mappings of services.
+		Stmps  map[string]Stmp   `json:"stmps"`  // Mail stmp server config for send mail.
+		Serves map[string]EMails `json:"serves"` // Mail mappings of services.
 
-		// Deprecated: Mail sender account for each backend server.
-		Sender map[string]*Sender `json:"sender"`
+		Host   string             `json:"host"`   // Deprecated: Mail proxy server host address.
+		Port   int                `json:"port"`   // Deprecated: Mail proxy server port.
+		Sender map[string]*Sender `json:"sender"` // Deprecated: Mail sender account for each backend server.
 	} `json:"email"`
 
 	// SMS sender service
@@ -124,6 +124,12 @@ type EMails struct {
 type Sender struct {
 	User string `json:"user"`
 	Pwd  string `json:"pwd"`
+}
+
+// Nocos config for mail stmp server settings.
+type Stmp struct {
+	Host string `json:"host"` // Mail stmp server host address.
+	Port int    `json:"port"` // Mail stmp server port.
 }
 
 // Nacos config for OTA upgrade by using DID_OTA_BUILDS data id.
