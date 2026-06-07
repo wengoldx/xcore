@@ -62,7 +62,7 @@ const (
 //
 //	{
 //	  "email": {
-//	    "stmps": {
+//	    "smtps": {
 //	      "qq":  {"host": "smtp.exmail.qq.com", "port": 465},
 //	      "ali": {"host": "smtp.qiye.aliyun.com", "port": 465},
 //	    },
@@ -91,7 +91,7 @@ type AccConfs struct {
 
 	// Email sender service
 	Email struct {
-		Stmps  map[string]Stmp   `json:"stmps"`  // Mail stmp server config for send mail.
+		Smtps  map[string]Smtp   `json:"smtps"`  // Mail smtp server config for send mail.
 		Serves map[string]EMails `json:"serves"` // Mail mappings of services.
 
 		// Deprecated: Mail proxy server host address.
@@ -129,10 +129,10 @@ type Sender struct {
 	Pwd  string `json:"pwd"`
 }
 
-// Nocos config for mail stmp server settings.
-type Stmp struct {
-	Host string `json:"host"` // Mail stmp server host address.
-	Port int    `json:"port"` // Mail stmp server port.
+// Nocos config for mail smtp server settings.
+type Smtp struct {
+	Host string `json:"host"` // Mail smtp server host address.
+	Port int    `json:"port"` // Mail smtp server port.
 }
 
 // Nacos config for OTA upgrade by using DID_OTA_BUILDS data id.

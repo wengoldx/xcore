@@ -45,8 +45,8 @@ import (
 type MailAgent struct {
 	acc  string // username - mail address
 	pwd  string // account password
-	host string // stmp/pop3 host
-	port int    // stmp/pop3 port
+	host string // smtp/pop3 host
+	port int    // smtp/pop3 port
 }
 
 // EmailContent email template
