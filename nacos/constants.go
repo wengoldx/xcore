@@ -59,14 +59,44 @@ const (
 /* -------------------------- */
 
 // Nacos config for data id DID_ACC_CONFIGS
+//
+//	{
+//	  "email": {
+//	    "identity" : "xxxxxx",
+//	    "host": "smtp.exmail.qq.com",
+//	    "port": 465,
+//	    "serves": {
+//	      "accservice": {
+//	        "send1": {"user": "sender1@email.com", "pwd":""},
+//	        "send2": {"user": "sender2@email.com", "pwd":""},
+//	        ...
+//	      },
+//	      "..." : {}
+//	    }
+//	  }
+//	  "sms": {
+//	    "secret": "",
+//	    "keyid": "",
+//	    "urlformat": ""
+//	  },
+//	  "secure": {
+//	    "secureSalt": "",
+//	    "apiTaxCode": "",
+//	    "apiIDViaCode": "",
+//	    "pageLimits": ""
+//	  }
+//	}
 type AccConfs struct {
 
 	// Email sender service
 	Email struct {
-		Identity string              `json:"identity"` // Mail proxy server identity.
-		Host     string              `json:"host"`     // Mail proxy server host address.
-		Port     int                 `json:"port"`     // Mail proxy server port.
-		Sender   map[string]*MallAcc `json:"sender"`   // Mail sender account for each backend server.
+		Identity string            `json:"identity"` // Mail proxy server identity.
+		Host     string            `json:"host"`     // Mail proxy server host address.
+		Port     int               `json:"port"`     // Mail proxy server port.
+		Serves   map[string]EMails `json:"serves"`   // Mail mappings of services.
+
+		// Deprecated: Mail sender account for each backend server.
+		Sender map[string]*Sender `json:"sender"`
 	} `json:"email"`
 
 	// SMS sender service
@@ -85,13 +115,18 @@ type AccConfs struct {
 	} `json:"secure"`
 }
 
-// Nacos config for mall account settings
-type MallAcc struct {
+// Nacos config for email senders of target server.
+type EMails struct {
+	Senders map[string]Sender
+}
+
+// Nacos config for mail sender account settings.
+type Sender struct {
 	User string `json:"user"`
 	Pwd  string `json:"pwd"`
 }
 
-// Nacos config for OTA upgrade by using DID_OTA_BUILDS data id
+// Nacos config for OTA upgrade by using DID_OTA_BUILDS data id.
 type OTAInfo struct {
 	BuildVersion string       `json:"BuildVersion"        description:"Build version string"`
 	BuildNumber  int          `json:"BuildNumber"         description:"Build number, pase form BuildVersion string as version = major*1000000 + middle*10000 + minor"`
