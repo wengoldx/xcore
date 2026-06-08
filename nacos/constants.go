@@ -87,12 +87,20 @@ const (
 //	    "pageLimits": ""
 //	  }
 //	}
+//
+// Access Email.Serves sender values as:
+//
+//	for serve, senders := range ac.Email.Serves {
+//		for tag, sender := range senders {
+//			fmt.Println("Server:", serve, "target:", tag, "acc:", sender.User, "pwd:", sender.Pwd)
+//		}
+//	}
 type AccConfs struct {
 
 	// Email sender service
 	Email struct {
 		Smtps  map[string]Smtp   `json:"smtps"`  // Mail smtp server config for send mail.
-		Serves map[string]EMails `json:"serves"` // Mail mappings of services.
+		Serves map[string]EMails `json:"serves"` // Mail mappings of services.[serve:[tag:{user:"", pwd:""}]]
 
 		// Deprecated: Mail proxy server host address.
 		Host string `json:"host"`
@@ -119,9 +127,7 @@ type AccConfs struct {
 }
 
 // Nacos config for email senders of target server.
-type EMails struct {
-	Senders map[string]Sender
-}
+type EMails map[string]Sender
 
 // Nacos config for mail sender account settings.
 type Sender struct {
