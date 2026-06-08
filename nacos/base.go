@@ -45,6 +45,7 @@ type ServerItem struct {
 type ServerCallback func(svr, addr string, port int)
 
 // Register current server to nacos, you must set configs in app.conf
+//
 //	@return - *ServerStub nacos server stub instance
 //
 // # NOTICE:
@@ -118,6 +119,7 @@ func RegisterServer() *ServerStub {
 // Listing services address and port changes, it will call the callback
 // immediately to return target service host when them allready registerd
 // to service central of nacos.
+//
 //	@params servers []*ServerItem target server registry informations
 func (ss *ServerStub) ListenServers(servers []*ServerItem) {
 	for _, s := range servers {
@@ -165,6 +167,7 @@ type MetaConfig struct {
 type MetaConfigCallback func(dataId, data string)
 
 // Create meta config client to get or listen configs changes
+//
 //	@return - *MetaConfig nacos config client instance
 //
 // # NOTICE:
@@ -262,25 +265,6 @@ func (mc *MetaConfig) UploadRouters() error {
 	return nil
 }
 
-// Update routers chinese descriptions and upload to nacos
-func (mc *MetaConfig) UpdateChineses(descs []*utils.SvrDesc) error {
-	nrouters, err := mc.GetConfig(DID_API_ROUTERS)
-	if err != nil {
-		naclog.E("Pull nacos routers, err:", err)
-		return err
-	}
-
-	// update routers chineses descriptions
-	routers, err := utils.UpdateChineses(nrouters, descs)
-	if err != nil {
-		naclog.E("Update routers chineses, err:", err)
-		return err
-	}
-
-	mc.PushConfig(DID_API_ROUTERS, routers)
-	return nil
-}
-
 /* ------------------------------------------------------------------- */
 
 // Create nacos client config, contain nacos remote server and
@@ -288,8 +272,8 @@ func (mc *MetaConfig) UpdateChineses(descs []*utils.SvrDesc) error {
 // 5s pingpong heartbeat and output logs on warn leven.
 //
 // # NOTICE:
-//	- Remote direct nacos server need access on http://{svr}:8848/nacos
-//	- Nginx proxy vip server need access on http://{svr}:3608/nacos
+//   - Remote direct nacos server need access on http://{svr}:8848/nacos
+//   - Nginx proxy vip server need access on http://{svr}:3608/nacos
 func genClientParam(ns, svr string) vo.NacosClientParam {
 	sc := []constant.ServerConfig{
 		{Scheme: "http", ContextPath: "/nacos", IpAddr: svr, Port: 8848},
