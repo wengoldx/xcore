@@ -28,13 +28,13 @@ import (
 //	DO NOT CHANGE THEME IF YOU KNOWE HOW TO CHANGE IT!
 const (
 	_swagger_json_file = "./swagger/swagger.json"
-	_key_paths         = "paths"
-	_key_method_get    = "get"
-	_key_method_post   = "post"
-	_key_summary       = "summary"
-	_key_group_tags    = "tags"
-	_key_group_name    = "name"
-	_key_group_desc    = "description"
+	_key_paths         = "paths"       // ROUTER KEY.
+	_key_method_get    = "get"         // ROUTER KEY.
+	_key_method_post   = "post"        // ROUTER KEY.
+	_key_summary       = "summary"     // ROUTER KEY.
+	_key_tags          = "tags"        // ROUTER & GROUP KEY.
+	_key_name          = "name"        // GROUP KEY.
+	_key_desc          = "description" // GROUP KEY.
 )
 
 // A router informations
@@ -219,7 +219,7 @@ func loadSwaggerRouters() (*Routers, error) {
 
 			// parse beego controller group name.
 			method := mvs.(map[string]any)
-			if gps, ok := method[_key_group_tags]; ok && gps != nil {
+			if gps, ok := method[_key_tags]; ok && gps != nil {
 				groups := reflect.ValueOf(gps)
 				router.Group = groups.Index(0).Interface().(string)
 			}
@@ -236,7 +236,7 @@ func loadSwaggerRouters() (*Routers, error) {
 	}
 
 	// fetch routers from 'tags' field values.
-	if gps, ok := routers[_key_group_tags]; ok && gps != nil {
+	if gps, ok := routers[_key_tags]; ok && gps != nil {
 		groups := gps.([]any) // parse all group array.
 
 		for _, group := range groups {
@@ -244,12 +244,12 @@ func loadSwaggerRouters() (*Routers, error) {
 			gp := &Group{}
 
 			// parse group name value.
-			if gpn, ok := t[_key_group_name]; ok && gpn != nil {
+			if gpn, ok := t[_key_name]; ok && gpn != nil {
 				gp.Name = gpn.(string)
 			}
 
 			// parse group english description.
-			if gpd, ok := t[_key_group_desc]; ok && gpd != nil {
+			if gpd, ok := t[_key_desc]; ok && gpd != nil {
 				gp.EnDesc = strings.TrimRight(gpd.(string), "\n")
 				if end := strings.Index(gp.EnDesc, "\n"); end != -1 {
 					gp.EnDesc = gp.EnDesc[:end]
