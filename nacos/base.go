@@ -262,7 +262,9 @@ func (mc *MetaConfig) UploadRouters() error {
 	if routers, err := utils.UpdateRouters(nrouters); err == nil {
 		if err = mc.PushConfig(DID_API_ROUTERS, routers); err != nil {
 			naclog.E("Push swagger routers, err:", err)
+			return err
 		}
+		naclog.I("Pushed swagger routers!")
 	}
 	return nil
 }
