@@ -99,7 +99,7 @@ type AccConfs struct {
 
 	// Email sender service
 	Email struct {
-		Smtps  map[string]Smtp   `json:"smtps"`  // Mail smtp server config for send mail.
+		Smtps  ESmtps            `json:"smtps"`  // Mail smtp server config for send mail.
 		Serves map[string]EMails `json:"serves"` // Mail mappings of services.[serve:[tag:{user:"", pwd:""}]]
 
 		// Deprecated: Mail proxy server host address.
@@ -126,8 +126,8 @@ type AccConfs struct {
 	} `json:"secure"`
 }
 
-// Nacos config for email senders of target server.
-type EMails map[string]Sender
+type EMails map[string]Sender // Nacos config for email senders mapping.
+type ESmtps map[string]Smtp   // Nacos config for email smtp servers mapping.
 
 // Nacos config for mail sender account settings.
 type Sender struct {

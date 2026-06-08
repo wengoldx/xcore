@@ -63,4 +63,7 @@ func TestParseConfig(t *testing.T) {
 				"acc:", sender.User, "pwd:", sender.Pwd)
 		}
 	}
+
+	senders := ac.Email.Serves["myserver-1"]
+	fmt.Println("Senders:", senders)
 }
