@@ -385,23 +385,7 @@ func (mc *MetaConfig) parseConfigs(data string) {
 	}
 	mc.Conf = conf
 	naclog.D("Updated Ass Configs!")
-
-	// emails := EMails{make(map[string]Sender)}
-	// for serve, values := range conf.Email.Serves {
-	// 	senders, ok := values.(map[string]any)
-	// 	if ok {
-	// 		for tag, sender := range senders {
-	// 			fmt.Println("Sender:", tag, "sender:", sender)
-	// 			sm := sender.(map[string]any)
-
-	// 			user := sm["user"].(string)
-	// 			pwd := sm["pwd"].(string)
-	// 			fmt.Println("acc:", user, "pwd:", pwd)
-	// 		}
-	// 	} else {
-	// 		fmt.Println("Invalid!")
-	// 	}
-	// }
+	// FIXME: See TestParseConfig() for parse emails.
 }
 
 // Parse OTA infos when project register DID_OTA_BUILDS change event
