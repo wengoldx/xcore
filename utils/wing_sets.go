@@ -172,7 +172,7 @@ func (s *Sets[T]) Fetch(scaning func(v T) bool) {
 
 // Fetch the given values and remove the items which not contained in sets.
 //
-//	utils.NewSets(1, 2, 3).Filters(2, 3, 6) // remain [2, 3]
+//	utils.NewSets(1, 2, 3).Filters(2, 3, 6) // remain overlap results: [2, 3]
 func (s *Sets[T]) Filters(values ...T) []T {
 	valids := []T{}
 	for _, ov := range values {

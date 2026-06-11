@@ -61,3 +61,13 @@ func TestUTimeValid(t *testing.T) {
 	fmt.Println("Valid UTime:", valid.ToString())
 	fmt.Println("Check result:", valid.IsValid())
 }
+
+func TestFormatPrice(t *testing.T) {
+	prices := []int64{
+		-1, 0, 5, 10, 12, 30,
+		123, 1200, 1204, 1234500, 12345678, 12345678900,
+	}
+	for _, price := range prices {
+		fmt.Println(price, "->", FormatPrice(price))
+	}
+}

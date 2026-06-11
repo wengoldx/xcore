@@ -45,7 +45,7 @@ func Try(do func(), catcher func(error), finaly ...func()) {
 // Standardy build-in types of golang.
 type BuildIn interface {
 	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 |
-	float32 | float64 | bool | string | any
+		float32 | float64 | bool | string | any
 }
 
 // Return the postive value when condition is true, or return negative value.
@@ -84,7 +84,7 @@ func PtrValue[T any](ptr *T) T {
 	if ptr != nil {
 		return *ptr
 	}
-	var def T;
+	var def T
 	return def
 }
 
@@ -100,7 +100,7 @@ func ToAnys[T BuildIn](values []T) []any {
 }
 
 // Translate strict build-in types values to strings array, it will
-// auto append '' when values is string type like '12345'.
+// auto append ” when values is string type like '12345'.
 //
 //	See utils.BuildIn for more types defined informations.
 func ToStrings[T BuildIn](values []T) []string {
@@ -108,7 +108,7 @@ func ToStrings[T BuildIn](values []T) []string {
 	for _, value := range values {
 		switch vt := any(value).(type) {
 		case string:
-			vs = append(vs, "'"+ vt+"'") // as '123abc'
+			vs = append(vs, "'"+vt+"'") // as '123abc'
 		default:
 			vs = append(vs, fmt.Sprintf("%v", value))
 		}
@@ -135,30 +135,30 @@ func ToJson[T any](src string, obj *T) *T {
 }
 
 // Join the strict build-in types values as string like "1,2,3",
-// "true,false", "4.5,6.78", "'abc','bce'" and so on, then append 
+// "true,false", "4.5,6.78", "'abc','bce'" and so on, then append
 // the joined string into the query which set by caller.
 //
 // 1. Usage for number values as:
 //
-//	- values: []int64{1, 2, 3}
-//	- query : "SELECT * FROM tablename WHERE id IN (%s)"
-//	- -> The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
+//   - values: []int64{1, 2, 3}
+//   - query : "SELECT * FROM tablename WHERE id IN (%s)"
+//   - -> The result is "SELECT * FROM tablename WHERE id IN (1,2,3)".
 //
 // 2. Usage for string values as:
 //
-//	- values: []string{"123", "abc", "hello"}
-//	- query : "SELECT * FROM tablename WHERE tag IN (%s)"
-//	- -> The result is "SELECT * FROM tablename WHERE tag IN ('123','abc','hello')".
+//   - values: []string{"123", "abc", "hello"}
+//   - query : "SELECT * FROM tablename WHERE tag IN (%s)"
+//   - -> The result is "SELECT * FROM tablename WHERE tag IN ('123','abc','hello')".
 //
 // 3. Usage for none query as:
 //
-//	- values: []string{"123", "abc", "hello"}
-//	- -> The result is "'123','abc','hello'".
+//   - values: []string{"123", "abc", "hello"}
+//   - -> The result is "'123','abc','hello'".
 //
 // Other more usages support by change the values type to defferent one.
 //
 //	See utils.BuildIn for more types defined informations.
-func Joins[T BuildIn] (values []T, query ...string) string {
+func Joins[T BuildIn](values []T, query ...string) string {
 	vs := ToStrings(values)
 	if len(vs) > 0 {
 		// Append values into none-empty query string
@@ -190,6 +190,9 @@ func Clamp[T cmp.Ordered](num T, minmum T, maximum T) T {
 }
 
 // Check the given list whether contain the item value.
+//
+//	true : 'item' is one of 'list' array item.
+//	false: 'item' not in 'list' array.
 func Contain[T comparable](list []T, item T) bool {
 	for _, v := range list {
 		if v == item {
@@ -200,11 +203,19 @@ func Contain[T comparable](list []T, item T) bool {
 }
 
 // Check the given items whether all contains in totals.
+//
+//	true : all 'items' values are contains in 'totals' array.
+//	false: anyone 'items' values not in 'totals' array.
 func Contains[T any](totals []T, items []T) bool {
 	return NewSets(totals...).Contain(items...)
 }
 
 // Remove the invalid values from items which not exist in totals.
+//
+//	totals := []int64{1,2,3,4,5,6,7}
+//	items  := []int64{3,7,8,10}
+//	rst := utils.Filters(totals, items)
+//	// return overlay result: rst = {3,7}
 func Filters[T any](totals []T, items []T) []T {
 	if len(totals) == 0 || len(items) == 0 {
 		return []T{}
@@ -213,6 +224,11 @@ func Filters[T any](totals []T, items []T) []T {
 }
 
 // Remove the invalid values from totals array.
+//
+//	totals   := []int64{1,2,3,4,5,6,7}
+//	invalids := []int64{3,7,8,10}
+//	rst := utils.Valids(totals, invalids)
+//	// return result: rst = {1,2,4,5,6}
 func Valids[T any](totals []T, invalids []T) []T {
 	if len(totals) == 0 || len(invalids) == 0 {
 		return totals
@@ -221,6 +237,9 @@ func Valids[T any](totals []T, invalids []T) []T {
 }
 
 // Check the given items whether exist anyone in totals.
+//
+//	true : anyone 'items' values in 'totals' array.
+//	false: all 'items' values are not in 'totals' array.
 func Exists[T any](totals []T, items []T) bool {
 	return NewSets(totals...).Exist(items...)
 }
@@ -230,12 +249,28 @@ func Distinct[T any](src []T) []T {
 	return NewSets(src...).Array()
 }
 
-// Remove empty string, it maybe return empty result array.
-func TrimEmpty(src []string) []string {
-	dst := []string{}
-	for _, str := range src {
-		if str != "" {
-			dst = append(dst, str)
+// Remove empty string, 0 number, nil struct from array,
+// it maybe return empty result array.
+//
+//	["123", "", "234"] => ["123", "234"]
+//	[1, 2, 0, 4, 5]    => [1, 2, 4, 5]
+//	[1.2, 0, 4.5]      => [1.2, 4.5]
+//	[s1, nil, s2, s3]  => [s1, s2, s3]
+func TrimEmpty[T any](src []T) []T {
+	dst := []T{}
+	for _, value := range src {
+		valid := true
+		switch vt := any(value).(type) {
+		case string:
+			valid = vt != ""
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+			valid = vt != 0
+		default:
+			valid = vt != nil
+		}
+
+		if valid {
+			dst = append(dst, value)
 		}
 	}
 	return dst
@@ -377,7 +412,7 @@ func SplitTrim(src, sub string) []string {
 //	utils.SplitAfterTrim(str, "/") // output []
 //
 // # WARNING:
-//	- DO NOT contain space chars in the sub string!
+//   - DO NOT contain space chars in the sub string!
 func SplitAfterTrim(src, sub string) []string {
 	src = strings.ReplaceAll(src, " ", "")
 	if !strings.HasSuffix(src, sub) {
@@ -425,6 +460,31 @@ func GetSortKey(str string) string {
 		}
 	}
 	return sortKey
+}
+
+// Format price to string as '0', '9,898', '9,758.05', '9,758.5'.
+func FormatPrice(price int64) string {
+	if price <= 0 {
+		return "0"
+	}
+
+	out, fen := "", price%100
+	if fen > 0 {
+		out = fmt.Sprintf(".%02d", fen)   // '.50', '.05'
+		out = strings.TrimRight(out, "0") // '.5',  '.05'
+	}
+
+	if price >= 100 {
+		for first, y := true, price/100; y > 0; y = y / 1000 {
+			separator := Condition(first, "", ",")
+			out = fmt.Sprintf("%03d%s", (y%1000), separator) + out
+			first = false
+		}
+		out = strings.TrimLeft(out, "0")
+	} else if out != "" {
+		out = "0" + out // '0.5', '0.05'
+	}
+	return out
 }
 
 // Indicate given object if the target type.
