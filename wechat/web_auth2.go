@@ -114,16 +114,16 @@ type WxIFAgent struct {
 	IsWxApp   bool   `json:"isapp"`     // Indicate wechat app or not, true is app
 }
 
-// WxToken wechat access and refresh tokens
+// Wechat access and refresh tokens.
 type WxToken struct {
-	AccessToken  string `json:"access_token"`
-	Expires      int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-	OpenID       string `json:"openid"`
-	Scope        string `json:"scope"`
+	AccessToken  string `json:"access_token"`  // Wechat app login access token.
+	Expires      int    `json:"expires_in"`    // Access token expire time.
+	RefreshToken string `json:"refresh_token"` // Refreshed token.
+	OpenID       string `json:"openid"`        // Wechat account openid.
+	Scope        string `json:"scope"`         // Requesnt scope string.
 }
 
-// WxUserInfo wechat user informations
+// Wechat user informations.
 type WxUserInfo struct {
 	OpenID     string   `json:"openid"`
 	Nickname   string   `json:"nickname"`
@@ -136,10 +136,17 @@ type WxUserInfo struct {
 	UnionID    string   `json:"unionid"`
 }
 
-// WxResult request result return from server
+// Request result return from server.
 type WxResult struct {
 	ErrCode int    `json:"errcode"`
 	Message string `json:"errmsg"`
+}
+
+// Wechat app id and secure datas.
+type WxSecret struct {
+	AppID     string `json:"appid"`      // Wechat app id as 'APPID'.
+	Secret    int    `json:"secret"`     // Wechat app secret as 'APPSECRET'.
+	GrantType string `json:"grant_type"` // Grant type, maybe fixed 'client_credential'.
 }
 
 const (
