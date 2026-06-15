@@ -114,46 +114,6 @@ type WxIFAgent struct {
 	IsWxApp   bool   `json:"isapp"`     // Indicate wechat app or not, true is app
 }
 
-// Wechat access and refresh tokens.
-type WxToken struct {
-	AccessToken  string `json:"access_token"`  // Wechat app login access token.
-	Expires      int    `json:"expires_in"`    // Access token expire time.
-	RefreshToken string `json:"refresh_token"` // Refreshed token.
-	OpenID       string `json:"openid"`        // Wechat account openid.
-	Scope        string `json:"scope"`         // Requesnt scope string.
-}
-
-// Wechat user informations.
-type WxUserInfo struct {
-	OpenID     string   `json:"openid"`
-	Nickname   string   `json:"nickname"`
-	Sex        int      `json:"sex"`
-	Province   string   `json:"province"`
-	City       string   `json:"city"`
-	Country    string   `json:"country"`
-	Headimgurl string   `json:"headimgurl"`
-	Privilege  []string `json:"privilege"`
-	UnionID    string   `json:"unionid"`
-}
-
-// Request result return from server.
-type WxResult struct {
-	ErrCode int    `json:"errcode"`
-	Message string `json:"errmsg"`
-}
-
-// Wechat app id and secure datas.
-type WxSecret struct {
-	AppID     string `json:"appid"`      // Wechat app id as 'APPID'.
-	Secret    int    `json:"secret"`     // Wechat app secret as 'APPSECRET'.
-	GrantType string `json:"grant_type"` // Grant type, maybe fixed 'client_credential'.
-}
-
-const (
-	wxauth2OpenUrlDomain = "https://open.weixin.qq.com"
-	wxauth2ApisUrlDomain = "https://api.weixin.qq.com"
-)
-
 // `Step 1` : Bind redirect url and return wechat url to get request code
 func (w *WxIFAgent) ToWxCodeUrl(redirecturl string, state ...string) string {
 	codeurl := wxauth2OpenUrlDomain +
