@@ -45,6 +45,8 @@ type AccClient interface {
 	UnbindWechat(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
 	// Return account request token by exist user uuid (only for IFSC).
 	GetToken(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Token, error)
+	// Return account primary email, maybe empty when not bund any email.
+	GetEmail(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Email, error)
 	// Return account emails by given uuids.
 	GetAccEmails(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*IDEMails, error)
 	// Return account simple profiles.
@@ -53,6 +55,8 @@ type AccClient interface {
 	GetContact(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Contact, error)
 	// Return account avatars by given uuids.
 	GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Avatars, error)
+	// Return wechat api access token.
+	GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*Token, error)
 	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(ctx context.Context, in *SKeys, opts ...grpc.CallOption) (*Avatars, error)
 	// Delete indicated account by given uuid.
@@ -196,6 +200,15 @@ func (c *accClient) GetToken(ctx context.Context, in *UUID, opts ...grpc.CallOpt
 	return out, nil
 }
 
+func (c *accClient) GetEmail(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Email, error) {
+	out := new(Email)
+	err := c.cc.Invoke(ctx, "/proto.Acc/GetEmail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accClient) GetAccEmails(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*IDEMails, error) {
 	out := new(IDEMails)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetAccEmails", in, out, opts...)
@@ -226,6 +239,15 @@ func (c *accClient) GetContact(ctx context.Context, in *UUID, opts ...grpc.CallO
 func (c *accClient) GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Avatars, error) {
 	out := new(Avatars)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetAvatars", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accClient) GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*Token, error) {
+	out := new(Token)
+	err := c.cc.Invoke(ctx, "/proto.Acc/GetWxToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,6 +434,8 @@ type AccServer interface {
 	UnbindWechat(context.Context, *UUID) (*AEmpty, error)
 	// Return account request token by exist user uuid (only for IFSC).
 	GetToken(context.Context, *UUID) (*Token, error)
+	// Return account primary email, maybe empty when not bund any email.
+	GetEmail(context.Context, *UUID) (*Email, error)
 	// Return account emails by given uuids.
 	GetAccEmails(context.Context, *UIDS) (*IDEMails, error)
 	// Return account simple profiles.
@@ -420,6 +444,8 @@ type AccServer interface {
 	GetContact(context.Context, *UUID) (*Contact, error)
 	// Return account avatars by given uuids.
 	GetAvatars(context.Context, *UIDS) (*Avatars, error)
+	// Return wechat api access token.
+	GetWxToken(context.Context, *App) (*Token, error)
 	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(context.Context, *SKeys) (*Avatars, error)
 	// Delete indicated account by given uuid.
@@ -494,6 +520,9 @@ func (UnimplementedAccServer) UnbindWechat(context.Context, *UUID) (*AEmpty, err
 func (UnimplementedAccServer) GetToken(context.Context, *UUID) (*Token, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetToken not implemented")
 }
+func (UnimplementedAccServer) GetEmail(context.Context, *UUID) (*Email, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEmail not implemented")
+}
 func (UnimplementedAccServer) GetAccEmails(context.Context, *UIDS) (*IDEMails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccEmails not implemented")
 }
@@ -505,6 +534,9 @@ func (UnimplementedAccServer) GetContact(context.Context, *UUID) (*Contact, erro
 }
 func (UnimplementedAccServer) GetAvatars(context.Context, *UIDS) (*Avatars, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvatars not implemented")
+}
+func (UnimplementedAccServer) GetWxToken(context.Context, *App) (*Token, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWxToken not implemented")
 }
 func (UnimplementedAccServer) SearchAvatars(context.Context, *SKeys) (*Avatars, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchAvatars not implemented")
@@ -768,6 +800,24 @@ func _Acc_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Acc_GetEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UUID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).GetEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/GetEmail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).GetEmail(ctx, req.(*UUID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Acc_GetAccEmails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UIDS)
 	if err := dec(in); err != nil {
@@ -836,6 +886,24 @@ func _Acc_GetAvatars_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccServer).GetAvatars(ctx, req.(*UIDS))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Acc_GetWxToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(App)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccServer).GetWxToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Acc/GetWxToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccServer).GetWxToken(ctx, req.(*App))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1198,6 +1266,10 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Acc_GetToken_Handler,
 		},
 		{
+			MethodName: "GetEmail",
+			Handler:    _Acc_GetEmail_Handler,
+		},
+		{
 			MethodName: "GetAccEmails",
 			Handler:    _Acc_GetAccEmails_Handler,
 		},
@@ -1212,6 +1284,10 @@ var Acc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAvatars",
 			Handler:    _Acc_GetAvatars_Handler,
+		},
+		{
+			MethodName: "GetWxToken",
+			Handler:    _Acc_GetWxToken_Handler,
 		},
 		{
 			MethodName: "SearchAvatars",

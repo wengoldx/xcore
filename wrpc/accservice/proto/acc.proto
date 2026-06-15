@@ -43,6 +43,9 @@ service Acc {
   // Return account request token by exist user uuid (only for IFSC).
   rpc GetToken(UUID) returns (Token);
 
+  // Return account primary email, maybe empty when not bund any email.
+  rpc GetEmail(UUID) returns (Email);
+
   // Return account emails by given uuids.
   rpc GetAccEmails(UIDS) returns (IDEMails);
 
@@ -55,6 +58,9 @@ service Acc {
   // Return account avatars by given uuids.
   rpc GetAvatars(UIDS) returns (Avatars);
   
+  // Return wechat api access token.
+  rpc GetWxToken(App) returns (Token);
+
   // Return account avatars by given uuids and search conditions.
   rpc SearchAvatars(SKeys) returns (Avatars);
 
@@ -128,6 +134,11 @@ message UUID {
 
 message UIDS {
   repeated string uids = 1;
+}
+
+
+message App {
+  string app = 1; // wechat app name, such as 'gym', 'mall'.
 }
 
 message SKeys {
