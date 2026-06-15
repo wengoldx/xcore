@@ -499,3 +499,33 @@ func FormatPrice(price int64) string {
 func InstanceOf(object any, tagtype reflect.Type) bool {
 	return reflect.TypeOf(object) == tagtype
 }
+
+// Convert reflect.Value to array.
+//
+//	strs := []string{"123", "abc"}
+//	rv := reflect.ValueOf(strs)
+//	arr := utils.RefToArray(rv, []string{})
+//	// string array : ["123", "abc"]
+//
+//	objs := []*MyStruct{obj1, obj2}
+//	rv := reflect.ValueOf(objs)
+//	arr := utils.RefToArray(rv, []*MyStruct{})
+//	// object array : [obj1, obj2]
+func RefToArray[T any](rv reflect.Value, def []T) []T {
+	if rv.Kind() != reflect.Slice {
+		return def
+	}
+
+	result, rl := []T{}, rv.Len()
+	for i := 0; i < rl; i++ {
+		elem := rv.Index(i)
+		if et, ok := elem.Interface().(T); ok {
+			result = append(result, et)
+		}
+	}
+	return result
+}
+
+func RefToInts(rv reflect.Value) []int       { return RefToArray(rv, []int{}) }
+func RefToInt64s(rv reflect.Value) []int64   { return RefToArray(rv, []int64{}) }
+func RefToStrings(rv reflect.Value) []string { return RefToArray(rv, []string{}) }

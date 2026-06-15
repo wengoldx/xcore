@@ -13,7 +13,9 @@ package utils
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
+	"time"
 
 	xt "github.com/wengoldx/xcore/utils/xtest"
 )
@@ -69,5 +71,18 @@ func TestFormatPrice(t *testing.T) {
 	}
 	for _, price := range prices {
 		fmt.Println(price, "->", FormatPrice(price))
+	}
+}
+
+func TestRefToArray(t *testing.T) {
+	args := []any{
+		"123",
+		[]string{"12345", "qwer", "qaz"},
+		time.Now(),
+	}
+	for idx, arg := range args {
+		rv := reflect.ValueOf(arg)
+		outs := RefToArray(rv, []string{"default"})
+		fmt.Println("[", idx, "] Outs:", outs)
 	}
 }
