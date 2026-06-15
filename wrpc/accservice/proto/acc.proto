@@ -59,7 +59,7 @@ service Acc {
   rpc GetAvatars(UIDS) returns (Avatars);
   
   // Return wechat api access token.
-  rpc GetWxToken(App) returns (Token);
+  rpc GetWxToken(App) returns (AToken);
 
   // Return account avatars by given uuids and search conditions.
   rpc SearchAvatars(SKeys) returns (Avatars);
@@ -136,9 +136,13 @@ message UIDS {
   repeated string uids = 1;
 }
 
-
 message App {
   string app = 1; // wechat app name, such as 'gym', 'mall'.
+}
+
+message AToken {
+  string token = 1; // access token.
+  int64  expire =2; // expire duration seconds, max 2 hours.
 }
 
 message SKeys {

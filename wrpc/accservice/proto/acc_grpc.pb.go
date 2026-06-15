@@ -56,7 +56,7 @@ type AccClient interface {
 	// Return account avatars by given uuids.
 	GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Avatars, error)
 	// Return wechat api access token.
-	GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*Token, error)
+	GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*AToken, error)
 	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(ctx context.Context, in *SKeys, opts ...grpc.CallOption) (*Avatars, error)
 	// Delete indicated account by given uuid.
@@ -245,8 +245,8 @@ func (c *accClient) GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *accClient) GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*Token, error) {
-	out := new(Token)
+func (c *accClient) GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*AToken, error) {
+	out := new(AToken)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetWxToken", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -445,7 +445,7 @@ type AccServer interface {
 	// Return account avatars by given uuids.
 	GetAvatars(context.Context, *UIDS) (*Avatars, error)
 	// Return wechat api access token.
-	GetWxToken(context.Context, *App) (*Token, error)
+	GetWxToken(context.Context, *App) (*AToken, error)
 	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(context.Context, *SKeys) (*Avatars, error)
 	// Delete indicated account by given uuid.
@@ -535,7 +535,7 @@ func (UnimplementedAccServer) GetContact(context.Context, *UUID) (*Contact, erro
 func (UnimplementedAccServer) GetAvatars(context.Context, *UIDS) (*Avatars, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAvatars not implemented")
 }
-func (UnimplementedAccServer) GetWxToken(context.Context, *App) (*Token, error) {
+func (UnimplementedAccServer) GetWxToken(context.Context, *App) (*AToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetWxToken not implemented")
 }
 func (UnimplementedAccServer) SearchAvatars(context.Context, *SKeys) (*Avatars, error) {
