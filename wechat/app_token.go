@@ -23,8 +23,22 @@ import (
 // - [Wechat app login API](https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/login/auth.code2Session.html)
 func (w *WxIFAgent) ToWxAppTokenUrl(requestcode string) string {
 	tokenurl := wxauth2ApisUrlDomain +
-		"/jscode2session?appid=APPID&secret=SECRET&js_code=CODE&grant_type=authorization_code"
+		"/sns/jscode2session?appid=APPID&secret=SECRET&js_code=CODE&grant_type=authorization_code"
 	tokenurl = strings.Replace(tokenurl, "APPID", w.AppID, -1)
 	tokenurl = strings.Replace(tokenurl, "SECRET", w.AppSecret, -1)
 	return strings.Replace(tokenurl, "CODE", requestcode, -1)
+}
+
+// Bind target app id and secret and return request url to get global api access token.
+//
+// see more links
+//
+// - [getAccessToke](https://developers.weixin.qq.com/miniprogram/dev/server/API/mp-access-token/api_getaccesstoken.html)
+// - [Access Token Usage](https://developers.weixin.qq.com/doc/oplatform/developers/dev/AccessToken.html)
+func (w *WxIFAgent) ToWxAccessTokenUrl() string {
+	tokenurl := wxauth2ApisUrlDomain +
+		"cgi-bin/token?appid=AppID&secret=AppSecret&grant_type=client_credential"
+	tokenurl = strings.Replace(tokenurl, "APPID", w.AppID, -1)
+	tokenurl = strings.Replace(tokenurl, "SECRET", w.AppSecret, -1)
+	return tokenurl
 }
