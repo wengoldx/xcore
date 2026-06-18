@@ -65,7 +65,7 @@ func AuthFunc(token string, ignore ...bool) SetRequest {
 // Handle http GET method without parse any response datas.
 //
 // # WARNING:
-//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
+//   - The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
 func GEmit(tagurl string, params ...any) (e error) {
 	_, e = handleGet(tagurl, false, params...)
 	return
@@ -74,7 +74,7 @@ func GEmit(tagurl string, params ...any) (e error) {
 // Handle http POST method without parse any response datas.
 //
 // # WARNING:
-//	- The params must url.Values typed datas when contentType set as ContentTypeForm!
+//   - The params must url.Values typed datas when contentType set as ContentTypeForm!
 func PEmit(tagurl string, params any, contentType ...string) (e error) {
 	_, e = handlePost(tagurl, params, false, contentType...)
 	return
@@ -83,9 +83,9 @@ func PEmit(tagurl string, params any, contentType ...string) (e error) {
 // Handle http GET method and return response datas.
 //
 // # WARNING:
-//	- The method only supput []byte, string, struct, []struct out data types.
-//	- The golang build in types array will case unmarshal error, such as []int, []string.
-//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
+//   - The method only supput []byte, string, struct, []struct out data types.
+//   - The golang build in types array will case unmarshal error, such as []int, []string.
+//   - The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
 //
 // # USAGE:
 //
@@ -102,20 +102,25 @@ func PEmit(tagurl string, params any, contentType ...string) (e error) {
 // Use GEmit() for execute GET http request without response data.
 func Get[T any](tagurl string, out *T, params ...any) error {
 	resp, err := handleGet(tagurl, true, params...)
-	if err != nil || out == nil{
+	if err != nil || out == nil {
 		return err
 	}
 	return parseResp(resp, out)
 }
 
-// Handle http POST method and return original response bytes,
-// the content-type header can be set as httputil.ContentTypeJson, 
-// httputil.ContentTypeForm, httputil.ContentTypeFile or others which you want.
+// Handle http POST method and return original response bytes, the content-type
+// header can be set as httputil.ContentTypeJson, httputil.ContentTypeForm,
+// httputil.ContentTypeFile or others which you want.
+//
+// And the 'params' enable set as nil, string or struct object.
+//   - 1. params = nil     : not create payload reader when execute POST request.
+//   - 2. params is string : not marshal json string, derectly use params as payload.
+//   - 3. params is struct : marshal params to json string as payload.
 //
 // # WARNING:
-//	- The method only supput []byte, string, struct, []struct out data types.
-//	- The golang build in types array will case unmarshal error, such as []int, []string.
-//	- The params must url.Values typed datas when contentType set as ContentTypeForm!
+//   - The method only support []byte, string, struct, []struct out data types.
+//   - The golang build in types array will case unmarshal error, such as []int, []string.
+//   - The params must url.Values typed datas when contentType set as ContentTypeForm!
 //
 // # USAGE:
 //
@@ -131,13 +136,19 @@ func Get[T any](tagurl string, out *T, params ...any) error {
 //	var outstruct MyStruct // get srtuct response.
 //	err := httputil.Post(tagurl, params, &outstruct)
 //
+//	var outstruct MyStruct // none payload.
+//	err := httputil.Post(tagurl, nil, &outstruct)
+//
+//	var outstruct MyStruct // use "{}" as payload.
+//	err := httputil.Post(tagurl, "{}", &outstruct)
+//
 // Use PEmit() for execute GET http request without response data.
 func Post[T any](tagurl string, params any, out *T, contentType ...string) error {
 	isparse := out != nil
 	resp, err := handlePost(tagurl, params, isparse, contentType...)
-	if err != nil || !isparse{
+	if err != nil || !isparse {
 		return err
-	} 
+	}
 	return parseResp(resp, out)
 }
 
@@ -197,14 +208,14 @@ func CPEmit(tagurl string, setRequestFunc SetRequest, datas ...any) error {
 // TLS verfiy of https auth.
 //
 // # WARNING:
-//	- The method only supput []byte, string, struct, []struct out data types.
-//	- The golang build in types array will case unmarshal error, such as []int, []string.
-//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
+//   - The method only supput []byte, string, struct, []struct out data types.
+//   - The golang build in types array will case unmarshal error, such as []int, []string.
+//   - The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
 //
 // # USAGE:
 //
 //	// USAGE 1. get valid out datas.
-//	var resp MyStruct        
+//	var resp MyStruct
 //	err := httpx.ClientGet(tagurl, func(req *http.Request) (bool, error) {
 //		req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 //		req.SetBasicAuth("username", "password") // set auther header
@@ -240,8 +251,8 @@ func ClientGet[T any](tagurl string, setRequestFunc SetRequest, out *T, params .
 // TLS verfiy of https auth.
 //
 // # WARNING:
-//	- The method only supput []byte, string, struct, []struct out data types.
-//	- The golang build in types array will case unmarshal error, such as []int, []string.
+//   - The method only supput []byte, string, struct, []struct out data types.
+//   - The golang build in types array will case unmarshal error, such as []int, []string.
 //
 // # USAGE:
 //
@@ -304,7 +315,7 @@ func readResponse(resp *http.Response, parse bool) ([]byte, error) {
 		if err != nil {
 			logger.E("Read response, err:", err)
 			return nil, err
-		} 
+		}
 		return body, nil
 	}
 	return nil, nil // not parse!
@@ -320,15 +331,29 @@ func unmarshalResponse(body []byte, out any) error {
 }
 
 // Post http request with json params.
+//
+// The params maybe nil, string or struct object.
+//   - 1. params = nil     : not create payload reader when execute POST request.
+//   - 2. params is string : not marshal json string.
+//   - 3. params is struct : marshal payload data as json string.
 func postJson(tagurl string, params any, parse bool) ([]byte, error) {
-	payload, err := json.Marshal(params)
-	if err != nil {
-		logger.E("Marshal post datas, err:", err)
-		return nil, err
+	var bodyreader *bytes.Reader
+	if params != nil {
+		switch vt := params.(type) {
+		case string:
+			bodyreader = bytes.NewReader([]byte(vt))
+		default:
+			payload, err := json.Marshal(params)
+			if err != nil {
+				logger.E("Marshal post datas, err:", err)
+				return nil, err
+			}
+			bodyreader = bytes.NewReader(payload)
+		}
 	}
 
 	ct := ContentTypeJson
-	resp, err := http.Post(tagurl, ct, bytes.NewReader(payload))
+	resp, err := http.Post(tagurl, ct, bodyreader)
 	if err != nil {
 		logger.E("Http post, err:", err)
 		return nil, err
@@ -351,7 +376,7 @@ func postForm(tagurl string, params url.Values, parse bool) ([]byte, error) {
 }
 
 // Encode text url to raw url.
-func encodeRawUrl(tagurl string, params ...any) string{
+func encodeRawUrl(tagurl string, params ...any) string {
 	if len(params) > 0 {
 		tagurl = fmt.Sprintf(tagurl, params...)
 	}
@@ -361,7 +386,7 @@ func encodeRawUrl(tagurl string, params ...any) string{
 // Handle http GET method request and parse response data if required.
 //
 // # WARNING:
-//	- The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
+//   - The tagurl must contain format marks such as '%s', '%d', '%v' when params not empty!
 func handleGet(tagurl string, parse bool, params ...any) ([]byte, error) {
 	rawurl := encodeRawUrl(tagurl, params...)
 	logger.D("Http Get:", rawurl)
@@ -377,7 +402,7 @@ func handleGet(tagurl string, parse bool, params ...any) ([]byte, error) {
 
 // Handle http POST method request and parse response data if required.
 func handlePost(tagurl string, params any, parse bool, contentType ...string) ([]byte, error) {
-	ct :=ContentTypeJson
+	ct := ContentTypeJson
 	if len(contentType) > 0 && contentType[0] != "" {
 		ct = contentType[0]
 	}
@@ -414,7 +439,7 @@ func clientDo[T any](req *http.Request, setRequestFunc SetRequest, out *T) error
 	}
 
 	defer resp.Body.Close()
-	datas, err :=  readResponse(resp, true)
+	datas, err := readResponse(resp, true)
 	if err != nil {
 		return err
 	}
@@ -444,12 +469,12 @@ func execClientDo(req *http.Request, setRequestFunc SetRequest) (*http.Response,
 // Parse the bytes response datas to templete out value.
 //
 // # WARNING:
-//	- The method only supput []byte, string, struct, []struct out data types.
-//	- The golang build in types array will case unmarshal error, such as []int, []string.
+//   - The method only supput []byte, string, struct, []struct out data types.
+//   - The golang build in types array will case unmarshal error, such as []int, []string.
 func parseResp[T any](resp []byte, out *T) error {
 	if out != nil {
 		switch v := any(out).(type) {
-		case *[]byte :
+		case *[]byte:
 			*v = resp
 			return nil
 		case *string:
@@ -465,4 +490,3 @@ func parseResp[T any](resp []byte, out *T) error {
 	}
 	return nil
 }
-
