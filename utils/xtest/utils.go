@@ -73,7 +73,7 @@ func LogE(msg ...any) { fmt.Println(append([]any{"[E]"}, msg...)...) }
 
 // Set 'dev' runmode and fix debug logger.
 func UseDebugLogger() {
-	beego.BConfig.RunMode = "dev"
+	beego.BConfig.RunMode = beego.DEV
 	logs.SetLevel(beego.LevelDebug)
 }
 
@@ -87,8 +87,8 @@ func UseDebugLogger() {
 //	  ...
 //
 // # WARNING:
-//	- DO NOT use beego.BConfig.AppName when unexist app.conf!
-//	- Return empty when ~/conf/.test unexist.
+//   - DO NOT use beego.BConfig.AppName when unexist app.conf!
+//   - Return empty when ~/conf/.test unexist.
 func GetTestEnv(app string) string {
 	length := len(app)
 	if pwd, err := os.Getwd(); err == nil && length > 0 {
@@ -105,8 +105,8 @@ func GetTestEnv(app string) string {
 // Return server root dir: /home/.../{server} on test model.
 //
 // # WARNING:
-//	- Use xt.GetTestEnv() get abstract path and trim conf paths.
-//	- Return empty when ~/conf/.test unexist.
+//   - Use xt.GetTestEnv() get abstract path and trim conf paths.
+//   - Return empty when ~/conf/.test unexist.
 func GetServRoot(app string) string {
 	if test := GetTestEnv(app); test != "" {
 		return strings.TrimSuffix(test, "/conf/.test")

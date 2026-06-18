@@ -12,7 +12,6 @@
 package xtask
 
 import (
-	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/toolbox"
 	"github.com/wengoldx/xcore/logger"
 )
@@ -76,7 +75,7 @@ func AddTask(tname, spec string, f toolbox.TaskFunc) {
 // Create tasks and start them as monitors.
 func StartTasks(monitors []*WTask) {
 	for _, m := range monitors {
-		if m.ForProd && beego.BConfig.RunMode != "prod" {
+		if m.ForProd && !logger.IsRunProd() {
 			logger.W("Filter out task:", m.Name, "on dev mode")
 			continue
 		}

@@ -94,7 +94,7 @@ func RegisterServer() *ServerStub {
 	}
 
 	// Create nacos server stub and setup it
-	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV)
+	ns := utils.Condition(logger.IsRunProd(), NS_PROD, NS_DEV)
 	stub := NewServerStub(ns, svr)
 	if err := stub.Setup(); err != nil {
 		panic(err)
@@ -183,7 +183,7 @@ func NewMetaConfig() *MetaConfig {
 	}
 
 	// Namespace id of meta configs
-	ns := utils.Condition(beego.BConfig.RunMode == "prod", NS_PROD, NS_DEV)
+	ns := utils.Condition(logger.IsRunProd(), NS_PROD, NS_DEV)
 
 	// Create nacos config stub and setup it
 	stub := NewConfigStub(ns, svr)

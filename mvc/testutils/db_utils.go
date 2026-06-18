@@ -23,7 +23,7 @@ import (
 
 // Set 'dev' runmode and fix debug logger.
 func UseDebugLogger() {
-	beego.BConfig.RunMode = "dev"
+	beego.BConfig.RunMode = beego.DEV
 	logs.SetLevel(beego.LevelDebug)
 }
 

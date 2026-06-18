@@ -383,7 +383,7 @@ func (c *WingController) ClientFrom() string {
 
 // Do next action on 'dev' runmode.
 func (c *WingController) RunDevMode(next func()) {
-	if beego.BConfig.RunMode != "dev" {
+	if logger.IsRunProd() {
 		c.E403Denind("Only For Debug!")
 		return
 	}
@@ -392,7 +392,7 @@ func (c *WingController) RunDevMode(next func()) {
 
 // Do next action on 'prod' runmode.
 func (c *WingController) RunProdMode(next func()) {
-	if beego.BConfig.RunMode != "prod" {
+	if !logger.IsRunProd() {
 		c.E403Denind("Only For Release!")
 		return
 	}

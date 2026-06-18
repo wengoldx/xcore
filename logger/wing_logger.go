@@ -37,7 +37,7 @@ var _none_flogger = false
 // init initialize app logger
 //
 // # NOTICE:
-//	- You must config logger params in /conf/app.config file as:
+//   - You must config logger params in /conf/app.config file as:
 //
 // ---
 //
@@ -47,9 +47,9 @@ var _none_flogger = false
 //
 // ---
 //
-//	- The level values range in : [debug, info, warn, error], default is info.
-//	- The maxdays is maximum days to hold logs cache, default is 7 days.
-//	- See mqtt/stub_logger.go to setup mqtt logger to output logs by mqtt chanel.
+//   - The level values range in : [debug, info, warn, error], default is info.
+//   - The maxdays is maximum days to hold logs cache, default is 7 days.
+//   - See mqtt/stub_logger.go to setup mqtt logger to output logs by mqtt chanel.
 func init() {
 	setupFileLogger()
 	logs.SetLogFuncCall(true) // use the default func depth
@@ -118,13 +118,17 @@ func logFormatString(n int, opts ...string) string {
 			}
 		}
 	}
-
 	return strings.Repeat("%v ", n)
+}
+
+// Check current runtime mode whether on 'prod'.
+func IsRunProd() bool {
+	return beego.BConfig.RunMode == beego.PROD
 }
 
 // Close console logger on prod mode and only remain file logger.
 func SetOutputLogger() {
-	if beego.BConfig.RunMode == "prod" && GetLevel() != LevelDebug {
+	if IsRunProd() && GetLevel() != LevelDebug {
 		beego.BeeLogger.DelLogger(logs.AdapterConsole)
 		app := beego.BConfig.AppName
 		if !_none_flogger {

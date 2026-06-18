@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/astaxie/beego"
+	"github.com/wengoldx/xcore/logger"
 	"github.com/wengoldx/xcore/utils"
 )
 
@@ -80,7 +81,7 @@ func LoadOptions(session ...string) Options {
 	opts := DefaultOptions(s)
 
 	// auto append suffix for dev mode.
-	if beego.BConfig.RunMode == "dev" {
+	if !logger.IsRunProd() {
 		s += "-dev"
 	}
 
