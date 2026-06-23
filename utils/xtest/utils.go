@@ -77,39 +77,46 @@ func UseDebugLogger() {
 	logs.SetLevel(beego.LevelDebug)
 }
 
-// Check app whether running on test mode, it just check the .test
-// file whether exist in ~/{app}/conf/ folder.
+// Return test env file abstract path when exist, the file exist status
+// use for indicate current app running on test mode or normal modes.
+//
+// The .test file path fixed in app sub dir: ~/{app}/conf/.test
 //
 //	~/{app}
-//	  |- bin
 //	  |- conf
-//	  |  |- .test  // -> Enable test mode, delete it for disable.
+//	     |- .test  // -> Enable test mode, delete it for disable.
 //	  ...
 //
 // # WARNING:
-//   - DO NOT use beego.BConfig.AppName when unexist app.conf!
+//   - DO NOT use beego.BConfig.AppName as 'app' param when unexist app.conf!
+//   - Call this method in app internal sub dir.
 //   - Return empty when ~/conf/.test unexist.
 func GetTestEnv(app string) string {
-	length := len(app)
-	if pwd, err := os.Getwd(); err == nil && length > 0 {
-		if start := strings.Index(pwd, app); start > 0 {
-			env := pwd[:start+length] + "/conf/.test"
-			if existFile(env) {
-				return env
+	if length := len(app); length > 0 {
+		if dir, err := os.Getwd(); err == nil {
+			if start := strings.Index(dir, app); start > 0 {
+				env := dir[:start+length] + "/conf/.test"
+				if existFile(env) {
+					return env
+				}
 			}
 		}
 	}
 	return ""
 }
 
-// Return server root dir: /home/.../{server} on test model.
+// Return app root dir: /home/.../{app} on test model.
 //
 // # WARNING:
-//   - Use xt.GetTestEnv() get abstract path and trim conf paths.
-//   - Return empty when ~/conf/.test unexist.
+//   - DO NOT use beego.BConfig.AppName as 'app' param when unexist app.conf!
+//   - Call this method in app internal sub dir.
 func GetServRoot(app string) string {
-	if test := GetTestEnv(app); test != "" {
-		return strings.TrimSuffix(test, "/conf/.test")
+	if length := len(app); length > 0 {
+		if pwd, err := os.Getwd(); err == nil {
+			if start := strings.Index(pwd, app); start > 0 {
+				return pwd[:start+length]
+			}
+		}
 	}
 	return ""
 }

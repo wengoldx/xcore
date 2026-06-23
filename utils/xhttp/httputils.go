@@ -406,7 +406,7 @@ func handlePost(tagurl string, params any, parse bool, contentType ...string) ([
 	if len(contentType) > 0 && contentType[0] != "" {
 		ct = contentType[0]
 	}
-	logger.D("Http Post:", tagurl, "ContentType:", ct)
+	// logger.D("Http Post:", tagurl, "ContentType:", ct)
 
 	switch ct {
 	case ContentTypeJson:
