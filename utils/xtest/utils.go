@@ -123,7 +123,7 @@ func GetServRoot(app string) string {
 
 // Return test mode status, the method base on xt.GetTestEnv().
 func IsTestMode(app string) bool {
-	if _test_mode_inited {
+	if !_test_mode_inited {
 		_test_mode_inited = true
 		_test_mode_status = (GetTestEnv(app) != "")
 	}
