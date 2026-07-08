@@ -37,30 +37,23 @@ const (
 	_key_desc          = "description" // GROUP KEY.
 )
 
-// A router informations
+// Controller api router path.
 type Router struct {
-	Router string `json:"router"` // restful router full path start /
-	Method string `json:"method"` // restful router http method, such as GET, POST...
-	Group  string `json:"group"`  // beego controller keyworld
-	EnDesc string `json:"endesc"` // beego controller router summary
-}
-
-// A group informations
-type Group struct {
-	Name   string `json:"group"`  // group name as swagger controller path, like '/v3/acc'
-	EnDesc string `json:"endesc"` // beego controller router summary
+	Router string `json:"router"` // api router full path, like '/debug/token'.
+	Method string `json:"method"` // api router http method, 'GET' or 'POST'.
+	Group  string `json:"group"`  // api router group's tag.
 }
 
 // All routers of one server
 type Routers struct {
-	Groups  []*Group  `json:"groups"`  // groups as swagger controllers
-	Routers []*Router `json:"routers"` // routers parsed from swagger.json file
+	Tags  []string  `json:"tags"`  // server controllers, from 'tags' array of swagger.json.
+	Paths []*Router `json:"paths"` // controller api routers, from 'paths.{router}'
 }
 
 // Parse total routers and update description on chinese for local server routers,
 // then marshal to string for next to push to nacos config server.
 func UpdateRouters(data string) (string, error) {
-	routers, err := loadSwaggerRouters()
+	routers, err := loadSwaggerRouters(_swagger_json_file)
 	if err != nil {
 		logger.E("Load local swagger, err:", err)
 		return "", err
@@ -173,7 +166,6 @@ func UpdateVersion(ver string) {
 //	            }
 //	        }, ...
 //	    },
-//	    "definitions": { ... },
 //	    "tags": [
 //	        {
 //	            "name": "debug",
@@ -181,8 +173,8 @@ func UpdateVersion(ver string) {
 //	        }, ...
 //	    ]
 //	}
-func loadSwaggerRouters() (*Routers, error) {
-	buff, err := os.ReadFile(_swagger_json_file)
+func loadSwaggerRouters(sf string) (*Routers, error) {
+	buff, err := os.ReadFile(sf) // swagger.json file path.
 	if err != nil {
 		logger.E("Load swagger routers, err:", err)
 		return nil, err
@@ -219,46 +211,32 @@ func loadSwaggerRouters() (*Routers, error) {
 
 			// parse beego controller group name.
 			method := mvs.(map[string]any)
-			if gps, ok := method[_key_tags]; ok && gps != nil {
-				groups := reflect.ValueOf(gps)
+			if tags, ok := method[_key_tags]; ok && tags != nil {
+				groups := reflect.ValueOf(tags)
 				router.Group = groups.Index(0).Interface().(string)
 			}
 
-			// parse router path english description.
-			if desc, ok := method[_key_summary]; ok && desc != nil {
-				router.EnDesc = desc.(string)
-			}
-
 			// append the router into routers array.
-			// logger.D("> Parsed ["+router.Method+"]\tpath:", path, "\tdesc:", router.EnDesc)
-			out.Routers = append(out.Routers, router)
+			// logger.D("> Parsed ["+router.Method+"]\tpath:", path, "\tmethod:", router.Group)
+			out.Paths = append(out.Paths, router)
 		}
 	}
 
 	// fetch routers from 'tags' field values.
-	if gps, ok := routers[_key_tags]; ok && gps != nil {
-		groups := gps.([]any) // parse all group array.
+	if tags, ok := routers[_key_tags]; ok && tags != nil {
+		groups := tags.([]any) // parse all group array.
 
 		for _, group := range groups {
-			t := group.(map[string]any)
-			gp := &Group{}
+			tag := group.(map[string]any)
 
 			// parse group name value.
-			if gpn, ok := t[_key_name]; ok && gpn != nil {
-				gp.Name = gpn.(string)
-			}
+			if tn, ok := tag[_key_name]; ok && tn != nil {
+				name := tn.(string)
 
-			// parse group english description.
-			if gpd, ok := t[_key_desc]; ok && gpd != nil {
-				gp.EnDesc = strings.TrimRight(gpd.(string), "\n")
-				if end := strings.Index(gp.EnDesc, "\n"); end != -1 {
-					gp.EnDesc = gp.EnDesc[:end]
-				}
+				// append the tag into tags array.
+				// logger.D("# Parsed group:", name)
+				out.Tags = append(out.Tags, name)
 			}
-
-			// append the group into groups array
-			// logger.D("# Parsed group ["+gp.Name+"] \t desc:", gp.EnDesc)
-			out.Groups = append(out.Groups, gp)
 		}
 	}
 

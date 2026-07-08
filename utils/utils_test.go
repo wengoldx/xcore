@@ -86,3 +86,37 @@ func TestRefToArray(t *testing.T) {
 		fmt.Println("[", idx, "] Outs:", outs)
 	}
 }
+
+func TestLoadSwagger(t *testing.T) {
+	xt.UseDebugLogger()
+
+	sf := "../.test/swagger.json"
+	routers, err := loadSwaggerRouters(sf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(200 * time.Millisecond)
+	fmt.Println("Tags:", routers.Tags)
+	for _, p := range routers.Paths {
+		fmt.Println("Paths:", "["+fmt.Sprintf("% -4s", p.Method)+"]",
+			fmt.Sprintf("% -8s", p.Group), "-", p.Router)
+	}
+}
+
+func TestParseRouters(t *testing.T) {
+	xt.UseDebugLogger()
+
+	rf := "../.test/routers_old.json"
+	data := ReadTextFile(rf)
+
+	routers := parseNacosRouters(data)
+	for serve, rs := range routers {
+		fmt.Println("Server:", serve)
+		fmt.Println("- Tags:", rs.Tags)
+		for _, p := range rs.Paths {
+			fmt.Println("- Paths:", "["+fmt.Sprintf("% -4s", p.Method)+"]",
+				fmt.Sprintf("% -8s", p.Group), "-", p.Router)
+		}
+	}
+}
