@@ -43,7 +43,7 @@ const (
 	passwordHashBytes   = 64 // default password hash length
 )
 
-// For generate uuid string
+// For generate uid string
 var uuidNode *snowflake.Node
 var rander *rand.Rand
 
@@ -53,7 +53,7 @@ var _loop_id = rand.Intn(_max_loop_id)
 // The max loop id value for 6 digit code.
 const _max_loop_id = 1000000
 
-// init uuid generater
+// init uid generater
 func init() {
 	rander = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if uuidNode == nil {
@@ -114,17 +114,17 @@ func CodeToNum(code string, mapping string) int64 {
 	return num
 }
 
-// Create a new uuid in int64
+// Create a new uid in int64
 func NewUID() int64 {
 	return uuidNode.Generate().Int64()
 }
 
-// Create a new uuid in string
+// Create a new uid in string
 func NewSUID() string {
 	return uuidNode.Generate().String()
 }
 
-// Create a random number uuid with specified digits
+// Create a random number uid with specified digits
 func NewRUID(buflen ...int) string {
 	length := passwordHashBytes
 	if len(buflen) > 0 && buflen[0] > 0 {

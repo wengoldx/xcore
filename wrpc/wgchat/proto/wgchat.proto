@@ -17,7 +17,7 @@ message CEmpty {}
 
 // Staff datas for add new one
 message Staff {
-    string uuid = 1;
+    string uid = 1;
     string nickname = 2;
     string headurl = 3;
     string company = 4;
@@ -27,7 +27,7 @@ message Staff {
 
 // Target staff's company and state
 message TagState {
-    string uuid = 1;
+    string uid = 1;
     string company = 2;
     string client = 3; 
     bool status = 4;
@@ -42,7 +42,7 @@ message Status {
 
 // Target company's staff
 message TagStaff {
-    string uuid = 1;
+    string uid = 1;
     string company = 2;
     string client = 3; 
 }

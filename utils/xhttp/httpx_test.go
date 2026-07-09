@@ -39,7 +39,7 @@ type MyStruct struct {
 	OpenID  string `json:"openid"`
 	Token   string `json:"token"`
 	UnionID string `json:"unionid"`
-	UUID    string `json:"uuid"`
+	UID     string `json:"uuid"`
 }
 
 func TestGetStruct(t *testing.T) {
@@ -72,7 +72,7 @@ func TestGetStruct2(t *testing.T) {
 		OpenID  string `json:"openid"`
 		Token   string `json:"token"`
 		UnionID string `json:"unionid"`
-		UUID    string `json:"uuid"`
+		UID     string `json:"uuid"`
 	}
 	if err := Get(req, &out, params); err != nil {
 		t.Fatal(err)

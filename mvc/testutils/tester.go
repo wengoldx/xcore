@@ -24,7 +24,7 @@ import (
 // Restful api tester runtime configs.
 type tester struct {
 	tabler   *provider.TableProvider     // TableProvider instance.
-	tokens   map[string]string // Auth token of test user, format as {uuid:token}.
+	tokens   map[string]string // Auth token of test user, format as {uid:token}.
 	envs     map[string]any    // Env caches, user ut.Get(key) and ut.Set(key, value) to get and set datas.
 	author   string            // Author header, such as 'WENGOLD-V1.1', 'WENGOLD-V1.2', 'WENGOLD-V2.0'
 	tokenApi string            // Rest4 API to get user token, like 'http://192.168.1.100:8000/server/token?id=%s'

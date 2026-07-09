@@ -302,15 +302,15 @@ func (stub *GrpcStub) GetFileInfo(filepath string) (*wss.Info, error) {
 /* For Acc GRPC agent                                                  */
 /* ------------------------------------------------------------------- */
 
-// Get account request token by given uuid.
-func (stub *GrpcStub) GetToken(uuid string) (string, error) {
+// Get account request token by given uid.
+func (stub *GrpcStub) GetToken(uid string) (string, error) {
 	if stub.Acc == nil {
 		return "", invar.ErrInvalidClient
-	} else if uuid == "" {
+	} else if uid == "" {
 		return "", invar.ErrInvalidParams
 	}
 
-	param := &acc.UUID{Uuid: uuid}
+	param := &acc.UID{Uid: uid}
 	token, err := stub.Acc.GetToken(context.Background(), param)
 	if err != nil {
 		return "", err
@@ -318,15 +318,15 @@ func (stub *GrpcStub) GetToken(uuid string) (string, error) {
 	return token.Token, nil
 }
 
-// Get account profiles by given uuid.
-func (stub *GrpcStub) GetProfile(uuid string) (*acc.Profile, error) {
+// Get account profiles by given uid.
+func (stub *GrpcStub) GetProfile(uid string) (*acc.Profile, error) {
 	if stub.Acc == nil {
 		return nil, invar.ErrInvalidClient
-	} else if uuid == "" {
+	} else if uid == "" {
 		return nil, invar.ErrInvalidParams
 	}
 
-	param := &acc.UUID{Uuid: uuid}
+	param := &acc.UID{Uid: uid}
 	return stub.Acc.GetProfile(context.Background(), param)
 }
 
@@ -384,7 +384,7 @@ func (stub *GrpcStub) MachLogin(uid, mach, code string) (*acc.EToken, error) {
 		return nil, invar.ErrInvalidParams
 	}
 
-	param := &acc.MCode{Uuid: uid, Mach: mach, Code: code}
+	param := &acc.MCode{Uid: uid, Mach: mach, Code: code}
 	return stub.Acc.MachLogin(context.Background(), param)
 }
 
@@ -396,7 +396,7 @@ func (stub *GrpcStub) AccMachs(uid string) (*acc.AMachs, error) {
 		return nil, invar.ErrInvalidParams
 	}
 
-	param := &acc.UUID{Uuid: uid}
+	param := &acc.UID{Uid: uid}
 	return stub.Acc.AccMachs(context.Background(), param)
 }
 
@@ -498,15 +498,15 @@ func (stub *GrpcStub) DelBody(reqid string) error {
 /* ------------------------------------------------------------------- */
 
 // Add a new staff to company.
-func (stub *GrpcStub) AddStaff(uuid, name, headurl, brand, client, old string) error {
+func (stub *GrpcStub) AddStaff(uid, name, headurl, brand, client, old string) error {
 	if stub.Chat == nil {
 		return invar.ErrInvalidClient
-	} else if uuid == "" || name == "" {
+	} else if uid == "" || name == "" {
 		return invar.ErrInvalidParams
 	}
 
 	param := &chat.Staff{
-		Uuid: uuid, Nickname: name, Headurl: headurl,
+		Uid: uid, Nickname: name, Headurl: headurl,
 		Company: brand, Client: client, Old: old,
 	}
 	_, err := stub.Chat.AddStaff(context.Background(), param)

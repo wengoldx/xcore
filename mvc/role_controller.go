@@ -41,7 +41,7 @@ import (
 //		mvc.ValidateHandler = func(token, router, method string) *mvc.WAuths {
 //			secures := &mvc.WAuths{}
 //			// decode and verify token string, than return indecated
-//			// account id, string uuid, password plaintext and role.
+//			// account id, string uid, password plaintext and role.
 //			return secures
 //		}
 //	}
@@ -74,7 +74,7 @@ import (
 //	func (c *AccController) AccDetail() {
 //		if s := c.AuthRequestHeader(); s != nil {
 //			// use c.BindValue("fieldkey", out) parse params from url
-//			c.ResponJSON(service.AccDetail(uuid))
+//			c.ResponJSON(service.AccDetail(uid))
 //		}
 //	}
 //

@@ -104,10 +104,10 @@ func TestLoadSwagger(t *testing.T) {
 	}
 }
 
-func TestParseRouters(t *testing.T) {
+func TestParseNacosRouters(t *testing.T) {
 	xt.UseDebugLogger()
 
-	rf := "../.test/routers_old.json"
+	rf := "../.test/routers.json"
 	data := ReadTextFile(rf)
 
 	routers := parseNacosRouters(data)
@@ -119,4 +119,51 @@ func TestParseRouters(t *testing.T) {
 				fmt.Sprintf("% -8s", p.Group), "-", p.Router)
 		}
 	}
+}
+
+func TestParseRoleRouters(t *testing.T) {
+	xt.UseDebugLogger()
+
+	rf := "../.test/routers.json"
+	data := ReadTextFile(rf)
+	mapping := parseNacosRouters(data)
+
+	for app, routers := range mapping {
+		apis := parseRoleRouters(app, routers.Paths)
+		for api, role := range apis {
+			if len(role.Methods) == 2 {
+				fmt.Println(
+					fmt.Sprintf("% -10s", role.App),
+					"ROLE:", fmt.Sprintf("% -5s", role.Role),
+					fmt.Sprintf("[% -4s % -4s]", role.Methods[0], role.Methods[1]), "- API:", api)
+			} else {
+				fmt.Println(
+					fmt.Sprintf("% -10s", role.App),
+					"ROLE:", fmt.Sprintf("% -5s", role.Role),
+					fmt.Sprintf("[% -4s     ]", role.Methods[0]), "- API:", api)
+			}
+		}
+	}
+}
+
+func TestParseRouters(t *testing.T) {
+	xt.UseDebugLogger()
+
+	rf := "../.test/routers.json"
+	data := ReadTextFile(rf)
+	apis := ParseRouters(data)
+	for _, role := range apis {
+		if len(role.Methods) == 2 {
+			fmt.Println(
+				fmt.Sprintf("% -10s", role.App),
+				"ROLE:", fmt.Sprintf("% -5s", role.Role),
+				fmt.Sprintf("[% -4s % -4s]", role.Methods[0], role.Methods[1]), "- API:", role.Policy)
+		} else {
+			fmt.Println(
+				fmt.Sprintf("% -10s", role.App),
+				"ROLE:", fmt.Sprintf("% -5s", role.Role),
+				fmt.Sprintf("[% -4s     ]", role.Methods[0]), "- API:", role.Policy)
+		}
+	}
+
 }

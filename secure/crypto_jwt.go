@@ -60,9 +60,9 @@ func ViaJwtToken(signedToken, salt string) (string, error) {
 	return "", err
 }
 
-// Encode account uuid and optianl datas as claims content of jwt token
-func EncClaims(uuid string, params ...string) string {
-	sets := []string{uuid}
+// Encode account uid and optianl datas as claims content of jwt token
+func EncClaims(uid string, params ...string) string {
+	sets := []string{uid}
 	if len(params) > 0 {
 		sets = append(sets, params...)
 	}

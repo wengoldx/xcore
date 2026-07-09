@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego"
+	"github.com/wengoldx/xcore/invar"
 	"github.com/wengoldx/xcore/logger"
 )
 
@@ -48,6 +49,14 @@ type Router struct {
 type Routers struct {
 	Tags  []string  `json:"tags"`  // server controllers, from 'tags' array of swagger.json.
 	Paths []*Router `json:"paths"` // controller api routers, from 'paths.{router}'
+}
+
+// Role router policys of server to auto set api access permissions.
+type RPolicy struct {
+	App     string   // server app name.
+	Role    string   // role key, such as 'admin', 'user', 'comp', 'mach', 'part', 'rb'.
+	Policy  string   // api path as role policy, like 'server/v4/utils/admin/*'.
+	Methods []string // api methods, one or all 'GET' and 'POST'.
 }
 
 // Parse total routers and update description on chinese for local server routers,
@@ -143,6 +152,26 @@ func UpdateVersion(ver string) {
 			}
 		}
 	}
+}
+
+// Parse nocos swagger apis datas and return all roles routers
+// for next auto append restful apis access permissions.
+//
+// # WARNIG:
+//   - Call this method after nacos config server connected.
+func ParseRouters(data string) []*RPolicy {
+	rsmap := parseNacosRouters(data)
+	if rsmap != nil {
+		policys := []*RPolicy{}
+		for app, routers := range rsmap {
+			rps := parseRoleRouters(app, routers.Paths)
+			for _, rp := range rps {
+				policys = append(policys, rp)
+			}
+		}
+		return policys
+	}
+	return nil
 }
 
 /* ------------------------------------------------------------------- */
@@ -254,4 +283,31 @@ func parseNacosRouters(data string) map[string]*Routers {
 		}
 	}
 	return routers
+}
+
+// Parse role routers from nacos router datas.
+func parseRoleRouters(app string, routers []*Router) map[string]*RPolicy {
+	outs := make(map[string]*RPolicy)
+	for _, r := range routers {
+		// '/v4/mach/code/auth'    : 'v4/mach'  -> path = 'code/auth'
+		// '/v4/utils/admin/confs' : 'v4/utils' -> path = 'admin/confs'
+		path := strings.TrimPrefix(r.Router, "/"+r.Group+"/")
+		if path != "" {
+			if seg := strings.Split(path, "/"); len(seg) > 0 {
+				if key := seg[0]; invar.IsRoleKey(key) {
+					// api = 'server/v4/utils/admin/*'
+					api := fmt.Sprintf("/%s/%s/%s/*", app, r.Group, key)
+					if role, ok := outs[api]; ok {
+						if !Contain(role.Methods, r.Method) {
+							role.Methods = append(role.Methods, r.Method)
+						}
+						continue
+					}
+					outs[api] = &RPolicy{App: app, Role: key,
+						Policy: api, Methods: []string{r.Method}}
+				}
+			}
+		}
+	}
+	return outs
 }

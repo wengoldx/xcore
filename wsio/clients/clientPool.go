@@ -39,7 +39,7 @@ var siolog = logger.CatLogger("SIO")
 
 // idleWeight idle client weight
 type idleWeight struct {
-	uuid   string // Client unique id
+	cid    string // Client unique id
 	weight int64  // Client weight as unix nanosecond start idle
 }
 
@@ -134,17 +134,17 @@ func (cp *ClientPool) SortIdels() []string {
 
 	var weights []idleWeight
 	for k, v := range cp.idles {
-		weights = append(weights, idleWeight{uuid: k, weight: v})
+		weights = append(weights, idleWeight{cid: k, weight: v})
 	}
 
 	sort.Slice(weights, func(i, j int) bool {
 		return weights[i].weight < weights[j].weight
 	})
 
-	// add each client's uuid to string array
+	// add each client's cid to string array
 	uuids := []string{}
 	for _, v := range weights {
-		uuids = append(uuids, v.uuid)
+		uuids = append(uuids, v.cid)
 	}
 	return uuids
 }
@@ -222,7 +222,7 @@ func (cp *ClientPool) registerLocked(sc sio.Socket, cid, opt string) error {
 
 	siolog.I("Client", cid, "bind socket", sid)
 	cp.clients[cid] = newOne
-	cp.s2c[sid] = cid // same as uuid
+	cp.s2c[sid] = cid // same as uid
 	return nil
 }
 

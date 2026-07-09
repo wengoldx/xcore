@@ -28,10 +28,10 @@ type AccClient interface {
 	ViaRole(ctx context.Context, in *Role, opts ...grpc.CallOption) (*Result, error)
 	// Attach a role with target account, excepted admin.
 	AddRole(ctx context.Context, in *TagRole, opts ...grpc.CallOption) (*AEmpty, error)
-	// Register account with given role, then return uuid and random password,
+	// Register account with given role, then return uid and random password,
 	// NOTICE that this function not create a admin role account.
 	AccRegister(ctx context.Context, in *UserRole, opts ...grpc.CallOption) (*AccPwd, error)
-	// Account login by uuid/phone/email and encryptd password.
+	// Account login by uid/phone/email and encryptd password.
 	AccLogin(ctx context.Context, in *AccPwd, opts ...grpc.CallOption) (*Token, error)
 	// Return profiles on role, e.g. get all store composers.
 	RoleProfiles(ctx context.Context, in *UserRole, opts ...grpc.CallOption) (*RoleProfs, error)
@@ -40,35 +40,35 @@ type AccClient interface {
 	// Update account email, it maybe case duplicate entry error when tag email exist in database.
 	UpdateEmail(ctx context.Context, in *IDEMail, opts ...grpc.CallOption) (*AEmpty, error)
 	// Reset account password and send by email.
-	ResetSendPwd(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
+	ResetSendPwd(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error)
 	// Unbind account wechat unionid (clear unionid field directly).
-	UnbindWechat(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
-	// Return account request token by exist user uuid (only for IFSC).
-	GetToken(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Token, error)
+	UnbindWechat(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error)
+	// Return account request token by exist user uid (only for IFSC).
+	GetToken(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Token, error)
 	// Return account primary email, maybe empty when not bund any email.
-	GetEmail(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Email, error)
+	GetEmail(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Email, error)
 	// Return account emails by given uuids.
 	GetAccEmails(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*IDEMails, error)
 	// Return account simple profiles.
-	GetProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Profile, error)
+	GetProfile(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Profile, error)
 	// Return account contact (contain nickname, phone, email).
-	GetContact(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Contact, error)
+	GetContact(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Contact, error)
 	// Return account avatars by given uuids.
 	GetAvatars(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*Avatars, error)
 	// Return wechat api access token.
 	GetWxToken(ctx context.Context, in *App, opts ...grpc.CallOption) (*AToken, error)
 	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(ctx context.Context, in *SKeys, opts ...grpc.CallOption) (*Avatars, error)
-	// Delete indicated account by given uuid.
-	DeleteAcc(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
+	// Delete indicated account by given uid.
+	DeleteAcc(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error)
 	// Verify bind code of backup email.
 	ViaBKMail(ctx context.Context, in *Code, opts ...grpc.CallOption) (*AEmpty, error)
 	// Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
 	SendMail(ctx context.Context, in *Mail, opts ...grpc.CallOption) (*AEmpty, error)
 	// Register store machine account.
-	StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error)
+	StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UID, error)
 	// Register store composer account.
-	StoreAddComp(ctx context.Context, in *Composer, opts ...grpc.CallOption) (*UUID, error)
+	StoreAddComp(ctx context.Context, in *Composer, opts ...grpc.CallOption) (*UID, error)
 	// Update store composer email and nickname.
 	StoreUpComp(ctx context.Context, in *CompSimp, opts ...grpc.CallOption) (*AEmpty, error)
 	// Store machine bind with player wechat unionid.
@@ -76,13 +76,13 @@ type AccClient interface {
 	// Store machine unbind player wechat unionid.
 	StoreUnbindWx(ctx context.Context, in *AccPwd, opts ...grpc.CallOption) (*AEmpty, error)
 	// Store composer unbind machine's player wechat unionid.
-	CompUnbindWx(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error)
+	CompUnbindWx(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error)
 	// Store composer reset machine password and send by email.
 	CompResetPwd(ctx context.Context, in *TagPwd, opts ...grpc.CallOption) (*AEmpty, error)
 	// Rename store machine nickname and addresses.
 	StoreRename(ctx context.Context, in *ProfAddr, opts ...grpc.CallOption) (*AEmpty, error)
 	// Return account simple profiles and addresses.
-	StoreProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*ProfStore, error)
+	StoreProfile(ctx context.Context, in *UID, opts ...grpc.CallOption) (*ProfStore, error)
 	// Return accounts simple profiles and addresses.
 	StoreProfiles(ctx context.Context, in *UIDS, opts ...grpc.CallOption) (*ProfStores, error)
 	// Return uuids and emails.
@@ -90,7 +90,7 @@ type AccClient interface {
 	// Machine login by offline code, return account uid and token if success.
 	MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallOption) (*EToken, error)
 	// Return target account bund machine infos.
-	AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error)
+	AccMachs(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AMachs, error)
 }
 
 type accClient struct {
@@ -173,7 +173,7 @@ func (c *accClient) UpdateEmail(ctx context.Context, in *IDEMail, opts ...grpc.C
 	return out, nil
 }
 
-func (c *accClient) ResetSendPwd(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error) {
+func (c *accClient) ResetSendPwd(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error) {
 	out := new(AEmpty)
 	err := c.cc.Invoke(ctx, "/proto.Acc/ResetSendPwd", in, out, opts...)
 	if err != nil {
@@ -182,7 +182,7 @@ func (c *accClient) ResetSendPwd(ctx context.Context, in *UUID, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *accClient) UnbindWechat(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error) {
+func (c *accClient) UnbindWechat(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error) {
 	out := new(AEmpty)
 	err := c.cc.Invoke(ctx, "/proto.Acc/UnbindWechat", in, out, opts...)
 	if err != nil {
@@ -191,7 +191,7 @@ func (c *accClient) UnbindWechat(ctx context.Context, in *UUID, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *accClient) GetToken(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Token, error) {
+func (c *accClient) GetToken(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Token, error) {
 	out := new(Token)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetToken", in, out, opts...)
 	if err != nil {
@@ -200,7 +200,7 @@ func (c *accClient) GetToken(ctx context.Context, in *UUID, opts ...grpc.CallOpt
 	return out, nil
 }
 
-func (c *accClient) GetEmail(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Email, error) {
+func (c *accClient) GetEmail(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Email, error) {
 	out := new(Email)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetEmail", in, out, opts...)
 	if err != nil {
@@ -218,7 +218,7 @@ func (c *accClient) GetAccEmails(ctx context.Context, in *UIDS, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *accClient) GetProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Profile, error) {
+func (c *accClient) GetProfile(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Profile, error) {
 	out := new(Profile)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetProfile", in, out, opts...)
 	if err != nil {
@@ -227,7 +227,7 @@ func (c *accClient) GetProfile(ctx context.Context, in *UUID, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *accClient) GetContact(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*Contact, error) {
+func (c *accClient) GetContact(ctx context.Context, in *UID, opts ...grpc.CallOption) (*Contact, error) {
 	out := new(Contact)
 	err := c.cc.Invoke(ctx, "/proto.Acc/GetContact", in, out, opts...)
 	if err != nil {
@@ -263,7 +263,7 @@ func (c *accClient) SearchAvatars(ctx context.Context, in *SKeys, opts ...grpc.C
 	return out, nil
 }
 
-func (c *accClient) DeleteAcc(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error) {
+func (c *accClient) DeleteAcc(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error) {
 	out := new(AEmpty)
 	err := c.cc.Invoke(ctx, "/proto.Acc/DeleteAcc", in, out, opts...)
 	if err != nil {
@@ -290,8 +290,8 @@ func (c *accClient) SendMail(ctx context.Context, in *Mail, opts ...grpc.CallOpt
 	return out, nil
 }
 
-func (c *accClient) StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UUID, error) {
-	out := new(UUID)
+func (c *accClient) StoreAddMach(ctx context.Context, in *Email, opts ...grpc.CallOption) (*UID, error) {
+	out := new(UID)
 	err := c.cc.Invoke(ctx, "/proto.Acc/StoreAddMach", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -299,8 +299,8 @@ func (c *accClient) StoreAddMach(ctx context.Context, in *Email, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *accClient) StoreAddComp(ctx context.Context, in *Composer, opts ...grpc.CallOption) (*UUID, error) {
-	out := new(UUID)
+func (c *accClient) StoreAddComp(ctx context.Context, in *Composer, opts ...grpc.CallOption) (*UID, error) {
+	out := new(UID)
 	err := c.cc.Invoke(ctx, "/proto.Acc/StoreAddComp", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -335,7 +335,7 @@ func (c *accClient) StoreUnbindWx(ctx context.Context, in *AccPwd, opts ...grpc.
 	return out, nil
 }
 
-func (c *accClient) CompUnbindWx(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AEmpty, error) {
+func (c *accClient) CompUnbindWx(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AEmpty, error) {
 	out := new(AEmpty)
 	err := c.cc.Invoke(ctx, "/proto.Acc/CompUnbindWx", in, out, opts...)
 	if err != nil {
@@ -362,7 +362,7 @@ func (c *accClient) StoreRename(ctx context.Context, in *ProfAddr, opts ...grpc.
 	return out, nil
 }
 
-func (c *accClient) StoreProfile(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*ProfStore, error) {
+func (c *accClient) StoreProfile(ctx context.Context, in *UID, opts ...grpc.CallOption) (*ProfStore, error) {
 	out := new(ProfStore)
 	err := c.cc.Invoke(ctx, "/proto.Acc/StoreProfile", in, out, opts...)
 	if err != nil {
@@ -398,7 +398,7 @@ func (c *accClient) MachLogin(ctx context.Context, in *MCode, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *accClient) AccMachs(ctx context.Context, in *UUID, opts ...grpc.CallOption) (*AMachs, error) {
+func (c *accClient) AccMachs(ctx context.Context, in *UID, opts ...grpc.CallOption) (*AMachs, error) {
 	out := new(AMachs)
 	err := c.cc.Invoke(ctx, "/proto.Acc/AccMachs", in, out, opts...)
 	if err != nil {
@@ -417,10 +417,10 @@ type AccServer interface {
 	ViaRole(context.Context, *Role) (*Result, error)
 	// Attach a role with target account, excepted admin.
 	AddRole(context.Context, *TagRole) (*AEmpty, error)
-	// Register account with given role, then return uuid and random password,
+	// Register account with given role, then return uid and random password,
 	// NOTICE that this function not create a admin role account.
 	AccRegister(context.Context, *UserRole) (*AccPwd, error)
-	// Account login by uuid/phone/email and encryptd password.
+	// Account login by uid/phone/email and encryptd password.
 	AccLogin(context.Context, *AccPwd) (*Token, error)
 	// Return profiles on role, e.g. get all store composers.
 	RoleProfiles(context.Context, *UserRole) (*RoleProfs, error)
@@ -429,35 +429,35 @@ type AccServer interface {
 	// Update account email, it maybe case duplicate entry error when tag email exist in database.
 	UpdateEmail(context.Context, *IDEMail) (*AEmpty, error)
 	// Reset account password and send by email.
-	ResetSendPwd(context.Context, *UUID) (*AEmpty, error)
+	ResetSendPwd(context.Context, *UID) (*AEmpty, error)
 	// Unbind account wechat unionid (clear unionid field directly).
-	UnbindWechat(context.Context, *UUID) (*AEmpty, error)
-	// Return account request token by exist user uuid (only for IFSC).
-	GetToken(context.Context, *UUID) (*Token, error)
+	UnbindWechat(context.Context, *UID) (*AEmpty, error)
+	// Return account request token by exist user uid (only for IFSC).
+	GetToken(context.Context, *UID) (*Token, error)
 	// Return account primary email, maybe empty when not bund any email.
-	GetEmail(context.Context, *UUID) (*Email, error)
+	GetEmail(context.Context, *UID) (*Email, error)
 	// Return account emails by given uuids.
 	GetAccEmails(context.Context, *UIDS) (*IDEMails, error)
 	// Return account simple profiles.
-	GetProfile(context.Context, *UUID) (*Profile, error)
+	GetProfile(context.Context, *UID) (*Profile, error)
 	// Return account contact (contain nickname, phone, email).
-	GetContact(context.Context, *UUID) (*Contact, error)
+	GetContact(context.Context, *UID) (*Contact, error)
 	// Return account avatars by given uuids.
 	GetAvatars(context.Context, *UIDS) (*Avatars, error)
 	// Return wechat api access token.
 	GetWxToken(context.Context, *App) (*AToken, error)
 	// Return account avatars by given uuids and search conditions.
 	SearchAvatars(context.Context, *SKeys) (*Avatars, error)
-	// Delete indicated account by given uuid.
-	DeleteAcc(context.Context, *UUID) (*AEmpty, error)
+	// Delete indicated account by given uid.
+	DeleteAcc(context.Context, *UID) (*AEmpty, error)
 	// Verify bind code of backup email.
 	ViaBKMail(context.Context, *Code) (*AEmpty, error)
 	// Send custom mail by given category and content, current it just for QKS/Rainbow Portal Website.
 	SendMail(context.Context, *Mail) (*AEmpty, error)
 	// Register store machine account.
-	StoreAddMach(context.Context, *Email) (*UUID, error)
+	StoreAddMach(context.Context, *Email) (*UID, error)
 	// Register store composer account.
-	StoreAddComp(context.Context, *Composer) (*UUID, error)
+	StoreAddComp(context.Context, *Composer) (*UID, error)
 	// Update store composer email and nickname.
 	StoreUpComp(context.Context, *CompSimp) (*AEmpty, error)
 	// Store machine bind with player wechat unionid.
@@ -465,13 +465,13 @@ type AccServer interface {
 	// Store machine unbind player wechat unionid.
 	StoreUnbindWx(context.Context, *AccPwd) (*AEmpty, error)
 	// Store composer unbind machine's player wechat unionid.
-	CompUnbindWx(context.Context, *UUID) (*AEmpty, error)
+	CompUnbindWx(context.Context, *UID) (*AEmpty, error)
 	// Store composer reset machine password and send by email.
 	CompResetPwd(context.Context, *TagPwd) (*AEmpty, error)
 	// Rename store machine nickname and addresses.
 	StoreRename(context.Context, *ProfAddr) (*AEmpty, error)
 	// Return account simple profiles and addresses.
-	StoreProfile(context.Context, *UUID) (*ProfStore, error)
+	StoreProfile(context.Context, *UID) (*ProfStore, error)
 	// Return accounts simple profiles and addresses.
 	StoreProfiles(context.Context, *UIDS) (*ProfStores, error)
 	// Return uuids and emails.
@@ -479,7 +479,7 @@ type AccServer interface {
 	// Machine login by offline code, return account uid and token if success.
 	MachLogin(context.Context, *MCode) (*EToken, error)
 	// Return target account bund machine infos.
-	AccMachs(context.Context, *UUID) (*AMachs, error)
+	AccMachs(context.Context, *UID) (*AMachs, error)
 	mustEmbedUnimplementedAccServer()
 }
 
@@ -511,25 +511,25 @@ func (UnimplementedAccServer) SearchInRole(context.Context, *Search) (*RoleProfs
 func (UnimplementedAccServer) UpdateEmail(context.Context, *IDEMail) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEmail not implemented")
 }
-func (UnimplementedAccServer) ResetSendPwd(context.Context, *UUID) (*AEmpty, error) {
+func (UnimplementedAccServer) ResetSendPwd(context.Context, *UID) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetSendPwd not implemented")
 }
-func (UnimplementedAccServer) UnbindWechat(context.Context, *UUID) (*AEmpty, error) {
+func (UnimplementedAccServer) UnbindWechat(context.Context, *UID) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnbindWechat not implemented")
 }
-func (UnimplementedAccServer) GetToken(context.Context, *UUID) (*Token, error) {
+func (UnimplementedAccServer) GetToken(context.Context, *UID) (*Token, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetToken not implemented")
 }
-func (UnimplementedAccServer) GetEmail(context.Context, *UUID) (*Email, error) {
+func (UnimplementedAccServer) GetEmail(context.Context, *UID) (*Email, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEmail not implemented")
 }
 func (UnimplementedAccServer) GetAccEmails(context.Context, *UIDS) (*IDEMails, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccEmails not implemented")
 }
-func (UnimplementedAccServer) GetProfile(context.Context, *UUID) (*Profile, error) {
+func (UnimplementedAccServer) GetProfile(context.Context, *UID) (*Profile, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfile not implemented")
 }
-func (UnimplementedAccServer) GetContact(context.Context, *UUID) (*Contact, error) {
+func (UnimplementedAccServer) GetContact(context.Context, *UID) (*Contact, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetContact not implemented")
 }
 func (UnimplementedAccServer) GetAvatars(context.Context, *UIDS) (*Avatars, error) {
@@ -541,7 +541,7 @@ func (UnimplementedAccServer) GetWxToken(context.Context, *App) (*AToken, error)
 func (UnimplementedAccServer) SearchAvatars(context.Context, *SKeys) (*Avatars, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchAvatars not implemented")
 }
-func (UnimplementedAccServer) DeleteAcc(context.Context, *UUID) (*AEmpty, error) {
+func (UnimplementedAccServer) DeleteAcc(context.Context, *UID) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAcc not implemented")
 }
 func (UnimplementedAccServer) ViaBKMail(context.Context, *Code) (*AEmpty, error) {
@@ -550,10 +550,10 @@ func (UnimplementedAccServer) ViaBKMail(context.Context, *Code) (*AEmpty, error)
 func (UnimplementedAccServer) SendMail(context.Context, *Mail) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMail not implemented")
 }
-func (UnimplementedAccServer) StoreAddMach(context.Context, *Email) (*UUID, error) {
+func (UnimplementedAccServer) StoreAddMach(context.Context, *Email) (*UID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreAddMach not implemented")
 }
-func (UnimplementedAccServer) StoreAddComp(context.Context, *Composer) (*UUID, error) {
+func (UnimplementedAccServer) StoreAddComp(context.Context, *Composer) (*UID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreAddComp not implemented")
 }
 func (UnimplementedAccServer) StoreUpComp(context.Context, *CompSimp) (*AEmpty, error) {
@@ -565,7 +565,7 @@ func (UnimplementedAccServer) StoreBindWx(context.Context, *WxBind) (*AEmpty, er
 func (UnimplementedAccServer) StoreUnbindWx(context.Context, *AccPwd) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreUnbindWx not implemented")
 }
-func (UnimplementedAccServer) CompUnbindWx(context.Context, *UUID) (*AEmpty, error) {
+func (UnimplementedAccServer) CompUnbindWx(context.Context, *UID) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompUnbindWx not implemented")
 }
 func (UnimplementedAccServer) CompResetPwd(context.Context, *TagPwd) (*AEmpty, error) {
@@ -574,7 +574,7 @@ func (UnimplementedAccServer) CompResetPwd(context.Context, *TagPwd) (*AEmpty, e
 func (UnimplementedAccServer) StoreRename(context.Context, *ProfAddr) (*AEmpty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreRename not implemented")
 }
-func (UnimplementedAccServer) StoreProfile(context.Context, *UUID) (*ProfStore, error) {
+func (UnimplementedAccServer) StoreProfile(context.Context, *UID) (*ProfStore, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreProfile not implemented")
 }
 func (UnimplementedAccServer) StoreProfiles(context.Context, *UIDS) (*ProfStores, error) {
@@ -586,7 +586,7 @@ func (UnimplementedAccServer) GetActiveEmails(context.Context, *Emails) (*Emails
 func (UnimplementedAccServer) MachLogin(context.Context, *MCode) (*EToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MachLogin not implemented")
 }
-func (UnimplementedAccServer) AccMachs(context.Context, *UUID) (*AMachs, error) {
+func (UnimplementedAccServer) AccMachs(context.Context, *UID) (*AMachs, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AccMachs not implemented")
 }
 func (UnimplementedAccServer) mustEmbedUnimplementedAccServer() {}
@@ -747,7 +747,7 @@ func _Acc_UpdateEmail_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _Acc_ResetSendPwd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -759,13 +759,13 @@ func _Acc_ResetSendPwd_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto.Acc/ResetSendPwd",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).ResetSendPwd(ctx, req.(*UUID))
+		return srv.(AccServer).ResetSendPwd(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Acc_UnbindWechat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -777,13 +777,13 @@ func _Acc_UnbindWechat_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto.Acc/UnbindWechat",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).UnbindWechat(ctx, req.(*UUID))
+		return srv.(AccServer).UnbindWechat(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Acc_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -795,13 +795,13 @@ func _Acc_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interf
 		FullMethod: "/proto.Acc/GetToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).GetToken(ctx, req.(*UUID))
+		return srv.(AccServer).GetToken(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Acc_GetEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -813,7 +813,7 @@ func _Acc_GetEmail_Handler(srv interface{}, ctx context.Context, dec func(interf
 		FullMethod: "/proto.Acc/GetEmail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).GetEmail(ctx, req.(*UUID))
+		return srv.(AccServer).GetEmail(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -837,7 +837,7 @@ func _Acc_GetAccEmails_Handler(srv interface{}, ctx context.Context, dec func(in
 }
 
 func _Acc_GetProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -849,13 +849,13 @@ func _Acc_GetProfile_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/proto.Acc/GetProfile",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).GetProfile(ctx, req.(*UUID))
+		return srv.(AccServer).GetProfile(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Acc_GetContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -867,7 +867,7 @@ func _Acc_GetContact_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/proto.Acc/GetContact",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).GetContact(ctx, req.(*UUID))
+		return srv.(AccServer).GetContact(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -927,7 +927,7 @@ func _Acc_SearchAvatars_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 func _Acc_DeleteAcc_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -939,7 +939,7 @@ func _Acc_DeleteAcc_Handler(srv interface{}, ctx context.Context, dec func(inter
 		FullMethod: "/proto.Acc/DeleteAcc",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).DeleteAcc(ctx, req.(*UUID))
+		return srv.(AccServer).DeleteAcc(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1071,7 +1071,7 @@ func _Acc_StoreUnbindWx_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 func _Acc_CompUnbindWx_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1083,7 +1083,7 @@ func _Acc_CompUnbindWx_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto.Acc/CompUnbindWx",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).CompUnbindWx(ctx, req.(*UUID))
+		return srv.(AccServer).CompUnbindWx(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1125,7 +1125,7 @@ func _Acc_StoreRename_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _Acc_StoreProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1137,7 +1137,7 @@ func _Acc_StoreProfile_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/proto.Acc/StoreProfile",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).StoreProfile(ctx, req.(*UUID))
+		return srv.(AccServer).StoreProfile(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1197,7 +1197,7 @@ func _Acc_MachLogin_Handler(srv interface{}, ctx context.Context, dec func(inter
 }
 
 func _Acc_AccMachs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UUID)
+	in := new(UID)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1209,7 +1209,7 @@ func _Acc_AccMachs_Handler(srv interface{}, ctx context.Context, dec func(interf
 		FullMethod: "/proto.Acc/AccMachs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccServer).AccMachs(ctx, req.(*UUID))
+		return srv.(AccServer).AccMachs(ctx, req.(*UID))
 	}
 	return interceptor(ctx, in, info, handler)
 }

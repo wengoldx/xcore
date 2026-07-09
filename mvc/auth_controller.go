@@ -44,8 +44,8 @@ import (
 //	func init() {
 //		mvc.GAuthHandlerFunc = func(token string) (string, string) {
 //			// decode and verify token string, than return indecated
-//			// account uuid and password.
-//			return "account uuid", "account password"
+//			// account uid and password.
+//			return "account uid", "account password"
 //		}
 //	}
 //
@@ -59,10 +59,10 @@ import (
 //	//	@router /login [post]
 //	func (c *AccController) AccLogin() {
 //		ps := &types.Accout{}
-//		c.DoAfterValidated(ps, func(uuid string) (int, any) {
+//		c.DoAfterValidated(ps, func(uid string) (int, any) {
 //		// Or get authed account password as :
-//		// c.DoAfterAuthValidated(ps, func(uuid, pwd string) (int, any) {
-//			// do same business with input NO-EMPTY account uuid,
+//		// c.DoAfterAuthValidated(ps, func(uid, pwd string) (int, any) {
+//			// do same business with input NO-EMPTY account uid,
 //			// directe use c and ps param in this methed.
 //			// ...
 //			return http.StatusOK, "Done business"
@@ -77,9 +77,9 @@ import (
 //	//	@Success 200 {types.Detail} "response data description"
 //	//	@router /detail [get]
 //	func (c *AccController) AccDetail() {
-//		if uuid := c.AuthRequestHeader(); uuid != "" {
+//		if uid := c.AuthRequestHeader(); uid != "" {
 //			// use c.BindValue("fieldkey", out) parse params from url
-//			c.ResponJSON(service.AccDetail(uuid))
+//			c.ResponJSON(service.AccDetail(uid))
 //		}
 //	}
 //
@@ -111,11 +111,11 @@ type WAuthController struct {
 	WingController
 }
 
-// Do action after input params validated, it decode token to get account uuid.
-type NextFunc2 func(uuid string) (int, any)
+// Do action after input params validated, it decode token to get account uid.
+type NextFunc2 func(uid string) (int, any)
 
-// Do action after input params validated, it decode token to get account uuid and password.
-type NextFunc3 func(uuid, pwd string) (int, any)
+// Do action after input params validated, it decode token to get account uid and password.
+type NextFunc3 func(uid, pwd string) (int, any)
 
 // Auth request token from http header and returen account secures.
 type AuthHandlerFunc func(token string) (string, string)
@@ -143,8 +143,8 @@ var GRoleHandlerFunc RoleHandlerFunc
 //	@Return 401: Unsupport author header or invalid token.
 //	@Return 403: API access permission denied.
 func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
-	uuid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[0])
-	return uuid
+	uid, _ := c.innerAuthHeader(len(hidelog) > 0 && hidelog[0])
+	return uid
 }
 
 // Parse url params for GET method, then do api action after success parsed.
@@ -159,8 +159,8 @@ func (c *WAuthController) AuthRequestHeader(hidelog ...bool) string {
 //	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterParsed(ps any, nextFunc2 NextFunc2, opt ...Option) {
 	opts := parseOptions(true, opt...)
-	if uuid := c.AuthRequestHeader(opts.Silent); uuid != "" {
-		c.doAfterParsedInner(ps, nextFunc2, uuid, opts)
+	if uid := c.AuthRequestHeader(opts.Silent); uid != "" {
+		c.doAfterParsedInner(ps, nextFunc2, uid, opts)
 	}
 }
 
@@ -188,8 +188,8 @@ func (c *WAuthController) DoParsedInsecure(ps any, nextFunc NextFunc, opt ...Opt
 //	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...Option) {
 	opts := parseOptions(true, opt...)
-	if uuid, _ := c.innerAuthHeader(opts.Silent); uuid != "" {
-		c.doAfterValidatedInner(ps, nextFunc2, uuid, opts)
+	if uid, _ := c.innerAuthHeader(opts.Silent); uid != "" {
+		c.doAfterValidatedInner(ps, nextFunc2, uid, opts)
 	}
 }
 
@@ -205,8 +205,8 @@ func (c *WAuthController) DoAfterValidated(ps any, nextFunc2 NextFunc2, opt ...O
 //	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...Option) {
 	opts := parseOptions(false, opt...)
-	if uuid, _ := c.innerAuthHeader(opts.Silent); uuid != "" {
-		c.doAfterValidatedInner(ps, nextFunc2, uuid, opts)
+	if uid, _ := c.innerAuthHeader(opts.Silent); uid != "" {
+		c.doAfterValidatedInner(ps, nextFunc2, uid, opts)
 	}
 }
 
@@ -218,8 +218,8 @@ func (c *WAuthController) DoAfterUnmarshal(ps any, nextFunc2 NextFunc2, opt ...O
 //	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, opts ...Option) {
 	options := parseOptions(true, opts...)
-	if uuid, pwd := c.innerAuthHeader(options.Silent); uuid != "" {
-		c.doAfterValidatedInner3(ps, nextFunc3, uuid, pwd, options)
+	if uid, pwd := c.innerAuthHeader(options.Silent); uid != "" {
+		c.doAfterValidatedInner3(ps, nextFunc3, uid, pwd, options)
 	}
 }
 
@@ -231,8 +231,8 @@ func (c *WAuthController) DoAfterAuthValidated(ps any, nextFunc3 NextFunc3, opts
 //	@Return 404: Server internal error.
 func (c *WAuthController) DoAfterAuthUnmarshal(ps any, nextFunc3 NextFunc3, opts ...Option) {
 	options := parseOptions(false, opts...)
-	if uuid, pwd := c.innerAuthHeader(options.Silent); uuid != "" {
-		c.doAfterValidatedInner3(ps, nextFunc3, uuid, pwd, options)
+	if uid, pwd := c.innerAuthHeader(options.Silent); uid != "" {
+		c.doAfterValidatedInner3(ps, nextFunc3, uid, pwd, options)
 	}
 }
 
@@ -264,19 +264,19 @@ func (c *WAuthController) innerAuthHeader(silent bool) (string, string) {
 
 	// get token from header and verify it and user role
 	if token := header.Get("Token"); token != "" {
-		if uuid, pwd := GAuthHandlerFunc(token); uuid == "" {
+		if uid, pwd := GAuthHandlerFunc(token); uid == "" {
 			c.E401Unauthed("Unauthed header token!")
 			return "", ""
 		} else {
-			if !GRoleHandlerFunc(uuid, c.Ctx.Input.URL(), c.Ctx.Request.Method) {
-				c.E403Denind("Role permission denied for " + uuid)
+			if !GRoleHandlerFunc(uid, c.Ctx.Input.URL(), c.Ctx.Request.Method) {
+				c.E403Denind("Role permission denied for " + uid)
 				return "", ""
 			}
 
 			if !silent {
-				logger.D("Authenticated account:", uuid)
+				logger.D("Authenticated account:", uid)
 			}
-			return uuid, pwd
+			return uid, pwd
 		}
 	}
 
@@ -288,13 +288,13 @@ func (c *WAuthController) innerAuthHeader(silent bool) (string, string) {
 // Parse url param, validate if need, then call api hander method and response result.
 //
 //	@See validateUrlParams() for more 400 error code returned.
-func (c *WAuthController) doAfterParsedInner(ps any, nextFunc2 NextFunc2, uuid string, opts *Options) {
+func (c *WAuthController) doAfterParsedInner(ps any, nextFunc2 NextFunc2, uid string, opts *Options) {
 	if !c.validateUrlParams(ps, true) { // fixed validate true!
 		return
 	}
 
 	// execute business function after validated.
-	status, resp := nextFunc2(uuid)
+	status, resp := nextFunc2(uid)
 	c.responCheckState(opts, status, resp)
 }
 
@@ -302,13 +302,13 @@ func (c *WAuthController) doAfterParsedInner(ps any, nextFunc2 NextFunc2, uuid s
 // validate the unmarshaled json or xml data.
 //
 //	@See validateParams() for more 400, 404 error code returned.
-func (c *WAuthController) doAfterValidatedInner(ps any, nextFunc2 NextFunc2, uuid string, opts *Options) {
+func (c *WAuthController) doAfterValidatedInner(ps any, nextFunc2 NextFunc2, uid string, opts *Options) {
 	if !c.validateParams(ps, opts) {
 		return
 	}
 
 	// execute business function after validated.
-	status, resp := nextFunc2(uuid)
+	status, resp := nextFunc2(uid)
 	c.responCheckState(opts, status, resp)
 }
 
@@ -316,12 +316,12 @@ func (c *WAuthController) doAfterValidatedInner(ps any, nextFunc2 NextFunc2, uui
 // validate the unmarshaled json or xml data.
 //
 //	@See validateParams() for more 400, 404 error code returned.
-func (c *WAuthController) doAfterValidatedInner3(ps any, nextFunc3 NextFunc3, uuid, pwd string, opts *Options) {
+func (c *WAuthController) doAfterValidatedInner3(ps any, nextFunc3 NextFunc3, uid, pwd string, opts *Options) {
 	if !c.validateParams(ps, opts) {
 		return
 	}
 
 	// execute business function after unmarshal and validated
-	status, resp := nextFunc3(uuid, pwd)
+	status, resp := nextFunc3(uid, pwd)
 	c.responCheckState(opts, status, resp)
 }

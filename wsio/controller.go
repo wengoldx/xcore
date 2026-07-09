@@ -19,7 +19,7 @@ import (
 
 // Auth client outset, it will disconnect when return no-nil error
 //	@param forms form values parse from url
-//	@param token client login jwt-token contain uuid or optional data in claims key string
+//	@param token client login jwt-token contain uid or optional data in claims key string
 //	@return - string client unique id (maybe same as client id)
 //			- any client optional data parsed from token
 //			- error Exception message

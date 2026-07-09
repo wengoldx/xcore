@@ -26,7 +26,7 @@ import (
 
 // Client datas for temp cache
 type clientOpt struct {
-	CID string // Client unique id (maybe same as account uuid)
+	CID string // Client unique id (maybe same as account uid)
 	Opt string // Client optional data
 }
 
@@ -36,7 +36,7 @@ type clientOpt struct {
 // # NOTICE:
 //
 // (1). The request client MUST set header have 'Author' : WENGOLD-V1.2 and
-// no-empty auth Token as 'Token' : 'plaintext uuid or base64 formated string'.
+// no-empty auth Token as 'Token' : 'plaintext uid or base64 formated string'.
 //
 // (2). DO NOT CHANGE THE go-socket.io MODULE VERSION, FIX IT IN 1.0.1 for
 // all UE4/UE5, Nodejs, python3 clients. the go-socket.io version 1.6.2
@@ -269,8 +269,8 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 	}
 
 	// auth client token by handler if set Authenticate function
-	// handler, or just use token as uuid when not set.
-	uuid, option := token, ""
+	// handler, or just use token as uid when not set.
+	uid, option := token, ""
 	if cc.handlers.AuthHandler != nil {
 		cid, opt, err := cc.handlers.AuthHandler(req.Form, token)
 		if err != nil || cid == "" {
@@ -282,12 +282,12 @@ func (cc *wingSIO) onAuthentication(req *http.Request) error {
 		}
 
 		siolog.I("Decoded client token, cid:", cid, "opt:", opt)
-		uuid, option = cid, opt
+		uid, option = cid, opt
 	}
 
 	// bind http.Request -> cid
 	h := uintptr(unsafe.Pointer(req))
-	cc.bindHTTP2UUIDLocked(h, uuid, option)
+	cc.bindHTTP2UUIDLocked(h, uid, option)
 	return nil
 }
 

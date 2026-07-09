@@ -218,7 +218,7 @@ func (stub *GrpcStub) ParseCerts(data string) error {
 /* Account Authentications Request                                     */
 /* ------------------------------------------------------------------- */
 
-// Auth header token and return account uuid.
+// Auth header token and return account uid.
 //
 // # NOTICE:
 //
@@ -236,20 +236,20 @@ func (stub *GrpcStub) AuthHeaderToken(token string) (string, string) {
 		rpclog.E("Auth grpc token, err:", err)
 		return "", ""
 	}
-	return resp.Acc /* uuid */, "" /* password */
+	return resp.Acc /* uid */, "" /* password */
 }
 
 // Auth account role from http header
-func (stub *GrpcStub) AuthHeaderRole(uuid, url, method string) bool {
-	if stub.Acc == nil || uuid == "" || url == "" || method == "" {
+func (stub *GrpcStub) AuthHeaderRole(uid, url, method string) bool {
+	if stub.Acc == nil || uid == "" || url == "" || method == "" {
 		rpclog.E("Acc grpc uninit, or invalid role!")
 		return false
 	}
 
-	param := &acc.Role{Uuid: uuid, Router: url, Method: method}
+	param := &acc.Role{Uid: uid, Router: url, Method: method}
 	resp, err := stub.Acc.ViaRole(context.Background(), param)
 	if err != nil {
-		rpclog.E("Auth", uuid, "role, err:", err)
+		rpclog.E("Auth", uid, "role, err:", err)
 		return false
 	}
 	return resp.Pass

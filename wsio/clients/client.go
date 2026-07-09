@@ -17,7 +17,7 @@ import (
 
 // socket connected client
 type client struct {
-	id     string     // Client id, maybe same as uuid
+	id     string     // Client id, maybe same as uid
 	option string     // Client optional data, can save as nickname, category, type, struct json string and so on
 	socket sio.Socket // Client socket.io connection.
 }

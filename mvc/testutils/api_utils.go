@@ -25,7 +25,7 @@ import (
 // Test case datas for multiple testing.
 type TestCase struct {
 	Case   string // Current excute unit test case.
-	User   string // Http request author uuid.
+	User   string // Http request author uid.
 	Want   int    // Http response code for pass current test.
 	Params any    // Http request params, body of POST method, form data of GET method.
 }
