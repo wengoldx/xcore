@@ -99,9 +99,12 @@ func accessAllowOriginBy(category int, origins string, allowCredentials bool) {
 // ===========================
 
 // Start a server as web page static service, run on PROD mode.
-func StaticServer(app string, port int, socket ...bool) {
+func StaticServer(app string, port int) {
 	setupStaticServer(app, port)
-	HttpServer(socket...)
+
+	logger.SilentLoggers()
+	beego.SetStaticPath("/", "static")
+	HttpServer()
 }
 
 func setupStaticServer(app string, port int) {
