@@ -93,3 +93,23 @@ func accessAllowOriginBy(category int, origins string, allowCredentials bool) {
 		MaxAge:           86400,
 	}))
 }
+
+// ===========================
+// For setup HTTP Server
+// ===========================
+
+// Start a server as web page static service, run on PROD mode.
+func StaticServer(app string, port int, socket ...bool) {
+	setupStaticServer(app, port)
+	HttpServer(socket...)
+}
+
+func setupStaticServer(app string, port int) {
+	beego.BConfig.AppName = app
+	beego.BConfig.RunMode = beego.PROD
+	beego.BConfig.CopyRequestBody = true          // copy body to request data.
+	beego.BConfig.WebConfig.AutoRender = false    // set auto render status.
+	beego.BConfig.WebConfig.DirectoryIndex = true // set index.html as dashboard page.
+	beego.BConfig.WebConfig.EnableDocs = true     // set enable apis web page.
+	beego.BConfig.Listen.HTTPPort = port
+}
