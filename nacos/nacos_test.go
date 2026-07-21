@@ -12,8 +12,9 @@ package nacos
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
+
+	xt "github.com/wengoldx/xcore/utils/xtest"
 )
 
 const _test_config = `{
@@ -54,16 +55,28 @@ func TestParseConfig(t *testing.T) {
 	if err := json.Unmarshal([]byte(_test_config), ac); err != nil {
 		t.Fatal("Error:", err)
 	}
-	fmt.Println("Parsed out:")
-	fmt.Println(ac)
+	xt.LogI("Parsed out:\n", ac)
 
 	for serve, senders := range ac.Email.Serves {
 		for tag, sender := range senders {
-			fmt.Println("> server:", serve, "sender:", tag,
+			xt.LogI("> server:", serve, "sender:", tag,
 				"acc:", sender.User, "pwd:", sender.Pwd)
 		}
 	}
 
 	senders := ac.Email.Serves["myserver-1"]
-	fmt.Println("Senders:", senders)
+	xt.LogI("Senders:", senders)
+}
+
+func TestMatchProxyIP(t *testing.T) {
+	xt.UseDebugLogger()
+
+	proxy := "192.168.1.100"
+	if result, err := matchProxyIP(proxy); err != nil {
+		t.Fatal(err)
+	} else if proxy != result {
+		xt.LogI("Using local ip:", result)
+	} else {
+		xt.LogI("None local ip!")
+	}
 }

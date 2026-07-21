@@ -19,33 +19,34 @@ import (
 	"github.com/wengoldx/xcore/invar"
 )
 
-// Nacos config client stub
-type ConfigStub struct {
-	Namespace   string                      // Namespace id, it defined on console at first
-	NacosServer string                      // Nacos server host ip
-	Stub        config_client.IConfigClient // Nacos configs client instance
+// Nacos config client stub.
+type NacosConf struct {
+	Namespace   string                      // Namespace id, it defined on console at first.
+	NacosServer string                      // Nacos server host ip.
+	Stub        config_client.IConfigClient // Nacos configs client instance.
 }
 
-// Nacos config keyword datas
+// Nacos config keyword datas.
 type ConfigKey struct {
-	DataID string // config data id
-	Group  string // config group name
+	DataID string // config data id.
+	Group  string // config group name.
 }
 
-// Callback to listen config changed
+// Callback to listen config changed.
 type ListenCallback func(namespace, group, dataId, data string)
 
-// Create a new ConfigStub instance.
-//	@params ns  string config namespace id
-//	@params svr string remote nacos server ip address
-//	@return - *ConfigStub config stub instance
-func NewConfigStub(ns, svr string) *ConfigStub {
-	return &ConfigStub{Namespace: ns, NacosServer: svr}
+// Create a new NacosConf instance.
+//
+//	@params ns  string config namespace id.
+//	@params svr string remote nacos server ip address.
+//	@return - *NacosConf config stub instance.
+func NewConfigStub(ns, svr string) *NacosConf {
+	return &NacosConf{Namespace: ns, NacosServer: svr}
 }
 
-// Setup config stub instance, it must set stub namespace and
-// nacos server values before call this function
-func (c *ConfigStub) Setup() error {
+// Setup config stub instance, it must set stub namespace and.
+// nacos server values before call this function.
+func (c *NacosConf) Setup() error {
 	if c.Namespace == "" || c.NacosServer == "" {
 		return invar.ErrUnperparedState
 	}
@@ -60,12 +61,13 @@ func (c *ConfigStub) Setup() error {
 	return nil
 }
 
-// Publish config to nacos server, just support string and json struct datas
-//	@params did    string    data id of nacos defined
-//	@params group  string    group name of nacos defined
-//	@params config interface string or struct type config content
-//	@return - error handle exception
-func (c *ConfigStub) Publish(did, group string, config any) error {
+// Publish config to nacos server, just support string and json struct datas.
+//
+//	@params did    string    data id of nacos defined.
+//	@params group  string    group name of nacos defined.
+//	@params config interface string or struct type config content.
+//	@return - error handle exception.
+func (c *NacosConf) Publish(did, group string, config any) error {
 	if c.Stub == nil {
 		return invar.ErrInvalidClient
 	} else if did == "" || group == "" || config == nil {
@@ -90,12 +92,13 @@ func (c *ConfigStub) Publish(did, group string, config any) error {
 	return err
 }
 
-// Listen same one config changed, and notify to update
-//	@params did   string         data id of nacos defined
-//	@params group string         group name of nacos defined
-//	@params cb    ListenCallback config changed callback
-//	@return - error handle exception
-func (c *ConfigStub) Listen(did, group string, cb ListenCallback) error {
+// Listen same one config changed, and notify to update.
+//
+//	@params did   string         data id of nacos defined.
+//	@params group string         group name of nacos defined.
+//	@params cb    ListenCallback config changed callback.
+//	@return - error handle exception.
+func (c *NacosConf) Listen(did, group string, cb ListenCallback) error {
 	if c.Stub == nil {
 		return invar.ErrInvalidClient
 	} else if did == "" || group == "" || cb == nil {
@@ -106,11 +109,12 @@ func (c *ConfigStub) Listen(did, group string, cb ListenCallback) error {
 	return c.Stub.ListenConfig(cp)
 }
 
-// Listen multiple configs changed, and using same callback to update
-//	@params keys []ConfigKey    configs keywords
-//	@params cb   ListenCallback config changed callback
-//	@return - error handle exception
-func (c *ConfigStub) Listens(keys []ConfigKey, cb ListenCallback) error {
+// Listen multiple configs changed, and using same callback to update.
+//
+//	@params keys []ConfigKey    configs keywords.
+//	@params cb   ListenCallback config changed callback.
+//	@return - error handle exception.
+func (c *NacosConf) Listens(keys []ConfigKey, cb ListenCallback) error {
 	for _, key := range keys {
 		if err := c.Listen(key.DataID, key.Group, cb); err != nil {
 			return err
@@ -119,10 +123,11 @@ func (c *ConfigStub) Listens(keys []ConfigKey, cb ListenCallback) error {
 	return nil
 }
 
-// Cancel listen configs changed
-//	@params keys []ConfigKey configs keywords
-//	@return - error handle exception
-func (c *ConfigStub) CancelListens(keys []ConfigKey) error {
+// Cancel listen configs changed.
+//
+//	@params keys []ConfigKey configs keywords.
+//	@return - error handle exception.
+func (c *NacosConf) CancelListens(keys []ConfigKey) error {
 	for _, key := range keys {
 		cp := vo.ConfigParam{DataId: key.DataID, Group: key.Group}
 		if err := c.Stub.CancelListenConfig(cp); err != nil {
@@ -132,12 +137,13 @@ func (c *ConfigStub) CancelListens(keys []ConfigKey) error {
 	return nil
 }
 
-// Get string config content
-//	@params did   string data id of nacos defined
-//	@params group string group name of nacos defined
-//	@return - string config content string
-//			- error  handle exception
-func (c *ConfigStub) GetString(did, group string) (string, error) {
+// Get string config content.
+//
+//	@params did   string data id of nacos defined.
+//	@params group string group name of nacos defined.
+//	@return - string config content string.
+//			- error  handle exception.
+func (c *NacosConf) GetString(did, group string) (string, error) {
 	if c.Stub == nil {
 		return "", invar.ErrInvalidClient
 	} else if did == "" || group == "" {
@@ -148,12 +154,13 @@ func (c *ConfigStub) GetString(did, group string) (string, error) {
 	return c.Stub.GetConfig(cp)
 }
 
-// Get struct config content from josn string
-//	@params did   string data id of nacos defined
-//	@params group string group name of nacos defined
-//	@return - out   config struct data
-//			- error handle exception
-func (c *ConfigStub) GetStruct(did, group string, out any) error {
+// Get struct config content from josn string.
+//
+//	@params did   string data id of nacos defined.
+//	@params group string group name of nacos defined.
+//	@return - out   config struct data.
+//			- error handle exception.
+func (c *NacosConf) GetStruct(did, group string, out any) error {
 	if content, err := c.GetString(did, group); err != nil {
 		return err
 	} else {
@@ -164,11 +171,12 @@ func (c *ConfigStub) GetStruct(did, group string, out any) error {
 	return nil
 }
 
-// Delete registered config
-//	@params did   string data id of nacos defined
-//	@params group string group name of nacos defined
-//	@return - error handle exception
-func (c *ConfigStub) Delete(did, group string) error {
+// Delete registered config.
+//
+//	@params did   string data id of nacos defined.
+//	@params group string group name of nacos defined.
+//	@return - error handle exception.
+func (c *NacosConf) Delete(did, group string) error {
 	if c.Stub == nil {
 		return invar.ErrInvalidClient
 	} else if did == "" || group == "" {
@@ -180,10 +188,11 @@ func (c *ConfigStub) Delete(did, group string) error {
 	return err
 }
 
-// Delete registered configs
-//	@params keys []ConfigKey configs keywords
-//	@return - error handle exception
-func (c *ConfigStub) Deletes(keys []ConfigKey) error {
+// Delete registered configs.
+//
+//	@params keys []ConfigKey configs keywords.
+//	@return - error handle exception.
+func (c *NacosConf) Deletes(keys []ConfigKey) error {
 	for _, key := range keys {
 		if err := c.Delete(key.DataID, key.Group); err != nil {
 			return err

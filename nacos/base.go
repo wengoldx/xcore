@@ -28,25 +28,25 @@ import (
 	"github.com/wengoldx/xcore/wechat"
 )
 
-// Object logger with [NACOS] mark for nacos module
-var naclog = logger.CatLogger("NACOS")
+// Nacos category logger with [NACOS] mark.
+var nlog = logger.CatLogger("NACOS")
 
 /* ------------------------------------------------------------------- */
 /* Auto Register Define                                                */
 /* ------------------------------------------------------------------- */
 
-// Server register informations
+// Server register informations.
 type ServerItem struct {
-	Name     string         // Server name, same as beego app name
-	Callback ServerCallback // Server register datas changed callback
+	Name     string         // Server name, same as beego app name.
+	Callback ServerCallback // Server register datas changed callback.
 }
 
-// Callback to listen server address and port changes
+// Callback to listen server address and port changes.
 type ServerCallback func(svr, addr string, port int)
 
-// Register current server to nacos, you must set configs in app.conf
+// Register current server to nacos, set configs in app.conf config file.
 //
-//	@return - *ServerStub nacos server stub instance
+//	@return - *ServerStub nacos server stub instance.
 //
 // # NOTICE:
 //
@@ -68,32 +68,32 @@ type ServerCallback func(svr, addr string, port int)
 //
 //	; Inner net port for grpc access
 //	nacosport = 3000
-func RegisterServer() *ServerStub {
+func RegisterServer() *NacosServe {
 	svr := beego.AppConfig.String(configKeySvr)
 	if svr == "" {
 		panic("Not found nacos server host!")
 	}
 
-	// Local server listing ip proxy
+	// local server listing ip proxy
 	idealip := beego.AppConfig.String(configKeyAddr)
 	if idealip == "" {
 		panic("Not found idea server ip to register!")
 	}
 
-	// Server access port for grpc, it maybe same as httpport config
-	// when the local server not support grpc but for http
+	// server access port for grpc, it maybe same as httpport config
+	// when the local server not support grpc but for http.
 	port, err := beego.AppConfig.Int(configKeyPort)
 	if err != nil || port < 3000 /* remain 0 ~ 3000 */ {
 		panic("Not found port number or less 3000!")
 	}
 
-	// Namespace id of local server, and parse local ip
+	// namespace id of local server, and parse local ip.
 	addr, err := matchProxyIP(idealip)
 	if err != nil {
 		panic("Find proxy local ip, err:" + err.Error())
 	}
 
-	// Create nacos server stub and setup it
+	// create nacos server stub and setup it.
 	ns := utils.Condition(logger.IsRunProd(), NS_PROD, NS_DEV)
 	stub := NewServerStub(ns, svr)
 	if err := stub.Setup(); err != nil {
@@ -112,7 +112,7 @@ func RegisterServer() *ServerStub {
 	}
 
 	logmsg := fmt.Sprintf("%s@%s:%v", app, addr, port)
-	naclog.I("Registered server on", logmsg)
+	nlog.I("Registered server on", logmsg)
 	return stub
 }
 
@@ -120,8 +120,8 @@ func RegisterServer() *ServerStub {
 // immediately to return target service host when them allready registerd
 // to service central of nacos.
 //
-//	@params servers []*ServerItem target server registry informations
-func (ss *ServerStub) ListenServers(servers []*ServerItem) {
+//	@params servers []*ServerItem target server registry informations.
+func (ss *NacosServe) ListenServers(servers []*ServerItem) {
 	for _, s := range servers {
 		if err := ss.Subscribe(s.Name, s.OnChanged, GP_WENGOLD); err != nil {
 			panic("Subscribe server " + s.Name + " err:" + err.Error())
@@ -129,16 +129,16 @@ func (ss *ServerStub) ListenServers(servers []*ServerItem) {
 	}
 }
 
-// Subscribe callback called when target service address and port changed
+// Subscribe callback called when target service address and port changed.
 func (si *ServerItem) OnChanged(services []model.Instance, err error) {
 	if err != nil {
-		naclog.E("Received server", si.Name, "change, err:", err)
+		nlog.E("Received server", si.Name, "change, err:", err)
 		return
 	}
 
 	if len(services) > 0 {
 		addr, port := services[0].Ip, services[0].Port
-		naclog.I("[GRPC] Server", si.Name, "address changed:", fmt.Sprintf("%s:%v", addr, port))
+		nlog.I("Server", si.Name, "address changed:", fmt.Sprintf("%s:%v", addr, port))
 		si.Callback(si.Name, addr, int(port))
 	}
 }
@@ -147,28 +147,28 @@ func (si *ServerItem) OnChanged(services []model.Instance, err error) {
 /* Config Service Define                                               */
 /* ------------------------------------------------------------------- */
 
-// Meta config informations
+// Meta config informations.
 type MetaConfig struct {
-	Stub      *ConfigStub                   // Nacos config client instance
-	Callbacks map[string]MetaConfigCallback // Meta config changed callback maps, key is dataid
+	Stub      *NacosConf                    // Nacos config client instance.
+	Callbacks map[string]MetaConfigCallback // Meta config changed callback maps, key is dataid.
 
 	// Custom datas when project register data ids, see parseXxxx inner functions.
-	Conf     AccConfs                     // DID_ACC_CONFIGS  : Account configs
-	OTA      map[string]*OTAInfo          // DID_OTA_BUILDS   : Projects OTA infos
-	Senders  map[string]*DTalkSender      // DID_DTALK_NTFERS : DingTalk senders
-	Agents   map[string]*wechat.WxIFAgent // DID_WX_AGENTS    : Wechat agents
-	Paths    map[string][]*ResPath        // DID_MIO_PATHS    : MinIO export resource paths
-	Users    map[string]string            // DID_MIO_USERS    : MinIO access service users
-	Words    EWords                       // DID_QK_WORDS     : Excel rule words
-	Releases map[string]*VRelease         // DID_SER_RELEASE  : Master release version and infos
+	Conf     AccConfs                     // DID_ACC_CONFIGS  : Account configs.
+	OTA      map[string]*OTAInfo          // DID_OTA_BUILDS   : Projects OTA infos.
+	Senders  map[string]*DTalkSender      // DID_DTALK_NTFERS : DingTalk senders.
+	Agents   map[string]*wechat.WxIFAgent // DID_WX_AGENTS    : Wechat agents.
+	Paths    map[string][]*ResPath        // DID_MIO_PATHS    : MinIO export resource paths.
+	Users    map[string]string            // DID_MIO_USERS    : MinIO access service users.
+	Words    EWords                       // DID_QK_WORDS     : Excel rule words.
+	Releases map[string]*VRelease         // DID_SER_RELEASE  : Master release version and infos.
 }
 
-// Callback to listen server address and port changes
+// Callback to listen server address and port changes.
 type MetaConfigCallback func(dataId, data string)
 
-// Create meta config client to get or listen configs changes
+// Create meta config client to get or listen configs changes.
 //
-//	@return - *MetaConfig nacos config client instance
+//	@return - *MetaConfig nacos config client instance.
 //
 // # NOTICE:
 //
@@ -182,28 +182,28 @@ func NewMetaConfig() *MetaConfig {
 		panic("Not found nacos server host!")
 	}
 
-	// Namespace id of meta configs
+	// namespace id of meta configs.
 	ns := utils.Condition(logger.IsRunProd(), NS_PROD, NS_DEV)
 
-	// Create nacos config stub and setup it
+	// create nacos config stub and setup it.
 	stub := NewConfigStub(ns, svr)
 	if err := stub.Setup(); err != nil {
 		panic("New config stub, err:" + err.Error())
 	}
 
-	// Fix the all config group as wengold
+	// fix the all config group as wengold.
 	cbs := make(map[string]MetaConfigCallback)
 	return &MetaConfig{
 		Stub: stub, Callbacks: cbs,
 	}
 }
 
-// Get and listing the config of indicated dataId
+// Get and listing the config of indicated dataId.
 func (mc *MetaConfig) ListenConfig(dataId string, cb MetaConfigCallback) {
-	mc.Callbacks[dataId] = cb // cache callback
+	mc.Callbacks[dataId] = cb // cache callback.
 	gp := GP_WENGOLD
 
-	// get config first before listing
+	// get config first before listing.
 	data, err := mc.Stub.GetString(dataId, gp)
 	if err != nil {
 		panic("Get config " + dataId + "err: " + err.Error())
@@ -212,12 +212,12 @@ func (mc *MetaConfig) ListenConfig(dataId string, cb MetaConfigCallback) {
 	mc.dispathParsers(dataId, data)
 	cb(dataId, data)
 
-	// listing config changes
-	naclog.I("Start listing config dateId:", dataId)
+	// listing config changes.
+	nlog.I("Start listing config dateId:", dataId)
 	mc.Stub.Listen(dataId, gp, mc.OnChanged)
 }
 
-// Get and listing the configs of indicated dataIds
+// Get and listing the configs of indicated dataIds.
 func (mc *MetaConfig) ListenConfigs(cb MetaConfigCallback, dataIds ...string) {
 	for _, dataId := range dataIds {
 		if dataId != "" && cb != nil {
@@ -226,45 +226,45 @@ func (mc *MetaConfig) ListenConfigs(cb MetaConfigCallback, dataIds ...string) {
 	}
 }
 
-// Listing callback called when target configs changed
+// Listing callback called when target configs changed.
 func (mc *MetaConfig) OnChanged(namespace, group, dataId, data string) {
 	if namespace != NS_DEV && namespace != NS_PROD {
-		naclog.E("Invalid meta config ns:", namespace)
+		nlog.E("Invalid meta config ns:", namespace)
 		return
 	}
 
 	if callback, ok := mc.Callbacks[dataId]; ok {
 		mc.dispathParsers(dataId, data)
-		// Call callback for next handle
+		// call callback for next handle.
 		callback(dataId, data)
 	}
 }
 
-// Get config data from nacos server by given data id
+// Get config data from nacos server by given data id.
 func (mc *MetaConfig) GetConfig(dataId string) (string, error) {
 	return mc.Stub.GetString(dataId, GP_WENGOLD)
 }
 
-// Push config data to indicated nacos config
+// Push config data to indicated nacos config.
 func (mc *MetaConfig) PushConfig(dataId, data string) error {
 	return mc.Stub.Publish(dataId, GP_WENGOLD, data)
 }
 
-// Parse local server swagger and upload routers to nacos
+// Parse local server swagger and upload routers to nacos.
 func (mc *MetaConfig) UploadRouters() error {
 	nrouters, err := mc.GetConfig(DID_API_ROUTERS)
 	if err != nil {
-		naclog.E("Pull nacos routers, err:", err)
+		nlog.E("Pull nacos routers, err:", err)
 		return err
 	}
 
-	// update local server swagger routers
+	// update local server swagger routers.
 	if routers, err := utils.UpdateRouters(nrouters); err == nil {
 		if err = mc.PushConfig(DID_API_ROUTERS, routers); err != nil {
-			naclog.E("Push swagger routers, err:", err)
+			nlog.E("Push swagger routers, err:", err)
 			return err
 		}
-		naclog.I("Pushed swagger routers!")
+		nlog.I("Pushed swagger routers!")
 	}
 	return nil
 }
@@ -276,19 +276,19 @@ func (mc *MetaConfig) UploadRouters() error {
 // 5s pingpong heartbeat and output logs on warn leven.
 //
 // # NOTICE:
-//   - Remote direct nacos server need access on http://{svr}:8848/nacos
-//   - Nginx proxy vip server need access on http://{svr}:3608/nacos
+//   - Visit http://{svr}:8848/nacos for nacos standalone mode to access directly.
+//   - Visit http://{svr}:3608/nacos for nacos culsters mode by nginx proxy.
 func genClientParam(ns, svr string) vo.NacosClientParam {
 	sc := []constant.ServerConfig{
 		{Scheme: "http", ContextPath: "/nacos", IpAddr: svr, Port: 8848},
 	}
 
-	// logs config
+	// logs config.
 	logcfg := &constant.ClientLogRollingConfig{
-		MaxSize: 10, MaxBackups: 10, // max 10 files and each max 10MB
+		MaxSize: 3, MaxBackups: 10, // max 3 files and each max 10MB.
 	}
 
-	// client config
+	// client config.
 	cc := &constant.ClientConfig{
 		NamespaceId:         ns,
 		TimeoutMs:           5000,
@@ -297,8 +297,8 @@ func genClientParam(ns, svr string) vo.NacosClientParam {
 		CacheDir:            nacosDirCache,
 		LogRollingConfig:    logcfg,
 		LogLevel:            nacosLogLevel,
-		Username:            nacosSysSecure, // secure account
-		Password:            nacosSysSecure, // secure passowrd
+		Username:            nacosSysSecure, // secure account.
+		Password:            nacosSysSecure, // secure passowrd.
 	}
 
 	return vo.NacosClientParam{
@@ -306,11 +306,11 @@ func genClientParam(ns, svr string) vo.NacosClientParam {
 	}
 }
 
-// Parse and return the local register IP that meets the conditions
+// Parse and return the local register IP that meets the conditions.
 func matchProxyIP(proxy string) (string, error) {
 	segments := strings.Split(proxy, ".")
 	if len(segments) != 4 {
-		naclog.E("Invalid nocos proxy ip:", proxy)
+		nlog.E("Invalid nocos proxy ip:", proxy)
 		return "", invar.ErrInvalidParams
 	}
 
@@ -318,7 +318,7 @@ func matchProxyIP(proxy string) (string, error) {
 	condition := strings.Join(segments[0:3], ".") + segment
 	reg, err := regexp.Compile(condition)
 	if err != nil {
-		naclog.E("Compile regular err:", err)
+		nlog.E("Compile regular err:", err)
 		return "", err
 	}
 
@@ -329,10 +329,10 @@ func matchProxyIP(proxy string) (string, error) {
 
 	satisfips := []string{}
 	for _, v := range matchips {
-		// Find ideal ip exists and return it if found
+		// find ideal ip exists and return it if found.
 		ip := reg.FindString(v)
 		if ip == proxy {
-			naclog.I("Direct use ideal ip:", proxy)
+			nlog.I("Direct use ideal ip:", proxy)
 			return ip, nil
 		} else if ip != "" {
 			satisfips = append(satisfips, ip)
@@ -340,15 +340,15 @@ func matchProxyIP(proxy string) (string, error) {
 	}
 
 	if len(satisfips) > 0 {
-		naclog.I("Use dynamic ip:", satisfips[0])
+		nlog.I("Use dynamic ip:", satisfips[0])
 		return satisfips[0], nil
 	}
 
-	naclog.E("Not found any local ips, just return proxy:", proxy)
+	nlog.E("Not found any local ips, just return proxy:", proxy)
 	return proxy, nil
 }
 
-// Dispath custom data parsers to parse data when changed
+// Dispath custom data parsers to parse data when changed.
 func (mc *MetaConfig) dispathParsers(dataId, data string) {
 	switch dataId {
 	case DID_ACC_CONFIGS:
@@ -372,110 +372,110 @@ func (mc *MetaConfig) dispathParsers(dataId, data string) {
 	// case DID_MQTT_AGENTS:
 	// 	mqtt.SetupMQLogger(data)
 	default: // DID_API_ROUTERS, DID_GRPC_CERTS
-		naclog.I("Received configs of", dataId)
+		nlog.I("Received configs of", dataId)
 	}
 }
 
-// Parse acc configs when project register DID_ACC_CONFIGS change event
+// Parse acc configs when project register DID_ACC_CONFIGS change event.
 func (mc *MetaConfig) parseConfigs(data string) {
 	conf := AccConfs{}
 	if err := json.Unmarshal([]byte(data), &conf); err != nil {
-		naclog.E("Unmarshal acc configs, err:", err)
+		nlog.E("Unmarshal acc configs, err:", err)
 		return
 	}
 	mc.Conf = conf
-	naclog.D("Updated Ass Configs!")
+	nlog.D("Updated Ass Configs!")
 	// FIXME: See TestParseConfig() for parse emails.
 }
 
-// Parse OTA infos when project register DID_OTA_BUILDS change event
+// Parse OTA infos when project register DID_OTA_BUILDS change event.
 func (mc *MetaConfig) parseOTAInfo(data string) {
 	ota := make(map[string]*OTAInfo)
 	if err := json.Unmarshal([]byte(data), &ota); err != nil {
-		naclog.E("Unmarshal OTA infos, err:", err)
+		nlog.E("Unmarshal OTA infos, err:", err)
 		return
 	}
 	mc.OTA = ota
-	naclog.D("Updated OTA infos!")
+	nlog.D("Updated OTA infos!")
 }
 
-// Parse DingTalk senders when project register DID_DTALK_NTFERS change event
+// Parse DingTalk senders when project register DID_DTALK_NTFERS change event.
 func (mc *MetaConfig) parseSenders(data string) {
 	senders := make(map[string]*DTalkSender)
 	if err := json.Unmarshal([]byte(data), &senders); err != nil {
-		naclog.E("Unmarshal DTalk senders, err:", err)
+		nlog.E("Unmarshal DTalk senders, err:", err)
 		return
 	}
 	mc.Senders = senders
-	naclog.D("Updated DTalk senders!")
+	nlog.D("Updated DTalk senders!")
 }
 
-// Parse wechat agents when project register DID_WX_AGENTS change event
+// Parse wechat agents when project register DID_WX_AGENTS change event.
 func (mc *MetaConfig) parseAgents(data string) {
 	agents := make(map[string]*wechat.WxIFAgent)
 	if err := json.Unmarshal([]byte(data), &agents); err != nil {
-		naclog.E("Unmarshal wechat agents, err:", err)
+		nlog.E("Unmarshal wechat agents, err:", err)
 		return
 	}
 	mc.Agents = agents
-	naclog.D("Updated wechat agents!")
+	nlog.D("Updated wechat agents!")
 }
 
-// Parse minio service users when project register DID_MIO_USERS change event
+// Parse minio service users when project register DID_MIO_USERS change event.
 func (mc *MetaConfig) parseUsers(data string) {
 	users := make(map[string]string)
 	if err := json.Unmarshal([]byte(data), &users); err != nil {
-		naclog.E("Unmarshal minio users, err:", err)
+		nlog.E("Unmarshal minio users, err:", err)
 		return
 	}
 	mc.Users = users
-	naclog.I("Updated minio users!")
+	nlog.I("Updated minio users!")
 }
 
-// Parse minio resource paths when project register DID_MIO_PATHS change event
+// Parse minio resource paths when project register DID_MIO_PATHS change event.
 func (mc *MetaConfig) parsePaths(data string) {
 	paths := make(map[string][]*ResPath)
 	if err := json.Unmarshal([]byte(data), &paths); err != nil {
-		naclog.E("Unmarshal minio paths, err:", err)
+		nlog.E("Unmarshal minio paths, err:", err)
 		return
 	}
 	mc.Paths = paths
-	naclog.I("Updated minio paths!")
+	nlog.I("Updated minio paths!")
 }
 
-// Parse excel rule words when project register DID_QK_WORDS change event
+// Parse excel rule words when project register DID_QK_WORDS change event.
 func (mc *MetaConfig) parseWords(data string) {
 	words := EWords{}
 	if err := json.Unmarshal([]byte(data), &words); err != nil {
-		naclog.E("Unmarshal excel rule words, err:", err)
+		nlog.E("Unmarshal excel rule words, err:", err)
 		return
 	}
 	mc.Words = words
-	naclog.I("Updated excel rule words!")
+	nlog.I("Updated excel rule words!")
 }
 
-// Parse release infos when project register DID_SER_RELEASE change event
+// Parse release infos when project register DID_SER_RELEASE change event.
 func (mc *MetaConfig) parseReleases(data string) {
 	release := make(map[string]*VRelease)
 	if err := json.Unmarshal([]byte(data), &release); err != nil {
-		naclog.E("Unmarshal excel releases, err:", err)
+		nlog.E("Unmarshal excel releases, err:", err)
 		return
 	}
 	mc.Releases = release
-	naclog.I("Updated releases infos!")
+	nlog.I("Updated releases infos!")
 }
 
-// Parse elastic server config and create es client
+// Parse elastic server config and create es client.
 func (mc *MetaConfig) setEsAgent(data string) {
 	c := &ESConfig{}
 	if err := json.Unmarshal([]byte(data), &c); err != nil {
-		naclog.E("Unmarshal elastic configs, err:", err)
+		nlog.E("Unmarshal elastic configs, err:", err)
 		return
 	}
 
 	if err := elastic.NewEsClient(c.Address, c.User, c.Pwd, c.CFP); err != nil {
-		naclog.E("Create elastic client, err:", err)
+		nlog.E("Create elastic client, err:", err)
 		return
 	}
-	naclog.I("Update elastic client!")
+	nlog.I("Update elastic client!")
 }
